@@ -1,0 +1,111 @@
+{
+  "default": "normal",
+  "sprite": "tank_top",
+  "animation": {
+    "name": "tank_top",
+    "duration": 300000000,
+    "cycled": true,
+    "length": 2
+  },
+  "items": {
+    "appear": {
+      "sprite": "tank_top",
+      "animation": {
+        "name": "tank_top",
+        "duration": 300000000,
+        "cycled": true,
+        "blink": 200000000,
+        "length": 2
+      },
+      "items": {
+        "top": {
+          "sprite": "tank_top",
+          "animation": {
+            "name": "tank_top",
+            "duration": 300000000,
+            "cycled": true,
+            "blink": 200000000,
+            "length": 2
+          }
+        },
+        "bottom": {
+          "sprite": "tank_bottom",
+          "animation": {
+            "name": "tank_bottom",
+            "duration": 300000000,
+            "cycled": true,
+            "blink": 200000000,
+            "length": 2
+          }
+        },
+        "left": {
+          "sprite": "tank_left",
+          "animation": {
+            "name": "tank_left",
+            "duration": 300000000,
+            "cycled": true,
+            "blink": 200000000,
+            "length": 2
+          }
+        },
+        "right": {
+          "sprite": "tank_right",
+          "animation": {
+            "name": "tank_right",
+            "duration": 300000000,
+            "cycled": true,
+            "blink": 200000000,
+            "length": 2
+          }
+        }
+      }
+    },
+    "normal": {
+      "sprite": "tank_top",
+      "animation": {
+        "name": "tank_top",
+        "duration": 300000000,
+        "cycled": true,
+        "length": 2
+      },
+      "items": {
+        "top": {
+          "sprite": "tank_top",
+          "animation": {
+            "name": "tank_top",
+            "duration": 300000000,
+            "cycled": true,
+            "length": 2
+          }
+        },
+        "bottom": {
+          "sprite": "tank_bottom",
+          "animation": {
+            "name": "tank_bottom",
+            "duration": 300000000,
+            "cycled": true,
+            "length": 2
+          }
+        },
+        "left": {
+          "sprite": "tank_left",
+          "animation": {
+            "name": "tank_left",
+            "duration": 300000000,
+            "cycled": true,
+            "length": 2
+          }
+        },
+        "right": {
+          "sprite": "tank_right",
+          "animation": {
+            "name": "tank_right",
+            "duration": 300000000,
+            "cycled": true,
+            "length": 2
+          }
+        }
+      }
+    }
+  }
+}

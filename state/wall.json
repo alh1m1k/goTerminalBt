@@ -1,0 +1,22 @@
+{
+  "default": "/",
+  "sprite": "wall",
+  "items": {
+    "normal": {
+      "sprite": "wall"
+    },
+    "damage": {
+      "sprite": "wall_damage"
+    },
+    "disappear": {
+      "sprite": "wall_ruin_0",
+      "animation": {
+        "name": "wall_ruin",
+        "duration": 2000000000,
+        "cycled": true,
+        "blink": 200000000,
+        "length": 1
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "type":   "collectable",
+  "sprite": "gun_0",
+  "state":  "gun",
+  "collision": {
+    "type": "penetrate",
+    "x": 0,
+    "y": 0,
+    "w": 7,
+    "h": 4
+  },
+  "ttl": 10000000000,
+  "tags": ["collectable", "gun", "highlights-appear"]
+}

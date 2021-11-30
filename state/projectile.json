@@ -1,0 +1,9 @@
+{
+  "default": "fly",
+  "sprite": "projectile",
+  "items": {
+    "fly": {
+      "sprite": "projectile"
+    }
+  }
+}

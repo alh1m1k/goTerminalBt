@@ -1,0 +1,15 @@
+{
+  "type":   "wall",
+  "sprite": "wall",
+  "state":  "wall",
+  "collision": {
+    "type": "static",
+    "x": 0,
+    "y": 0,
+    "w": 8,
+    "h": 4
+  },
+  "hp": 50,
+  "score": 50,
+  "tags": ["wall", "obstacle", "highlights-disappear", "scored"]
+}

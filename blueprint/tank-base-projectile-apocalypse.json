@@ -1,0 +1,25 @@
+{
+  "type":   "projectile",
+  "sprite": "projectile-fanout",
+  "state":  "projectile-fanout",
+  "collision": {
+    "type": "penetrate",
+    "x": 0,
+    "y": 0,
+    "w": 1,
+    "h": 1
+  },
+  "speed": {
+    "min": 5,
+    "max": 5
+  },
+  "ttl":    3500000000,
+  "damage": 0,
+  "tags": {
+      "projectile": true,
+      "apocalypse": true,
+      "fanout": {
+          "blueprint": "projectile-sharp-apoc-start"
+      }
+  }
+}

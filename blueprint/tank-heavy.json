@@ -1,0 +1,192 @@
+{
+  "type":   "unit",
+  "sprite": {
+    "type": "animation",
+    "name": "heavy/tank/top/tank",
+    "duration": 300000000,
+    "cycled": true,
+    "length": 2
+  },
+  "state":  {
+    "default": "normal",
+    "sprite": {
+      "type": "animation",
+      "name": "heavy/tank/top/tank",
+      "duration": 300000000,
+      "cycled": true,
+      "length": 2
+    },
+    "items": {
+      "appear": {
+        "sprite": {
+          "type": "animation",
+          "name": "heavy/tank/top/tank",
+          "duration": 300000000,
+          "cycled": true,
+          "blink": 200000000,
+          "length": 2
+        },
+        "items": {
+          "top": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/top/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "blink": 200000000,
+              "length": 2
+            }
+          },
+          "bottom": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/bottom/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "blink": 200000000,
+              "length": 2
+            }
+          },
+          "left": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/left/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "blink": 200000000,
+              "length": 2
+            }
+          },
+          "right": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/right/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "blink": 200000000,
+              "length": 2
+            }
+          }
+        }
+      },
+      "receiveDamage": {
+        "sprite": {
+          "type": "animation",
+          "name": "heavy/tank/top/tank",
+          "duration": 300000000,
+          "cycled": true,
+          "blink": 100000000,
+          "length": 2
+        },
+        "items": {
+          "top": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/top/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "blink": 100000000,
+              "length": 2
+            }
+          },
+          "bottom": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/bottom/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "blink": 100000000,
+              "length": 2
+            }
+          },
+          "left": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/left/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "blink": 100000000,
+              "length": 2
+            }
+          },
+          "right": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/right/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "blink": 100000000,
+              "length": 2
+            }
+          }
+        }
+      },
+      "normal": {
+        "sprite": {
+          "type": "animation",
+          "name": "heavy/tank/top/tank",
+          "duration": 300000000,
+          "cycled": true,
+          "length": 2
+        },
+        "items": {
+          "top": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/top/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "length": 2
+            }
+          },
+          "bottom": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/bottom/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "length": 2
+            }
+          },
+          "left": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/left/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "length": 2
+            }
+          },
+          "right": {
+            "sprite": {
+              "type": "animation",
+              "name": "heavy/tank/right/tank",
+              "duration": 300000000,
+              "cycled": true,
+              "length": 2
+            }
+          }
+        }
+      }
+    }
+  },
+  "collision": {
+    "x": 0,
+    "y": 0,
+    "w": 7,
+    "h": 4
+  },
+  "speed": {
+    "min": 3,
+    "max": 6
+  },
+  "accelTime": 10000000000,
+  "gun": {
+    "projectile": "tank-base-projectile-fanout",
+    "reloadTime": 3000000000,
+    "shotQueue":  2
+  },
+  "hp":    150,
+  "score": 150,
+  "tags": ["tank", "obstacle", "explosive", "highlights-damage", "ai", "scored"]
+}

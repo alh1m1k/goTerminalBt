@@ -1,0 +1,19 @@
+{
+  "type":   "explosion",
+  "sprite": {
+    "type": "animation",
+    "name": "explosion",
+    "length": 5,
+    "duration": 500000000
+  },
+  "collision": {
+    "type": "penetrate",
+    "x": 0,
+    "y": 0,
+    "w": 9,
+    "h": 6
+  },
+  "ttl":    500000000,
+  "damage": 100,
+  "tags": ["explosion", "danger"]
+}

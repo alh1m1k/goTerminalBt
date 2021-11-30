@@ -1,0 +1,14 @@
+{
+  "type":   "collectable",
+  "sprite": "opel_0",
+  "state":  "collectable",
+  "collision": {
+    "type": "penetrate",
+    "x": 0,
+    "y": 0,
+    "w": 7,
+    "h": 4
+  },
+  "ttl": 10000000000,
+  "tags": ["collectable", "opel", "highlights-appear"]
+}

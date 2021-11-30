@@ -1,0 +1,32 @@
+{
+  "default": "normal",
+  "sprite": "gun-0",
+  "animation": {
+    "name": "gun",
+    "duration": 2000000000,
+    "cycled": true,
+    "blink": 200000000,
+    "length": 6
+  },
+  "items": {
+    "appear": {
+      "sprite": "gun-0",
+      "animation": {
+        "name": "gun",
+        "duration": 2000000000,
+        "cycled": true,
+        "blink": 200000000,
+        "length": 6
+      }
+    },
+    "normal": {
+      "sprite": "gun-0",
+      "animation": {
+        "name": "gun",
+        "duration": 2000000000,
+        "cycled": true,
+        "length": 6
+      }
+    }
+  }
+}

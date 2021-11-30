@@ -1,0 +1,7 @@
+*.log
+*.bat
+*.sh
+*.svg
+images
+.idea
+prof
