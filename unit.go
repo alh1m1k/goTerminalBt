@@ -1,8 +1,10 @@
 package main
 
 import (
+	"GoConsoleBT/collider"
 	"GoConsoleBT/controller"
 	"errors"
+	"github.com/tanema/ump"
 	"math"
 	"time"
 )
@@ -21,16 +23,8 @@ var DamadgeEvent Event = Event{
 }
 
 type UnitStateInfo struct {
-	sprite    Spriteer
+	sprite                                         Spriteer
 	collisionX, collisionY, collisionW, collisionH float64
-}
-
-type UnitConfig struct {
-	MotionObjectConfig
-	State      *State
-	Output     EventChanel
-	Controller *controller.Control
-	HP, FullHP, Score   int
 }
 
 type Unit struct {
@@ -39,13 +33,13 @@ type Unit struct {
 	*MotionObject
 	*State
 	*Gun
-	HP, FullHP, Score 	int
-	projectile 			string
+	HP, FullHP, Score int
+	projectile        string
 }
 
-func (receiver *Unit) Execute(command controller.Command) error  {
+func (receiver *Unit) Execute(command controller.Command) error {
 
-	receiver.moving	= command.Move
+	receiver.moving = command.Move
 
 	if command.Direction.X != command.Direction.Y {
 		receiver.Move.Direction.X = command.Direction.X
@@ -77,28 +71,26 @@ func (receiver *Unit) Execute(command controller.Command) error  {
 		if errors.Is(err, GunConfigError) {
 			logger.Println(err)
 		}
-		//receiver.Trigger(FireEvent, receiver, nil)
 	}
 
 	return nil
 }
 
-func (receiver *Unit) Update(timeLeft time.Duration) error {
-	if receiver.destroyed {
-		return nil
-	}
-	receiver.MotionObject.Update(timeLeft)
-	if receiver.collision.Collided() {
-		for object, _ := range receiver.collision.CollisionInfo().I() {
-			if object.HasTag("danger") {
-				if DEBUG_IMMORTAL_PLAYER && receiver.HasTag("player") {
-					continue
-				}
-				receiver.ReciveDamage(object.(Danger))
-			}
+func (receiver *Unit) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
+
+}
+
+func (receiver *Unit) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
+	if object.HasTag("danger") {
+		if DEBUG_IMMORTAL_PLAYER && receiver.HasTag("player") {
+			return
 		}
+		receiver.ReciveDamage(object.(Danger))
 	}
-	return nil
+}
+
+func (receiver *Unit) OnStopCollide(object collider.Collideable, duration time.Duration) {
+
 }
 
 func (receiver *Unit) ReciveDamage(incoming Danger) {
@@ -162,7 +154,7 @@ func (receiver *Unit) ApplyState(current *StateItem) error {
 	return nil
 }
 
-func (receiver *Unit) Free()  {
+func (receiver *Unit) Free() {
 	receiver.ControlledObject.Free()
 	receiver.MotionObject.Free()
 	receiver.State.Free()
@@ -181,34 +173,37 @@ func (receiver *Unit) Copy() *Unit {
 
 	instance.ObservableObject = receiver.ObservableObject.Copy()
 	instance.ObservableObject.Owner = &instance
-	instance.MotionObject     = receiver.MotionObject.Copy()
-	instance.State 			  = receiver.State.Copy()
-	instance.State.Owner	  = &instance
-	instance.Gun			  = receiver.Gun.Copy()
-	instance.Gun.Owner 		  = &instance
+	instance.MotionObject = receiver.MotionObject.Copy()
+	instance.State = receiver.State.Copy()
+	instance.State.Owner = &instance
+	instance.Gun = receiver.Gun.Copy()
+	instance.Gun.Owner = &instance
+	instance.Interactions.Subscribe(&instance)
 
 	return &instance
 }
 
-func (receiver *Unit) GetEventChanel() EventChanel  {
+func (receiver *Unit) GetEventChanel() EventChanel {
 	return receiver.output
 }
 
 func NewUnit2(co *ControlledObject, oo *ObservableObject,
-			  mo *MotionObject, st *State) (*Unit, error)  {
+	mo *MotionObject, st *State) (*Unit, error) {
 
 	gun, _ := NewGun(nil)
 	instance := &Unit{
 		ControlledObject: co,
 		ObservableObject: oo,
 		MotionObject:     mo,
-		State:			  st,
-		Gun:			  gun,
+		State:            st,
+		Gun:              gun,
 	}
 
-	instance.Gun.Owner					= instance
+	instance.Interactions.Subscribe(instance)
+
+	instance.Gun.Owner = instance
 	if st != nil {
-		instance.State.Owner 			= instance
+		instance.State.Owner = instance
 	}
 	if co != nil {
 		instance.ControlledObject.Owner = instance
@@ -220,15 +215,15 @@ func NewUnit2(co *ControlledObject, oo *ObservableObject,
 	return instance, nil
 }
 
-func GetTankState(id string) (*State,error)  {
+func GetTankState(id string) (*State, error) {
 	return GetState(id, func(m map[string]interface{}) (interface{}, error) {
 		var sprite Spriteer = nil
 		var err error
 
 		if animation, ok := m["animation"]; ok {
 			//todo refactor this shit
-			animationInfo 	:= animation.(map[string]interface{})
-			sprite, _ 		= GetAnimation(animationInfo["name"].(string), int(animationInfo["length"].(float64)), true, false)
+			animationInfo := animation.(map[string]interface{})
+			sprite, _ = GetAnimation(animationInfo["name"].(string), int(animationInfo["length"].(float64)), true, false)
 			if sprite != nil {
 				spriteAsAnimation := sprite.(*Animation)
 				spriteAsAnimation.Cycled = animationInfo["cycled"].(bool)

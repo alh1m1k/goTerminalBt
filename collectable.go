@@ -1,6 +1,8 @@
 package main
 
 import (
+	"GoConsoleBT/collider"
+	"github.com/tanema/ump"
 	"time"
 )
 
@@ -16,9 +18,9 @@ type Collectable struct {
 	*ObservableObject
 	*throttle
 	*State
-	Owner	ObjectInterface
-	Damage 	int
-	Ttl 	time.Duration
+	Owner  ObjectInterface
+	Damage int
+	Ttl    time.Duration
 }
 
 func (receiver *Collectable) ApplyState(current *StateItem) error {
@@ -32,18 +34,27 @@ func (receiver *Collectable) Update(timeLeft time.Duration) error {
 		return nil
 	}
 
-	if receiver.collision.Collided() {
-		for object, _ := range receiver.collision.CollisionInfo().I() {
-			if object.HasTag("tank") {
-				receiver.Collect(object.(*Unit))
-			}
-		}
-	}
+	receiver.Object.Update(timeLeft)
+
 	if receiver.throttle != nil && receiver.throttle.Reach(timeLeft) {
 		receiver.Destroy(nil)
 	}
 
 	return nil
+}
+
+func (receiver *Collectable) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
+
+}
+
+func (receiver *Collectable) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
+	if object.HasTag("tank") {
+		receiver.Collect(object.(*Unit))
+	}
+}
+
+func (receiver *Collectable) OnStopCollide(object collider.Collideable, duration time.Duration) {
+
 }
 
 func (receiver *Collectable) Collect(by *Unit) error {
@@ -102,24 +113,26 @@ func (receiver *Collectable) Copy() *Collectable {
 
 	instance.ObservableObject = receiver.ObservableObject.Copy()
 	instance.ObservableObject.Owner = instance
-	instance.Object     	  = receiver.Object.Copy()
-	instance.State 			  = receiver.State.Copy()
-	instance.State.Owner	  = &instance
+	instance.Object = receiver.Object.Copy()
+	instance.State = receiver.State.Copy()
+	instance.State.Owner = &instance
+	instance.Interactions.Subscribe(&instance)
 	if instance.throttle != nil {
-		instance.throttle		  = receiver.throttle.Copy()
+		instance.throttle = receiver.throttle.Copy()
 	}
 
 	return &instance
 }
 
-func NewCollectable2(obj *Object, oo *ObservableObject, state *State, Owner ObjectInterface) (*Collectable, error)  {
+func NewCollectable2(obj *Object, oo *ObservableObject, state *State, Owner ObjectInterface) (*Collectable, error) {
 	instance := &Collectable{
-		Object:     	  obj,
+		Object:           obj,
 		ObservableObject: oo,
-		State			: state,
-		Owner:			  Owner,
+		State:            state,
+		Owner:            Owner,
 	}
 	instance.ObservableObject.Owner = instance
 	instance.State.Owner = instance
+	instance.Interactions.Subscribe(instance)
 	return instance, nil
 }

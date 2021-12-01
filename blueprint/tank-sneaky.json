@@ -459,5 +459,5 @@
   },
   "hp":     50,
   "score": 150,
-  "tags": ["tank", "obstacle", "explosive", "highlights-damage", "ai", "scored", "stealth"]
+  "tags": ["tank", "obstacle", "explosive", "highlights-damage", "ai", "scored", "stealth", "vulnerable"]
 }

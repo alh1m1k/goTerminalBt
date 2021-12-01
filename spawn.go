@@ -6,7 +6,6 @@ import (
 	"fmt"
 	lfpool "github.com/xiaonanln/go-lockfree-pool"
 	"math"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -27,27 +26,27 @@ type Pooler interface {
 type Configurator func(object ObjectInterface, config interface{}) ObjectInterface
 
 type SpawnManager struct {
-	updater                               *Updater
-	render                                Renderer
-	animator                              *AnimationManager
-	collider                              *collider.Collider
-	location                              *Location
-	config                                *GameConfig
-	spawned                               map[ObjectInterface]bool
-	builders                              map[string]Builder
-	pendingSpawn, pendingDeSpawn  		  []ObjectInterface
-	respawn                				  map[string]Pooler
-	UnitEventChanel                       EventChanel
-	spawnMutex, deSpawnMutex              sync.Mutex
-	planeDeSpawnAll                       bool
-	cycleSpawned						  int64 //only pooled
-	cycleCreated						  int64 //only pooled
-	Flags								  struct {
-		lockFree	bool
+	updater                      *Updater
+	render                       Renderer
+	animator                     *AnimationManager
+	collider                     *collider.Collider
+	location                     *Location
+	config                       *GameConfig
+	spawned                      map[ObjectInterface]bool
+	builders                     map[string]Builder
+	pendingSpawn, pendingDeSpawn []ObjectInterface
+	respawn                      map[string]Pooler
+	UnitEventChanel              EventChanel
+	spawnMutex, deSpawnMutex     sync.Mutex
+	planeDeSpawnAll              bool
+	cycleSpawned                 int64 //only pooled
+	cycleCreated                 int64 //only pooled
+	Flags                        struct {
+		lockFree bool
 	}
 }
 
-func (manager *SpawnManager) Execute(timeLeft time.Duration)  {
+func (manager *SpawnManager) Execute(timeLeft time.Duration) {
 	var deSpawnAll bool
 
 	manager.deSpawnMutex.Lock()
@@ -69,8 +68,8 @@ func (manager *SpawnManager) Execute(timeLeft time.Duration)  {
 		manager.updater.Remove(object)
 		manager.collider.Remove(object)
 		manager.render.Remove(object)
-		manager.pendingDeSpawn[i] 	= nil
-		manager.spawned[object] 	= false
+		manager.pendingDeSpawn[i] = nil
+		manager.spawned[object] = false
 		object.DeSpawn()
 		bl := object.GetBlueprint()
 		if bl != "" && !deSpawnAll && manager.Flags.lockFree {
@@ -163,7 +162,8 @@ func (manager *SpawnManager) Spawn(coordinate Point, blueprint string, configura
 	} else {
 		object.GetClBody().Move(coordinate.X, coordinate.Y)
 	}
-	object.Reset()
+
+	object.Reset() //todo check animation and other then late reset
 
 	manager.spawnMutex.Lock()
 	manager.pendingSpawn = append(manager.pendingSpawn, object)
@@ -243,7 +243,7 @@ func (manager *SpawnManager) QuerySpawnedByTagCount(tag string) int64 {
 	return result
 }
 
-func (manager *SpawnManager) AddBuilder(blueprint string, builder Builder)  {
+func (manager *SpawnManager) AddBuilder(blueprint string, builder Builder) {
 	manager.spawnMutex.Lock()
 	defer manager.spawnMutex.Unlock()
 	manager.builders[blueprint] = builder
@@ -252,7 +252,7 @@ func (manager *SpawnManager) AddBuilder(blueprint string, builder Builder)  {
 	}
 }
 
-func (manager *SpawnManager) setupPool(blueprint string, size int, builder Builder){
+func (manager *SpawnManager) setupPool(blueprint string, size int, builder Builder) {
 	if manager.Flags.lockFree {
 		manager.respawn[blueprint] = lfpool.NewFastPool(size, builder)
 	} else {
@@ -272,138 +272,24 @@ func NewSpawner(updater *Updater, render Renderer, collider *collider.Collider, 
 	}
 
 	instance := &SpawnManager{
-		updater:                updater,
-		render:                 render,
-		animator:               nil,
-		collider:               collider,
-		location:               location,
-		config:                 config,
-		spawned:                make(map[ObjectInterface]bool, 25),
-		builders: 				make(map[string]Builder, 5),
-		pendingSpawn:           make([]ObjectInterface, 0, 25),
-		pendingDeSpawn:         make([]ObjectInterface, 0, 25),
-		respawn:                make(map[string]Pooler, 0),
-		UnitEventChanel:        make(EventChanel),
-		spawnMutex:             sync.Mutex{},
-		deSpawnMutex:           sync.Mutex{},
-		planeDeSpawnAll:        false,
+		updater:         updater,
+		render:          render,
+		animator:        nil,
+		collider:        collider,
+		location:        location,
+		config:          config,
+		spawned:         make(map[ObjectInterface]bool, 25),
+		builders:        make(map[string]Builder, 5),
+		pendingSpawn:    make([]ObjectInterface, 0, 25),
+		pendingDeSpawn:  make([]ObjectInterface, 0, 25),
+		respawn:         make(map[string]Pooler, 0),
+		UnitEventChanel: make(EventChanel),
+		spawnMutex:      sync.Mutex{},
+		deSpawnMutex:    sync.Mutex{},
+		planeDeSpawnAll: false,
 	}
 
 	instance.Flags.lockFree = gameConfig.LockfreePool
 
 	return instance, nil
-}
-
-func DefaultConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
-	request := config.(*SpawnRequest)
-
-	switch object.(type) {
-	case *Wall:
-		wall := object.(*Wall)
-		if wall.GetAttr().Team != 0 {
-			wall.removeTag(wall.GetAttr().TeamTag)
-		}
-		wall.GetAttr().Team 		= request.Team
-		wall.GetAttr().TeamTag 	=	"team-" + strconv.Itoa(int(request.Team))
-		wall.addTag(wall.GetAttr().TeamTag)
-	case *Unit:
-		unit := object.(*Unit)
-		if unit.GetAttr().Team != 0 {
-			unit.removeTag(unit.GetAttr().TeamTag)
-		}
-		unit.GetAttr().Team 		= request.Team
-		unit.GetAttr().TeamTag 	=	"team-" + strconv.Itoa(int(request.Team))
-		unit.addTag(unit.GetAttr().TeamTag)
-	}
-	return object
-}
-
-func PlayerConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
-	player := config.(*Player)
-	object.GetAttr().Team 		= -1
-	object.GetAttr().TeamTag 	= "team-" + strconv.Itoa(-1)
-	object.GetAttr().Player = true
-	unit := object.(*Unit)
-	unit.addTag(object.GetAttr().TeamTag)
-	if unit.Control != nil {
-		unit.deactivate()
-	}
-	unit.Control 	= player.Control
-	player.Unit 	= unit
-	return object
-}
-
-func ExplosionConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
-	from 	:= config.(ObjectInterface)
-	owner 	:= from.GetOwner()
-	x, y 	:= from.GetXY()
-	w, h 	:= from.GetWH()
-	gX := x + w / 2
-	gY := y + h / 2
-
-	explosion := object.(*Explosion)
-	expW, expH := explosion.GetWH()
-
-	explosion.Owner = owner
-	explosion.GetClBody().Move(gX - expW / 2, gY - expH / 2)
-
-	explosion.GetAttr().ID = -100
-	explosion.GetAttr().Team = -1
-	explosion.GetAttr().TeamTag = "team--1"
-
-	return object
-}
-
-func CollectableConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
-	from := config.(*Unit)
-	collectable := object.(*Collectable)
-	x, y 	:= from.GetXY()
-
-	collectable.Owner = from
-	collectable.GetClBody().Move(x, y)
-	collectable.GetAttr().ID = -1
-	collectable.GetAttr().Team = -100
-	collectable.GetAttr().TeamTag = "team--100"
-
-	return object
-}
-
-func ProjectileConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
-
-	owner := config.(*Unit)
-	object.GetAttr().Team = -1
-
-	x, y 	:= owner.GetXY()
-	dir 	:= owner.Direction
-	w, h 	:= owner.GetWH()
-
-	if dir.X == 0 && dir.Y == 0 {
-		dir.Y = -1
-	}
-
-	x = (x + w / 2) + (dir.X * (w / 2)) + (dir.X * 1)
-	y = (y + h / 2) + (dir.Y * (h / 2)) + (dir.Y * 1)
-
-	projectile := object.(*Projectile)
-	projectile.GetClBody().Move(x, y)
-	//----- speed modify based at owner speed
-	projectile.Speed.X += owner.Speed.X
-	projectile.Speed.Y += owner.Speed.Y
-	projectile.MaxSpeed.X += owner.Speed.X
-	projectile.MaxSpeed.Y += owner.Speed.Y
-	projectile.MinSpeed.X += owner.Speed.X
-	projectile.MinSpeed.Y += owner.Speed.Y
-	//-----
-	projectile.Direction.X = owner.Direction.X
-	projectile.Direction.Y = owner.Direction.Y
-	projectile.Owner = owner
-
-	if projectile.GetAttr().Team != 0 {
-		projectile.removeTag(projectile.GetAttr().TeamTag)
-	}
-	projectile.GetAttr().Team 		= owner.Team
-	projectile.GetAttr().TeamTag 	= owner.TeamTag
-	projectile.addTag(projectile.GetAttr().TeamTag)
-
-	return projectile
 }

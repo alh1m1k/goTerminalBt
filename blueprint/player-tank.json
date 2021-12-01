@@ -184,7 +184,7 @@
   "control": null,
   "hp":     100,
   "gun": {
-      "projectile": "tank-base-projectile-he",
+      "projectile": "tank-base-projectile-rail",
       "reloadTime": 500000000
   },
   "score": 1000,
@@ -194,6 +194,7 @@
     "explosive": true,
     "highlights-appear": true,
     "player": true,
-    "scored": true
+    "scored": true,
+    "vulnerable": true
   }
 }

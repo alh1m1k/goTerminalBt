@@ -12,7 +12,7 @@ import (
 const DEBUG_DISARM_AI = false
 
 var (
-	buf, _ = os.OpenFile("control.log.txt", os.O_CREATE|os.O_TRUNC, 644)
+	buf, _ = os.OpenFile("control.log", os.O_CREATE|os.O_TRUNC, 644)
 	logger = log.New(buf, "logger: ", log.Lshortfile)
 )
 

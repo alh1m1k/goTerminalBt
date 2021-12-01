@@ -3,15 +3,15 @@ package main
 import (
 	"GoConsoleBT/collider"
 	"errors"
+	"github.com/tanema/ump"
 	"time"
 )
 
 const OBJECT_EVENT_DESTROY = 1
 const OBJECT_EVENT_DESPAWN = 2
 
-const OBJECT_EVENT_RESET   = 3
-const OBJECT_EVENT_SPAWN   = 4
-
+const OBJECT_EVENT_RESET = 3
+const OBJECT_EVENT_SPAWN = 4
 
 var DestroyEvent Event = Event{
 	EType:   OBJECT_EVENT_DESTROY,
@@ -33,9 +33,7 @@ var SpawnEvent Event = Event{
 	Payload: nil,
 }
 
-
 var Tag404Error = errors.New("tag not found")
-
 
 type Located interface {
 	GetXY() (x float64, y float64)
@@ -68,18 +66,15 @@ type Disappearable interface {
 }
 
 type Obstacle interface {
-
 }
 
 type Prototyped interface {
 	GetPrototype() ObjectInterface
 }
 
-
 type BlueprintMaked interface {
 	GetBlueprint() string
 }
-
 
 type ObjectInterface interface {
 	BlueprintMaked
@@ -89,14 +84,14 @@ type ObjectInterface interface {
 	Update(timeLeft time.Duration) error
 	GetSprite() Spriteer
 	GetClBody() *collider.ClBody
-	GetAttr() 	*Attributes
+	GetAttr() *Attributes
 	GetTagValue(tag string, key string, defaultValue string) (string, error)
-	GetOwner()  ObjectInterface
+	GetOwner() ObjectInterface
 	HasTag(tag string) bool
 	Destroy(nemesis ObjectInterface) error //nemesis may be nil
-	Reset() 	error //todo reset by configuration
-	DeSpawn() 	error
-	Spawn() 	error
+	Reset() error                          //todo reset by configuration
+	DeSpawn() error
+	Spawn() error
 }
 
 type Point struct {
@@ -105,6 +100,7 @@ type Point struct {
 
 type Object struct {
 	*Attributes
+	*collider.Interactions
 	destroyed, spawned bool
 	blueprint          string
 	sprite             Spriteer
@@ -116,7 +112,23 @@ type Object struct {
 }
 
 func (receiver *Object) Update(timeLeft time.Duration) error {
+	if receiver.GetClBody() == nil || receiver.destroyed {
+		return nil
+	}
+	receiver.Interactions.Interact(receiver, timeLeft)
 	return nil
+}
+
+func (receiver *Object) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
+	logger.Println("warning: empty tick collide")
+}
+
+func (receiver *Object) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
+	logger.Println("warning: empty start collide")
+}
+
+func (receiver *Object) OnStopCollide(object collider.Collideable, duration time.Duration) {
+	logger.Println("warning: empty stop collide")
 }
 
 func (receiver *Object) GetSprite() Spriteer {
@@ -175,14 +187,14 @@ func (receiver *Object) GetPrototype() ObjectInterface {
 }
 
 func (receiver *Object) addTag(tags ...string) {
-	for _, tag := range tags{
+	for _, tag := range tags {
 		receiver.tag = append(receiver.tag, tag)
 	}
 }
 
 func (receiver *Object) HasTag(tag string) bool {
 
-/*	switch receiver.GetAttr() {
+	/*	switch receiver.GetAttr() {
 		id
 		team
 		blueprint
@@ -197,7 +209,7 @@ func (receiver *Object) HasTag(tag string) bool {
 		renderable
 		Tagable
 	}*/
-	
+
 	for _, part := range receiver.tag {
 		if part == tag {
 			return true
@@ -235,7 +247,7 @@ func (receiver *Object) GetTag(tag string, makeIfNil bool) (*TagValue, error) {
 
 /**
 * get tag value without allocation
-*/
+ */
 func (receiver *Object) GetTagValue(tag string, key string, defaultValue string) (string, error) {
 	if tag, ok := receiver.tagValues[tag]; ok {
 		return tag.Get(key, defaultValue), nil
@@ -245,19 +257,21 @@ func (receiver *Object) GetTagValue(tag string, key string, defaultValue string)
 
 func (receiver *Object) Reset() error {
 	receiver.destroyed = false
+	receiver.Interactions.Clear()
 	return nil
 }
 
-func (receiver *Object) Free()  {
+func (receiver *Object) Free() {
 	receiver.clearTags()
 }
 
 func (receiver *Object) Copy() *Object {
-	instance 	:= *receiver
-	attributes 	:= *receiver.Attributes //todo same?
-	instance.Attributes 	= &attributes
-	instance.sprite 		= CopySprite(receiver.sprite)
-	instance.collision 		= receiver.collision.Copy()
+	instance := *receiver
+	attributes := *receiver.Attributes //todo same?
+	instance.Attributes = &attributes
+	instance.sprite = CopySprite(receiver.sprite)
+	instance.collision = receiver.collision.Copy()
+	instance.Interactions = receiver.Interactions.Copy()
 	if receiver.tag != nil {
 		instance.tag = make([]string, len(receiver.tag), cap(receiver.tag))
 		copy(instance.tag, receiver.tag)
@@ -272,14 +286,19 @@ func (receiver *Object) Copy() *Object {
 }
 
 func NewObject(s Spriteer, c *collider.ClBody) (*Object, error) {
+	interactions, _ := collider.NewIteractions()
 	return &Object{
-		Attributes: new(Attributes),
-		destroyed:  false,
-		spawned:    false,
-		blueprint:  "",
-		sprite:     s,
-		collision:  c,
-		tag:        nil,
-		tagValues: 	make(map[string]*TagValue),
+		Attributes:   new(Attributes),
+		Interactions: interactions,
+		destroyed:    false,
+		spawned:      false,
+		blueprint:    "",
+		sprite:       s,
+		collision:    c,
+		zIndex:       0,
+		tag:          nil,
+		tagValues:    make(map[string]*TagValue),
+		Owner:        nil,
+		Prototype:    nil,
 	}, nil
 }

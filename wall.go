@@ -1,9 +1,10 @@
 package main
 
 import (
+	"GoConsoleBT/collider"
+	"github.com/tanema/ump"
 	"time"
 )
-
 
 type Wall struct {
 	Object
@@ -16,15 +17,23 @@ func (receiver *Wall) Update(timeLeft time.Duration) error {
 	if receiver.destroyed {
 		return nil
 	}
-	if receiver.collision.Collided() {
-		for object, _ := range receiver.collision.CollisionInfo().I() {
-			if object.HasTag("danger") {
-				//logger.Println("Damage", cycle)
-				receiver.ReciveDamage(object.(Danger))
-			}
-		}
-	}
+	receiver.Object.Update(timeLeft)
 	return nil
+}
+
+func (receiver *Wall) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
+	logger.Println("tick with", object)
+}
+
+func (receiver *Wall) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
+	if object.HasTag("danger") {
+		receiver.ReciveDamage(object.(Danger))
+	}
+	logger.Println("start with", object)
+}
+
+func (receiver *Wall) OnStopCollide(object collider.Collideable, duration time.Duration) {
+	logger.Println("stop with", object)
 }
 
 func (receiver *Wall) ReciveDamage(incoming Danger) {
@@ -43,7 +52,6 @@ func (receiver *Wall) ReciveDamage(incoming Danger) {
 func (receiver *Wall) GetScore() int {
 	return receiver.Score
 }
-
 
 func (receiver *Wall) Destroy(nemesis ObjectInterface) error {
 	if receiver.destroyed {
@@ -89,10 +97,11 @@ func (receiver *Wall) Copy() *Wall {
 	instance := *receiver
 
 	instance.ObservableObject = receiver.ObservableObject.Copy()
-	instance.ObservableObject.Owner	= instance
-	instance.Object     	  = *receiver.Object.Copy()
-	instance.State 			  = receiver.State.Copy()
-	instance.State.Owner	  = &instance
+	instance.ObservableObject.Owner = instance
+	instance.Object = *receiver.Object.Copy()
+	instance.State = receiver.State.Copy()
+	instance.State.Owner = &instance
+	instance.Interactions.Subscribe(&instance)
 
 	return &instance
 }
@@ -104,6 +113,8 @@ func NewWall2(obj Object, state *State, obs *ObservableObject) (*Wall, error) {
 	instance.ObservableObject.Owner = instance
 	instance.State = state
 	instance.State.Owner = instance
+	instance.Interactions.Subscribe(instance)
+
 	instance.destroyed = false
 	instance.spawned = false
 

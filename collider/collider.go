@@ -3,7 +3,14 @@ package collider
 import (
 	"errors"
 	"github.com/tanema/ump"
+	"log"
+	"os"
 	"time"
+)
+
+var (
+	buf, _ = os.OpenFile("collider.log", os.O_CREATE|os.O_TRUNC, 644)
+	logger = log.New(buf, "logger: ", log.Lshortfile)
 )
 
 type Collideable interface {
@@ -11,11 +18,10 @@ type Collideable interface {
 	HasTag(tag string) bool
 }
 
-
 type Collider struct {
-	bodyMap  map[*ump.Body]Collideable
-	world    *ump.World
-	ver      bool //odd even
+	bodyMap map[*ump.Body]Collideable
+	world   *ump.World
+	ver     bool //odd even
 }
 
 func (c *Collider) Add(object Collideable) error {
@@ -68,28 +74,23 @@ func (c *Collider) Remove(object Collideable) {
 	}
 }
 
-func (c *Collider) Execute(timeLeft time.Duration)  {
+func (c *Collider) Execute(timeLeft time.Duration) {
 	for realBody, object := range c.bodyMap {
 		if realBody == nil {
 			continue
 		}
 		clBody := object.GetClBody().First
-		x,y := clBody.GetXY()
+		x, y := clBody.GetXY()
+		if clBody.ver != c.ver {
+			clBody.collisionInfo.Clear()
+			clBody.ver = c.ver
+		}
 		for clBody != nil {
 			if clBody.static {
 				realBody.Update(float32(x), float32(y))
 				//info must be clear even if no coolision at this time
-				if clBody.First.ver != c.ver {
-					clBody.First.collisionInfo.Clear()
-					clBody.First.ver = c.ver
-				}
 			} else {
 				newX, newY, collisions := realBody.Move(float32(x), float32(y))
-				//todo переиспользовать clBody.collisionInfoSet
-				if clBody.First.ver != c.ver {
-					clBody.First.collisionInfo.Clear()
-					clBody.First.ver = c.ver
-				}
 				for _, collision := range collisions {
 					if collideWith, ok := c.bodyMap[collision.Body]; !ok {
 						panic("undefined object in world!")
@@ -97,7 +98,7 @@ func (c *Collider) Execute(timeLeft time.Duration)  {
 						//lib generate collision only for object that exactly move, take care of that
 						clBody.First.collisionInfo.Add(collideWith, collision)
 						if collideWith.GetClBody().First.ver != c.ver {
-							collideWith.GetClBody().collisionInfo.Clear()
+							collideWith.GetClBody().First.collisionInfo.Clear()
 							collideWith.GetClBody().First.ver = c.ver
 						}
 						collideWith.GetClBody().First.collisionInfo.Add(object, collision)
@@ -112,13 +113,88 @@ func (c *Collider) Execute(timeLeft time.Duration)  {
 	c.ver = !c.ver
 }
 
-
-
-func NewCollider(queueSize int) (*Collider, error)  {
+func NewCollider(queueSize int) (*Collider, error) {
 	cl := &Collider{
 		bodyMap: make(map[*ump.Body]Collideable, queueSize),
-		world: ump.NewWorld(64),
-		ver: true,
+		world:   ump.NewWorld(64),
+		ver:     true,
 	}
+	/*
+		reader := bufio.NewReader(os.Stdin)
+		reader.ReadByte()
+
+		bullet := cl.world.Add("bullet", 0,0,1,1)
+		bullet.SetResponse("wall", "cross")
+		wall := cl.world.Add("wall", 10,10, 8, 7)
+		wall.SetResponse("wall", "cross")
+
+		var start float32 = 10.0*/
+
+	/*	_, _, collisions := bullet.Move(start + 0.000000, start + 4.099998)
+
+		if len(collisions) > 0 {
+			fmt.Println("collide")
+		} else {
+			fmt.Println("no collision")
+		}*/
+
+	/*	var i, y float32
+		var errSeq []float32
+		var gotchaCnt, okCnt = 0, 0
+		for i = 0.0; i <= 8; i +=0.1 {
+			for y = 0.0; y <= 7; y +=0.1 {
+				_, _, gotcha := bullet.Move(start + i, start + y)
+				if len(gotcha) == 0 {
+					errSeq = append(errSeq, i, y)
+					gotchaCnt++
+				} else {
+					okCnt++
+				}
+			}
+		}
+		fmt.Printf("total of %f, gotcha %d, ok %d \n", (8 / 0.1) * (7 / 0.1), gotchaCnt, okCnt)*/
+	/*
+		gotchaCnt = 0
+		okCnt	  = 0
+		for i := 0; i < len(errSeq); i+=2 {
+			_, _, gotcha := bullet.Move(errSeq[i], errSeq[i+1])
+			if len(gotcha) == 0 {
+				gotchaCnt++
+				fmt.Printf("gotcha second time %f:%f \n", errSeq[i], errSeq[i+1])
+			} else {
+				okCnt++
+				fmt.Printf("collision %f, %f \n", errSeq[i], errSeq[i+1])
+			}
+		}
+		fmt.Printf("second time total of %d, gotcha %d, ok %d \n", len(errSeq), gotchaCnt, okCnt)
+
+
+		fmt.Printf("########\n")
+		fmt.Printf("#      #\n")
+		fmt.Printf("#      #\n")
+		fmt.Printf("#      #\n")
+		fmt.Printf("#      #\n")
+		fmt.Printf("#      #\n")
+		fmt.Printf("#      #\n")
+		fmt.Printf("########\n")
+
+		for i := 0; i < len(errSeq); i+=2 {
+			_, _, gotcha := bullet.Move(errSeq[i], errSeq[i+1])
+			if len(gotcha) == 0 {
+
+			}
+		}*/
+	/*
+		_, _,cl1 := bullet.Move(12,12)
+		_, _,cl2 := bullet.Move(14,14)
+		_, _,cl3 := bullet.Move(0,0)
+
+		if len(cl1) > 0 && len(cl2) == 0 && len(cl3) > 0 {
+			fmt.Println("done")
+		}
+
+
+		os.Exit(0)*/
+
 	return cl, nil
 }

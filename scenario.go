@@ -15,32 +15,32 @@ var (
 )
 
 type SpawnRequest struct {
-	Location 	Point //maybe auto
-	Team		int8
-	Blueprint 	string
+	Location  Point //maybe auto
+	Team      int8
+	Blueprint string
 }
 
 type ScenarioStateInfo struct {
 	Declare []string
-	Spawn 	[]*SpawnRequest
+	Spawn   []*SpawnRequest
 	Screen  *Screen
 }
 
 type Scenario struct {
 	*State
 	*ObservableObject
-	declareBlueprint 	func (blueprint string)
-	dropBlueprint 		func (blueprint string)
-	declarationCleanup 	[]string
-	player1Blueprint, 	player2Blueprint string
+	declareBlueprint                   func(blueprint string)
+	dropBlueprint                      func(blueprint string)
+	declarationCleanup                 []string
+	player1Blueprint, player2Blueprint string
 }
 
-func (receiver *Scenario) ApplyState(current *StateItem) error {/*
-	//cleanup
-	for _, blueprint := range receiver.declarationCleanup {
-		receiver.dropBlueprint(blueprint)
-	}
-	receiver.declarationCleanup = receiver.declarationCleanup[0:0]*/
+func (receiver *Scenario) ApplyState(current *StateItem) error { /*
+		//cleanup
+		for _, blueprint := range receiver.declarationCleanup {
+			receiver.dropBlueprint(blueprint)
+		}
+		receiver.declarationCleanup = receiver.declarationCleanup[0:0]*/
 
 	//move on
 	scenarioStateInfo := current.StateInfo.(*ScenarioStateInfo)
@@ -56,16 +56,15 @@ func (receiver *Scenario) ApplyState(current *StateItem) error {/*
 	return nil
 }
 
-
-func (receiver *Scenario) DeclareBlueprint(fn func (blueprint string)) {
+func (receiver *Scenario) DeclareBlueprint(fn func(blueprint string)) {
 	receiver.declareBlueprint = fn //todo queue
 }
 
-func (receiver *Scenario) DropBlueprint(fn func (blueprint string)) {
+func (receiver *Scenario) DropBlueprint(fn func(blueprint string)) {
 	receiver.declareBlueprint = fn //todo queue
 }
 
-func NewScenario() (*Scenario, error)  {
+func NewScenario() (*Scenario, error) {
 	instance := new(Scenario)
 	instance.State, _ = NewState(instance)
 	root, _ := NewStateItem(nil, nil)
@@ -77,29 +76,29 @@ func NewScenario() (*Scenario, error)  {
 	return instance, nil
 }
 
-func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error)  {
+func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 	scenario, err := NewScenario()
 	if err != nil {
 		return nil, err
 	}
 	spawn := make([]*SpawnRequest, 0, tankCnt+wallCnt)
 	blList := []string{"tank", "tank", "tank", "tank-fast", "tank-fast", "tank-fast", "tank-heavy", "tank-sneaky", "tank-sneaky"}
-	for i := 0; i < tankCnt; i++  {
+	for i := 0; i < tankCnt; i++ {
 		spawn = append(spawn, &SpawnRequest{
 			Location:  PosAuto,
 			Blueprint: blList[rand.Intn(len(blList))],
-			Team: 1,
+			Team:      1,
 		})
 	}
-	for i := 0; i < wallCnt; i++  {
+	for i := 0; i < wallCnt; i++ {
 		spawn = append(spawn, &SpawnRequest{
 			Location:  PosAuto,
 			Blueprint: "wall",
-			Team: 100,
+			Team:      100,
 		})
 	}
 	start, _ := NewStateItem(scenario.State.root, &ScenarioStateInfo{
-		Declare: []string {
+		Declare: []string{
 			"player-tank",
 			"tank",
 			"tank-fast",
@@ -108,6 +107,7 @@ func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error)  {
 			"tank-base-explosion",
 			"tank-base-projectile",
 			"tank-base-projectile-he",
+			"tank-base-projectile-rail",
 			"tank-special-projectile-smoke",
 			"tank-special-smokescreen-1",
 			"tank-special-smokescreen-2",
@@ -120,8 +120,8 @@ func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error)  {
 			"gun",
 			"wall",
 		},
-		Spawn:   spawn,
-		Screen:  nil,
+		Spawn:  spawn,
+		Screen: nil,
 	})
 	scenario.State.root.items["start"] = start
 

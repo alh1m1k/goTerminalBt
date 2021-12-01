@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-const GAME_START	= 200
-const GAME_END_WIN 	= 201
+const GAME_START = 200
+const GAME_END_WIN = 201
 const GAME_END_LOSE = 202
 
 var GameInProgress = errors.New("game in progress")
@@ -18,9 +18,9 @@ var GameInProgress = errors.New("game in progress")
 type gameActionCallback func(game Game, object ObjectInterface, payload interface{}) error
 
 type GameAction struct {
-	callback gameActionCallback
-	object   ObjectInterface
-	payload	 interface{}
+	callback  gameActionCallback
+	object    ObjectInterface
+	payload   interface{}
 	waitUnitl time.Time
 }
 
@@ -37,10 +37,10 @@ type Game struct {
 	mutex, delay             sync.Mutex
 	delayedAction            []*GameAction
 	nextDelayedTaskExec      time.Time
-	delayedTaskChan          <- chan time.Time
+	delayedTaskChan          <-chan time.Time
 }
 
-func (receiver *Game) AddPlayer(player *Player) error  {
+func (receiver *Game) AddPlayer(player *Player) error {
 	if receiver.inProgress {
 		return GameInProgress
 	}
@@ -48,11 +48,11 @@ func (receiver *Game) AddPlayer(player *Player) error  {
 	return nil
 }
 
-func (receiver *Game) GetPlayers() []*Player  {
+func (receiver *Game) GetPlayers() []*Player {
 	return receiver.players
 }
 
-func (receiver *Game) Run(scenario *Scenario) error  {
+func (receiver *Game) Run(scenario *Scenario) error {
 
 	receiver.mutex.Lock()
 	if receiver.inProgress || scenario == nil {
@@ -80,7 +80,7 @@ func (receiver *Game) Run(scenario *Scenario) error  {
 		return err
 	}
 
-	for _, player :=  range receiver.players {
+	for _, player := range receiver.players {
 		location, _ := receiver.location.Coordinate2Spawn(true)
 		err := receiver.SpawnManager.SpawnPlayerTank2(location, "player-tank", player)
 		if err != nil {
@@ -98,11 +98,11 @@ func (receiver *Game) Run(scenario *Scenario) error  {
 	return nil
 }
 
-func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest)  {
+func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) {
 	var location Point
 	if payload.Location == PosAuto {
 		if receiver.Location != nil {
-			location, _ =  receiver.Location.Coordinate2Spawn(true)
+			location, _ = receiver.Location.Coordinate2Spawn(true)
 		} else {
 			location = Point{}
 		}
@@ -110,7 +110,7 @@ func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) 
 	receiver.SpawnManager.Spawn(location, payload.Blueprint, DefaultConfigurator, payload)
 }
 
-func (receiver *Game) onUnitFire(object *Unit, payload interface{})  {
+func (receiver *Game) onUnitFire(object *Unit, payload interface{}) {
 	if object.Gun != nil && object.Gun.GetProjectile() != "" {
 		err := receiver.SpawnManager.SpawnProjectile2(PosAuto, object.Gun.GetProjectile(), object)
 		if err != nil {
@@ -121,44 +121,44 @@ func (receiver *Game) onUnitFire(object *Unit, payload interface{})  {
 	}
 }
 
-func (receiver *Game) onUnitDamage(object ObjectInterface, payload interface{})  {
+func (receiver *Game) onUnitDamage(object ObjectInterface, payload interface{}) {
 	if object.HasTag("wall") {
 		wall := object.(*Wall)
 		wallHp := int(math.Max(float64(wall.HP), 1))
-		if wall.FullHP / wallHp >= 2 {
+		if wall.FullHP/wallHp >= 2 {
 			wall.Enter("damage")
 		}
 	}
-	if object.HasTag("highlights-damage")  {
+	if object.HasTag("highlights-damage") {
 		toState, _ := object.GetTagValue("highlights-damage", "moveToState", "receiveDamage")
 		returnToState, _ := object.GetTagValue("highlights-damage", "returnToState", ToDefaultState)
 		object.(Stater).Enter(toState)
-		delayedEnterState(object.(Stater), returnToState, time.Millisecond * 500)
+		delayedEnterState(object.(Stater), returnToState, time.Millisecond*500)
 	}
 	if object.HasTag("tank") {
 		tank := object.(*Unit)
 		tankHp := int(math.Max(float64(tank.HP), 1))
-		if tank.FullHP / tankHp > 2 {
+		if tank.FullHP/tankHp > 2 {
 			//wall.Enter("damage") //todo
 		}
 	}
 }
 
-func (receiver *Game) onObjectReset(object ObjectInterface, payload interface{})  {
-/*	if object.HasTag("highlights-appear") {
+func (receiver *Game) onObjectReset(object ObjectInterface, payload interface{}) {
+	/*	if object.HasTag("highlights-appear") {
 		object.(Stater).Enter("appear")
 		delayedEnterState(object.(Stater), "normal", object.(Appearable).GetAppearDuration())
 	}*/
 }
 
-func (receiver *Game) onObjectSpawn(object ObjectInterface, payload interface{})  {
-	if object.HasTag("highlights-appear")  {
+func (receiver *Game) onObjectSpawn(object ObjectInterface, payload interface{}) {
+	if object.HasTag("highlights-appear") {
 		object.(Stater).Enter("appear")
 		delayedEnterState(object.(Stater), "normal", object.(Appearable).GetAppearDuration())
 	}
 }
 
-func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{})  {
+func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{}) {
 	var despawnNow = true
 
 	if object.HasTag("scored") && payload != nil {
@@ -172,12 +172,12 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 	}
 
 	if object.HasTag("explosive") {
-		bl, _ := object.GetTagValue("explosive", "blueprint","tank-base-explosion")
+		bl, _ := object.GetTagValue("explosive", "blueprint", "tank-base-explosion")
 		err := receiver.SpawnManager.SpawnExplosion2(PosAuto, bl, object)
 		if err != nil {
 			logger.Printf("unable to spawn explosion: %s \n", err)
 		}
-		receiver.EffectManager.applyGlobalShake(0.3, time.Second * 1)
+		receiver.EffectManager.applyGlobalShake(0.3, time.Second*1)
 	}
 
 	if object.HasTag("fanout") {
@@ -197,57 +197,57 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 	}
 }
 
-func (receiver *Game) onUnitCollect(object *Collectable, payload interface{})  {
+func (receiver *Game) onUnitCollect(object *Collectable, payload interface{}) {
 	//make Geschäft
-	unit   := payload.(*Unit)
+	unit := payload.(*Unit)
 	player := receiver.playerByUnit(unit)
 
 	if object.HasTag("opel") {
-			if player != nil {
-				player.IncScore(int64((rand.Intn(2) - 1) * rand.Intn(1000)))
-			}
-			if rand.Intn(4) > 3 {
-				unit.Gun.Downgrade()
-			} else {
-				unit.Gun.IncAmmoIfAcceptable(1)
-			}
+		if player != nil {
+			player.IncScore(int64((rand.Intn(2) - 1) * rand.Intn(1000)))
 		}
+		if rand.Intn(4) > 3 {
+			unit.Gun.Downgrade()
+		} else {
+			unit.Gun.IncAmmoIfAcceptable(1)
+		}
+	}
 	if object.HasTag("gun") {
-			seed := rand.Intn(10)
-			if seed <= 3 {
-				unit.Gun.Current.ShotQueue += 2
-			}
-			if seed <= 8 && seed > 3 {
-
-				unit.Gun.Upgrade(&GunState{
-					Projectile:       GetConventionalProjectileName(),
-					Ammo:             10,
-					ShotQueue:        1,
-					PerShotQueueTime: time.Second / 5,
-					ReloadTime:       2 * time.Second,
-				})
-
-			}
-			if seed >= 9 {
-
-				unit.Gun.Upgrade(&GunState{
-					Projectile:       "tank-base-projectile-apocalypse",
-					Ammo:             1,
-					ShotQueue:        1,
-					PerShotQueueTime: time.Second / 2,
-					ReloadTime:       5 * time.Second,
-				})
-
-			}
-			unit.Gun.IncAmmoIfAcceptable(2)
-			if player != nil {
-				player.IncScore(100)
-			}
+		seed := rand.Intn(10)
+		if seed <= 3 {
+			unit.Gun.Current.ShotQueue += 2
 		}
+		if seed <= 8 && seed > 3 {
+
+			unit.Gun.Upgrade(&GunState{
+				Projectile:       GetConventionalProjectileName(),
+				Ammo:             10,
+				ShotQueue:        1,
+				PerShotQueueTime: time.Second / 5,
+				ReloadTime:       2 * time.Second,
+			})
+
+		}
+		if seed >= 9 {
+
+			unit.Gun.Upgrade(&GunState{
+				Projectile:       "tank-base-projectile-apocalypse",
+				Ammo:             1,
+				ShotQueue:        1,
+				PerShotQueueTime: time.Second / 2,
+				ReloadTime:       5 * time.Second,
+			})
+
+		}
+		unit.Gun.IncAmmoIfAcceptable(2)
+		if player != nil {
+			player.IncScore(100)
+		}
+	}
 
 }
 
-func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{})  {
+func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{}) {
 	if object.HasTag("player") {
 		for _, player := range receiver.players {
 			if player.Unit == object {
@@ -302,10 +302,10 @@ func (receiver *Game) End(code int) {
 	receiver.inProgress = false
 	receiver.SpawnManager.DeSpawnAll()
 
-	time.AfterFunc(time.Millisecond * 500, func() {
+	time.AfterFunc(time.Millisecond*500, func() {
 		//todo after despawn callback
 		close(receiver.terminator)
-		receiver.scenario 	= nil
+		receiver.scenario = nil
 		receiver.terminator = nil
 		receiver.mutex.Unlock()
 
@@ -317,16 +317,16 @@ func (receiver *Game) End(code int) {
 	})
 }
 
-func NewGame(players []*Player, spm *SpawnManager) (*Game, error)  {
+func NewGame(players []*Player, spm *SpawnManager) (*Game, error) {
 	game := &Game{
-		players: players,
-		SpawnManager:     spm,
+		players:      players,
+		SpawnManager: spm,
 		ObservableObject: &ObservableObject{
 			Owner:  nil,
 			output: make(EventChanel),
 		},
 		spawnedPlayer: -1,
-		spawnedAi: -1,
+		spawnedAi:     -1,
 	}
 	game.ObservableObject.Owner = game
 	game.inProgress = false
@@ -334,7 +334,7 @@ func NewGame(players []*Player, spm *SpawnManager) (*Game, error)  {
 	return game, nil
 }
 
-func (receiver *Game) playerByUnit(unit ObjectInterface) *Player  {
+func (receiver *Game) playerByUnit(unit ObjectInterface) *Player {
 	for _, player := range receiver.players {
 		if player.Unit == unit {
 			return player
@@ -412,19 +412,19 @@ func scenarioDispatcher(instance *Game, scenarioEvent EventChanel, terminator <-
 	}
 }
 
-func delayedEnterState(object Stater, state string, delay time.Duration)  {
+func delayedEnterState(object Stater, state string, delay time.Duration) {
 	time.AfterFunc(delay, func() {
 		object.Enter(state)
 	})
 }
 
 type fanoutConfig struct {
-	Owner 		ObjectInterface
-	Direction 	Point
-	SpeedScale  float64
+	Owner      ObjectInterface
+	Direction  Point
+	SpeedScale float64
 }
 
-func doFanoutSpawn(instance *Game, object ObjectInterface)  {
+func doFanoutSpawn(instance *Game, object ObjectInterface) {
 	var bl string
 	x, y := object.GetXY()
 	coords := []Point{Point{X: -1, Y: -1}, Point{X: 0, Y: -1}, Point{X: 1, Y: -1},
@@ -432,7 +432,7 @@ func doFanoutSpawn(instance *Game, object ObjectInterface)  {
 		Point{X: -1, Y: 1}, Point{X: 0, Y: 1}, Point{X: 1, Y: 1},
 	}
 	var sscale float64 = 1
-	for _, coord := range coords{
+	for _, coord := range coords {
 		if coord.X == 0 || coord.Y == 0 {
 			sscale = .5
 		} else {
@@ -442,40 +442,10 @@ func doFanoutSpawn(instance *Game, object ObjectInterface)  {
 		instance.Spawn(Point{
 			X: x,
 			Y: y,
-		}, bl, fanoutProjectileConfigurator,  &fanoutConfig{
-			Owner:     object,
-			Direction: coord,
+		}, bl, FanoutProjectileConfigurator, &fanoutConfig{
+			Owner:      object,
+			Direction:  coord,
 			SpeedScale: sscale,
 		})
 	}
-}
-
-func fanoutProjectileConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
-	cfg := config.(*fanoutConfig)
-	owner := cfg.Owner.GetOwner().(*Unit)
-	dir   := cfg.Direction
-	scale := cfg.SpeedScale
-
-	projectile := object.(*Projectile)
-	projectile.Direction.X = dir.X
-	projectile.Direction.Y = dir.Y
-	projectile.Owner = owner
-	projectile.AccelTimeFunc = GetRandomTimeFunc()
-
-	projectile.Speed.X *= scale
-	projectile.Speed.Y *= scale
-	projectile.MaxSpeed.X *= scale
-	projectile.MaxSpeed.Y *= scale
-	projectile.MinSpeed.X *= scale
-	projectile.MinSpeed.Y *= scale
-
-	if projectile.Team != 0 {
-		projectile.removeTag(projectile.GetAttr().TeamTag)
-	}
-
-	projectile.GetAttr().Team 		= owner.Team
-	projectile.GetAttr().TeamTag 	= owner.TeamTag
-	projectile.addTag("team--1")
-
-	return projectile
 }

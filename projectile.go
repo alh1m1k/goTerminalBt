@@ -1,6 +1,8 @@
 package main
 
 import (
+	"GoConsoleBT/collider"
+	"github.com/tanema/ump"
 	"math/rand"
 	"time"
 )
@@ -10,9 +12,10 @@ type Projectile struct {
 	*State
 	*ObservableObject
 	*throttle
-	Owner	ObjectInterface
-	Damage 	int
-	Ttl 	time.Duration
+	collisionsCnt int64
+	Owner         ObjectInterface
+	Damage        int
+	Ttl           time.Duration
 }
 
 func (receiver *Projectile) ApplyState(current *StateItem) error {
@@ -26,17 +29,7 @@ func (receiver *Projectile) Update(timeLeft time.Duration) error {
 	}
 	collision := receiver.collision
 
-	if collision.Collided() {
-		for object, _ := range receiver.collision.CollisionInfo().I() {
-			//logger.Println(object, receiver.GetAttr().TeamTag, !object.HasTag(receiver.GetAttr().TeamTag))
-			if object.HasTag("obstacle") {
-				if !object.HasTag(receiver.GetAttr().TeamTag) {
-					receiver.Destroy(nil)
-					break
-				}
-			}
-		}
-	}
+	receiver.Interactions.Interact(receiver, timeLeft)
 
 	if receiver.throttle != nil && receiver.throttle.Reach(timeLeft) {
 		receiver.Destroy(nil)
@@ -44,8 +37,8 @@ func (receiver *Projectile) Update(timeLeft time.Duration) error {
 
 	if receiver.moving {
 		collision.RelativeMove(
-			receiver.Move.Direction.X * receiver.Move.Speed.X/float64(TIME_FACTOR),
-			receiver.Move.Direction.Y * receiver.Move.Speed.Y/float64(TIME_FACTOR),
+			receiver.Move.Direction.X*receiver.Move.Speed.X/float64(TIME_FACTOR),
+			receiver.Move.Direction.Y*receiver.Move.Speed.Y/float64(TIME_FACTOR),
 		)
 		if receiver.AccelDuration > 0 {
 			fraction := receiver.AccelTimeFunc(float64(receiver.currAccelDuration) / float64(receiver.AccelDuration))
@@ -65,6 +58,27 @@ func (receiver *Projectile) Update(timeLeft time.Duration) error {
 
 func (receiver *Projectile) GetZIndex() int {
 	return 0
+}
+
+func (receiver *Projectile) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
+
+}
+
+func (receiver *Projectile) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
+	if object.HasTag("obstacle") {
+		if !object.HasTag(receiver.GetAttr().TeamTag) {
+			if !receiver.HasTag("projectile-penetrate") {
+				receiver.Destroy(nil)
+			} else {
+				//todo penetrateCnt logic
+			}
+		}
+	}
+	receiver.collisionsCnt++
+}
+
+func (receiver *Projectile) OnStopCollide(object collider.Collideable, duration time.Duration) {
+
 }
 
 func (receiver *Projectile) GetDamage(target Vulnerable) (value int, owner ObjectInterface) {
@@ -107,7 +121,22 @@ func (receiver *Projectile) DeSpawn() error {
 
 func (receiver *Projectile) Spawn() error {
 	receiver.Object.Spawn()
-	receiver.moving 	= true
+	receiver.moving = true
+
+	//todo guidance nav
+	if receiver.Move.Direction.X > 0 {
+		receiver.Enter("right")
+	}
+	if receiver.Move.Direction.X < 0 {
+		receiver.Enter("left")
+	}
+	if receiver.Move.Direction.Y < 0 {
+		receiver.Enter("top")
+	}
+	if receiver.Move.Direction.Y > 0 {
+		receiver.Enter("bottom")
+	}
+
 	return nil
 }
 
@@ -119,29 +148,32 @@ func (receiver *Projectile) Copy() *Projectile {
 	instance := *receiver
 
 	instance.ObservableObject = receiver.ObservableObject.Copy()
-	instance.Owner		      = &instance
-	instance.MotionObject     = receiver.MotionObject.Copy()
-	instance.State 			  = receiver.State.Copy()
-	instance.State.Owner	  = &instance
+	instance.Owner = &instance
+	instance.MotionObject = receiver.MotionObject.Copy()
+	instance.State = receiver.State.Copy()
+	instance.State.Owner = &instance
+	instance.Interactions.Subscribe(&instance)
 	if instance.throttle != nil {
-		instance.throttle		  = receiver.throttle.Copy()
+		instance.throttle = receiver.throttle.Copy()
 	}
 
 	return &instance
 }
 
-func NewProjectile2(mo *MotionObject, oo *ObservableObject, state *State, Owner ObjectInterface) (*Projectile, error)  {
+func NewProjectile2(mo *MotionObject, oo *ObservableObject, state *State, Owner ObjectInterface) (*Projectile, error) {
 	instance := &Projectile{
 		MotionObject:     mo,
 		State:            state,
 		ObservableObject: oo,
-		Owner:			  Owner,
+		Owner:            Owner,
 	}
+	instance.Interactions.Subscribe(instance)
 	instance.State.Owner = instance
 	instance.ObservableObject.Owner = instance
 	instance.moving = true
 	instance.destroyed = false
 	instance.spawned = false
+	instance.collisionsCnt = 0
 	return instance, nil
 }
 
@@ -149,7 +181,7 @@ var conventionalProjectileNames []string = []string{
 	"tank-base-projectile-he",
 	"tank-base-projectile-fanout",
 }
-func GetConventionalProjectileName() string  {
+
+func GetConventionalProjectileName() string {
 	return conventionalProjectileNames[rand.Intn(len(conventionalProjectileNames))]
 }
-
