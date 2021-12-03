@@ -90,7 +90,6 @@ func (receiver *Collectable) Reset() error {
 	if receiver.throttle != nil {
 		receiver.throttle.Reset()
 	}
-	SwitchSprite(receiver.sprite, receiver.sprite) //in case if state is same
 	receiver.Trigger(ResetEvent, receiver, nil)
 	return nil
 }

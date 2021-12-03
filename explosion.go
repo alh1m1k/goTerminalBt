@@ -95,7 +95,6 @@ func (receiver *Explosion) Reset() error {
 		receiver.throttle = newThrottle(receiver.Ttl, false)
 	}
 	receiver.throttle.Reset()
-	SwitchSprite(receiver.sprite, receiver.sprite)
 	return nil
 }
 
@@ -113,7 +112,7 @@ func (receiver *Explosion) Copy() *Explosion {
 	instance := *receiver
 
 	instance.ObservableObject = receiver.ObservableObject.Copy()
-	instance.ObservableObject.Owner = instance
+	instance.ObservableObject.Owner = &instance
 	instance.Object = receiver.Object.Copy()
 	if instance.throttle != nil {
 		instance.throttle = receiver.throttle.Copy()

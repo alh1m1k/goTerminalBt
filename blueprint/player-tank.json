@@ -3,7 +3,7 @@
   "sprite": {
     "type": "animation",
     "name": "tank_top",
-    "duration": 300000000,
+    "duration": 400000000,
     "cycled": true,
     "length": 2
   },
@@ -12,7 +12,7 @@
     "sprite": {
       "type": "animation",
       "name": "tank_top",
-      "duration": 300000000,
+      "duration": 400000000,
       "cycled": true,
       "length": 2
     },
@@ -21,7 +21,7 @@
         "sprite": {
           "type": "animation",
           "name": "tank_top",
-          "duration": 300000000,
+          "duration": 400000000,
           "cycled": true,
           "blink": 200000000,
           "length": 2
@@ -31,7 +31,7 @@
             "sprite": {
               "type": "animation",
               "name": "tank_top",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
               "blink": 200000000,
               "length": 2
@@ -41,7 +41,7 @@
             "sprite": {
               "type": "animation",
               "name": "tank_bottom",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
               "blink": 200000000,
               "length": 2
@@ -51,7 +51,7 @@
             "sprite": {
               "type": "animation",
               "name": "tank_left",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
               "blink": 200000000,
               "length": 2
@@ -61,7 +61,7 @@
             "sprite": {
               "type": "animation",
               "name": "tank_right",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
               "blink": 200000000,
               "length": 2
@@ -73,7 +73,7 @@
         "sprite": {
           "type": "animation",
           "name": "tank_top",
-          "duration": 300000000,
+          "duration": 400000000,
           "cycled": true,
           "blink": 200000000,
           "length": 2
@@ -83,7 +83,7 @@
             "sprite": {
               "type": "animation",
               "name": "tank_top",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
               "blink": 200000000,
               "length": 2
@@ -93,7 +93,7 @@
             "sprite": {
               "type": "animation",
               "name": "tank_bottom",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
               "blink": 200000000,
               "length": 2
@@ -103,7 +103,7 @@
             "sprite": {
               "type": "animation",
               "name": "tank_left",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
               "blink": 200000000,
               "length": 2
@@ -113,7 +113,7 @@
             "sprite": {
               "type": "animation",
               "name": "tank_right",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
               "blink": 200000000,
               "length": 2
@@ -125,7 +125,7 @@
         "sprite": {
           "type": "animation",
           "name": "tank_top",
-          "duration": 300000000,
+          "duration": 400000000,
           "cycled": true,
           "length": 2
         },
@@ -134,16 +134,16 @@
             "sprite": {
               "type": "animation",
               "name": "tank_top",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
-              "length": 17
+              "length": 2
             }
           },
           "bottom": {
             "sprite": {
               "type": "animation",
               "name": "tank_bottom",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
               "length": 2
             }
@@ -152,7 +152,7 @@
             "sprite": {
               "type": "animation",
               "name": "tank_left",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
               "length": 2
             }
@@ -161,7 +161,7 @@
             "sprite": {
               "type": "animation",
               "name": "tank_right",
-              "duration": 300000000,
+              "duration": 400000000,
               "cycled": true,
               "length": 2
             }
@@ -180,11 +180,11 @@
     "min": 7,
     "max": 7
   },
-  "accelTime": 3000000000,
+  "accelTime": 4000000000,
   "control": null,
   "hp":     100,
   "gun": {
-      "projectile": "tank-base-projectile-rail",
+      "projectile": "tank-base-projectile-flak",
       "reloadTime": 500000000
   },
   "score": 1000,

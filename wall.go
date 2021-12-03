@@ -22,18 +22,17 @@ func (receiver *Wall) Update(timeLeft time.Duration) error {
 }
 
 func (receiver *Wall) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
-	logger.Println("tick with", object)
+
 }
 
 func (receiver *Wall) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
-	if object.HasTag("danger") {
+	if object.HasTag("danger") && receiver.HasTag("vulnerable") {
 		receiver.ReciveDamage(object.(Danger))
 	}
-	logger.Println("start with", object)
 }
 
 func (receiver *Wall) OnStopCollide(object collider.Collideable, duration time.Duration) {
-	logger.Println("stop with", object)
+
 }
 
 func (receiver *Wall) ReciveDamage(incoming Danger) {

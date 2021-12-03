@@ -2,6 +2,7 @@ package main
 
 import (
 	direct "github.com/buger/goterm"
+	"math"
 	"math/rand"
 	"sync/atomic"
 	"time"
@@ -17,7 +18,7 @@ func newThrottle(every time.Duration, done bool) *throttle {
 	}
 
 	return &throttle{
-		left: left,
+		left:     left,
 		duration: every,
 	}
 }
@@ -69,4 +70,28 @@ func genId() int64 {
 		swapped = atomic.CompareAndSwapInt64(&monotonicId, old, old+1)
 	}
 	return old + 1
+}
+
+func absMax(arguments ...float64) float64 {
+	var cur float64
+	var curi int
+	for i := 0; i < len(arguments); i++ {
+		if math.Abs(arguments[i]) > cur {
+			cur = arguments[i]
+			curi = i
+		}
+	}
+	return arguments[curi]
+}
+
+func absMin(arguments ...float64) float64 {
+	var cur float64
+	var curi int
+	for i := 0; i < len(arguments); i++ {
+		if math.Abs(arguments[i]) < cur {
+			cur = arguments[i]
+			curi = i
+		}
+	}
+	return arguments[curi]
 }

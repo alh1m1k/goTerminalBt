@@ -18,15 +18,14 @@ var sprites map[string]*Sprite = make(map[string]*Sprite, 20)
 var tokenRe = regexp.MustCompile(`<(?P<tag>\w+?)>(?P<val>\S+?)</(?P<tg>\w+)>`)
 
 var (
-	SpriteExistError 	= errors.New("new sprite Id exist")
-	SpriteNotFoundError = errors.New("sprite do not exist")
+	SpriteExistError       = errors.New("new sprite Id exist")
+	SpriteNotFoundError    = errors.New("sprite do not exist")
 	SpriteTransparentError = errors.New("transparent must set at load")
 )
 
 var (
 	ErrorSprite = NewContentSprite([]byte("!!!Error!!!"))
 )
-
 
 type Spriteer interface {
 	io.Writer
@@ -36,8 +35,8 @@ type Spriteer interface {
 type CustomizeMap map[string]int
 
 type Sprite struct {
-	Parent *Sprite
-	Buf *bytes.Buffer
+	Parent        *Sprite
+	Buf           *bytes.Buffer
 	isTransparent bool
 }
 
@@ -101,7 +100,7 @@ func AddSprite(id string, sprite *Sprite) (*Sprite, error) {
 	return sprite, nil
 }
 
-func LoadSprite2(path string, processTransparent bool) (*Sprite, error)  {
+func LoadSprite2(path string, processTransparent bool) (*Sprite, error) {
 	buffer, err := loadSprite(path)
 	if err != nil {
 		return ErrorSprite, err
@@ -117,7 +116,7 @@ func LoadSprite2(path string, processTransparent bool) (*Sprite, error)  {
 	return sprite, nil
 }
 
-func GetSprite2(id string) (*Sprite, error)  {
+func GetSprite2(id string) (*Sprite, error) {
 	if sprite, ok := sprites[id]; ok {
 		return sprite, nil
 	} else {
@@ -125,7 +124,7 @@ func GetSprite2(id string) (*Sprite, error)  {
 	}
 }
 
-func IsCustomizedSpriteVer(sprite *Sprite) bool  {
+func IsCustomizedSpriteVer(sprite *Sprite) bool {
 	if sprite.Parent != nil {
 		return true
 	} else {
@@ -153,12 +152,16 @@ func CustomizeSprite(sprite *Sprite, custom CustomizeMap) (*Sprite, error) {
 	return newSprite, nil
 }
 
-func SwitchSprite(new, old Spriteer)  {
+func SwitchSprite(new, old Spriteer) {
 	manager, _ := getAnimationManager()
-	if new == old {
+	if new == old && new != nil {
 		switch new.(type) {
 		case *Animation:
-			new.(*Animation).Reset()
+			animation := new.(*Animation)
+			animation.Reset()
+			if animation.Manager == nil {
+				manager.Add(animation)
+			}
 		default:
 
 		}
@@ -167,8 +170,11 @@ func SwitchSprite(new, old Spriteer)  {
 	if new != nil {
 		switch new.(type) {
 		case *Animation:
-			new.(*Animation).Reset()
-			manager.Add(new.(*Animation))
+			animation := new.(*Animation)
+			animation.Reset()
+			if animation.Manager == nil {
+				manager.Add(animation)
+			}
 		default:
 
 		}
@@ -176,7 +182,10 @@ func SwitchSprite(new, old Spriteer)  {
 	if old != nil {
 		switch old.(type) {
 		case *Animation:
-			manager.Remove(old.(*Animation))
+			animation := old.(*Animation)
+			if animation.Manager != nil {
+				animation.Manager.Remove(animation)
+			}
 		default:
 
 		}
@@ -195,7 +204,7 @@ func CopySprite(spriteer Spriteer) Spriteer {
 	}
 }
 
-func TruncateSpaces(reader io.Reader, writer io.Writer)  {
+func TruncateSpaces(reader io.Reader, writer io.Writer) {
 	buf := make([]byte, 1, 1)
 	spaceCounter := 0
 	for {
@@ -215,7 +224,7 @@ func TruncateSpaces(reader io.Reader, writer io.Writer)  {
 	}
 }
 
-func customizedSpriteName(familyId string, customizeMap CustomizeMap) string  {
+func customizedSpriteName(familyId string, customizeMap CustomizeMap) string {
 	return familyId + "-" + hashCustomizeMap(customizeMap)
 }
 

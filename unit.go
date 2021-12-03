@@ -81,7 +81,7 @@ func (receiver *Unit) OnTickCollide(object collider.Collideable, collision *ump.
 }
 
 func (receiver *Unit) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
-	if object.HasTag("danger") {
+	if object.HasTag("danger") && receiver.HasTag("vulnerable") {
 		if DEBUG_IMMORTAL_PLAYER && receiver.HasTag("player") {
 			return
 		}
@@ -132,6 +132,9 @@ func (receiver *Unit) Reset() error {
 }
 
 func (receiver *Unit) DeSpawn() error {
+	if receiver.Control != nil {
+		receiver.ControlledObject.deactivate()
+	}
 	receiver.MotionObject.DeSpawn()
 	receiver.Trigger(DeSpawnEvent, receiver, nil)
 	return nil

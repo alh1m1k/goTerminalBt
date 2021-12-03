@@ -8,18 +8,19 @@ import (
 )
 
 var animations map[string]*Animation = make(map[string]*Animation, 25)
-var BlinkSprite	= NewSprite() //empty sprite
+var BlinkSprite = NewSprite() //empty sprite
 
-var FrameTypeCombinationError 	= errors.New("all frame must be same type")
-var UndefinedFrameCountError 	= errors.New("frame count must be predefined and more than 0")
-var MismatchFrameCountError 	= errors.New("frame count param mismatch actual frame count")
-var AnimationExistError 		= errors.New("animation exist in storage")
-var Animation404Error 			= errors.New("animation does not exist in storage")
+var FrameTypeCombinationError = errors.New("all frame must be same type")
+var UndefinedFrameCountError = errors.New("frame count must be predefined and more than 0")
+var MismatchFrameCountError = errors.New("frame count param mismatch actual frame count")
+var AnimationExistError = errors.New("animation exist in storage")
+var Animation404Error = errors.New("animation does not exist in storage")
 
-var ErrorAnimation, _	= NewErrorAnimation()
+var ErrorAnimation, _ = NewErrorAnimation()
 
 type Animation struct {
 	Spriteer
+	Manager                                   *AnimationManager
 	Duration, RepeatDuration                  time.Duration
 	keyFrames                                 []Spriteer
 	TimeFunction                              timeFunction
@@ -27,7 +28,7 @@ type Animation struct {
 	BlinkRate, index, blinkIndex, repeatIndex time.Duration
 }
 
-func (receiver *Animation) Update(timeLeft time.Duration) (done bool, error error)  {
+func (receiver *Animation) Update(timeLeft time.Duration) (done bool, error error) {
 	if receiver.collection { //todo split struct
 		return receiver.updateCollection(timeLeft) //collection of sprites
 	} else {
@@ -37,16 +38,16 @@ func (receiver *Animation) Update(timeLeft time.Duration) (done bool, error erro
 
 func (receiver *Animation) updateCollection(timeLeft time.Duration) (done bool, error error) {
 	var (
-		index int64
+		index  int64
 		offset float64
 	)
 
-	offset = math.Min(receiver.TimeFunction(float64(receiver.index) / float64(receiver.Duration)), 1)
+	offset = math.Min(receiver.TimeFunction(float64(receiver.index)/float64(receiver.Duration)), 1)
 	if receiver.Reversed {
-		fLen  := float64(len(receiver.keyFrames) - 1)
-		index  = int64(fLen - offset * fLen)
+		fLen := float64(len(receiver.keyFrames) - 1)
+		index = int64(fLen - offset*fLen)
 	} else {
-		index  = int64(offset * float64(len(receiver.keyFrames) - 1))
+		index = int64(offset * float64(len(receiver.keyFrames)-1))
 	}
 
 	if receiver.BlinkRate > 0 {
@@ -81,7 +82,7 @@ func (receiver *Animation) updateCollection(timeLeft time.Duration) (done bool, 
 		}
 	}
 
-	receiver.index 			+= timeLeft
+	receiver.index += timeLeft
 
 	return false, nil
 }
@@ -103,13 +104,12 @@ func (receiver *Animation) updateContainer(timeLeft time.Duration) (done bool, e
 		return false, error
 	}
 
-	if int64(receiver.index) >= int64(len(receiver.keyFrames)) - 1 {
+	if int64(receiver.index) >= int64(len(receiver.keyFrames))-1 {
 		if receiver.Cycled {
 			receiver.index = 0
 		}
 		return true, nil
 	}
-
 
 	if done {
 		receiver.index++
@@ -140,7 +140,7 @@ func (receiver *Animation) AddFrame(frame Spriteer) error {
 }
 
 func (receiver *Animation) Reset() {
-	receiver.index 		= 0
+	receiver.index = 0
 	receiver.blinkIndex = 0
 	receiver.repeatIndex = 0
 	if receiver.collection == true {
@@ -168,13 +168,13 @@ func (receiver *Animation) Copy() *Animation {
 	for i := 0; i < len(receiver.keyFrames); i++ {
 		instance.keyFrames[i] = CopySprite(receiver.keyFrames[i])
 	}
-	instance.Spriteer 	      = CopySprite(receiver.Spriteer)
+	instance.Spriteer = CopySprite(receiver.Spriteer)
 	return &instance
 }
 
 func NewAnimation(sprites []Spriteer) (*Animation, error) {
 	anim := Animation{
-		Spriteer:      nil,
+		Spriteer:       nil,
 		Duration:       0,
 		keyFrames:      nil,
 		TimeFunction:   LinearTimeFunction,
@@ -202,7 +202,7 @@ func NewAnimation(sprites []Spriteer) (*Animation, error) {
 
 func NewErrorAnimation() (*Animation, error) {
 	anim := Animation{
-		Spriteer:      nil,
+		Spriteer:       nil,
 		Duration:       1,
 		keyFrames:      nil,
 		TimeFunction:   LinearTimeFunction,
@@ -222,7 +222,7 @@ func NewErrorAnimation() (*Animation, error) {
 }
 
 //return new animation every call
-func GetAnimation(id string,  length int, load bool, processTransparent bool) (*Animation, error) {
+func GetAnimation(id string, length int, load bool, processTransparent bool) (*Animation, error) {
 	if anim, ok := animations[id]; ok {
 		if len(anim.keyFrames) != length {
 			return nil, MismatchFrameCountError
@@ -243,7 +243,7 @@ func GetAnimation(id string,  length int, load bool, processTransparent bool) (*
 		return nil, err
 	}
 	for i := 0; i < length; i++ {
-		sprite, err := GetSprite(id + "_" + strconv.Itoa(i), true, processTransparent)
+		sprite, err := GetSprite(id+"_"+strconv.Itoa(i), true, processTransparent)
 		if err != nil {
 			return nil, err
 		}

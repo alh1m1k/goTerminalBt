@@ -55,7 +55,7 @@ func (receiver *Location) SetupZones(size Point) error {
 	receiver.setupUnitSize = &size
 	receiver.zoneX = int(receiver.setupSize.X / size.X)
 	receiver.zoneY = int(receiver.setupSize.Y / size.Y)
-	receiver.zones = make([]*Point, receiver.zoneX * receiver.zoneY, receiver.zoneX * receiver.zoneY)
+	receiver.zones = make([]*Point, receiver.zoneX*receiver.zoneY, receiver.zoneX*receiver.zoneY)
 	return nil
 }
 
@@ -63,7 +63,7 @@ func (receiver *Location) setup(pos *Point, size *Point) error {
 	receiver.setupSize = size
 	if receiver.left == nil {
 		receiver.left = collider.NewStaticCollision(
-			pos.X - BORDER_SIZE,
+			pos.X-BORDER_SIZE,
 			pos.Y,
 			BORDER_SIZE,
 			size.Y,
@@ -73,7 +73,7 @@ func (receiver *Location) setup(pos *Point, size *Point) error {
 	}
 	if receiver.right == nil {
 		receiver.right = collider.NewStaticCollision(
-			pos.X + size.X,
+			pos.X+size.X,
 			pos.Y,
 			BORDER_SIZE,
 			size.Y,
@@ -83,9 +83,9 @@ func (receiver *Location) setup(pos *Point, size *Point) error {
 	}
 	if receiver.top == nil {
 		receiver.top = collider.NewStaticCollision(
-			pos.X - BORDER_SIZE,
-			pos.Y - BORDER_SIZE,
-			BORDER_SIZE + size.X,
+			pos.X-BORDER_SIZE,
+			pos.Y-BORDER_SIZE,
+			BORDER_SIZE+size.X,
 			BORDER_SIZE,
 		)
 	} else {
@@ -93,9 +93,9 @@ func (receiver *Location) setup(pos *Point, size *Point) error {
 	}
 	if receiver.bottom == nil {
 		receiver.bottom = collider.NewStaticCollision(
-			pos.X - BORDER_SIZE,
-			pos.Y + size.Y,
-			BORDER_SIZE + size.X,
+			pos.X-BORDER_SIZE,
+			pos.Y+size.Y,
+			BORDER_SIZE+size.X,
 			BORDER_SIZE,
 		)
 	} else {
@@ -115,23 +115,26 @@ func (receiver *Location) HasTag(tag string) bool {
 	if tag == "obstacle" {
 		return true
 	}
+	if tag == "border" {
+		return true
+	}
 	return false
 }
 
 func NewLocation(pos Point, size Point) (*Location, error) {
 	location := &Location{
-		left:     nil,
-		right:    nil,
-		top:      nil,
-		bottom:   nil,
+		left:   nil,
+		right:  nil,
+		top:    nil,
+		bottom: nil,
 	}
 	location.setup(&pos, &size)
 	return location, nil
 }
 
-func newPointFromZone(uw, uh float64, zoneX, index int) *Point  {
+func newPointFromZone(uw, uh float64, zoneX, index int) *Point {
 	return &Point{
-		X: float64(index % zoneX) * uw,
-		Y: float64(int(index / zoneX)) * uh,
+		X: float64(index%zoneX) * uw,
+		Y: float64(int(index/zoneX)) * uh,
 	}
 }

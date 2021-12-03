@@ -1,0 +1,105 @@
+{
+  "type":   "projectile",
+  "sprite": {
+      "type": "animation",
+      "name": "flak/top/flak",
+      "length": 10,
+      "duration": 400000000
+  },
+  "state":  {
+    "default": "normal",
+    "sprite": {
+      "type": "animation",
+      "name": "flak/top/flak",
+      "length": 10,
+      "duration": 400000000
+    },
+    "items": {
+      "normal": {
+        "sprite": {
+          "type": "animation",
+          "name": "flak/top/flak",
+          "length": 10,
+          "duration": 400000000
+        },
+        "items": {
+          "top": {
+            "sprite": {
+              "type": "animation",
+              "name": "flak/top/flak",
+              "length": 10,
+              "duration": 400000000
+            },
+            "collision": {
+              "type": "penetrate",
+              "x": 0,
+              "y": 0,
+              "w": 7,
+              "h": 9
+            }
+          },
+          "bottom": {
+            "sprite": {
+              "type": "animation",
+              "name": "flak/bottom/flak",
+              "length": 10,
+              "duration": 400000000
+            },
+            "collision": {
+              "type": "penetrate",
+              "x": 0,
+              "y": 0,
+              "w": 7,
+              "h": 9
+            }
+          },
+          "left": {
+            "sprite": {
+              "type": "animation",
+              "name": "flak/left/flak",
+              "length": 10,
+              "duration": 400000000
+            },
+            "collision": {
+              "type": "penetrate",
+              "x": 0,
+              "y": 0,
+              "w": 18,
+              "h": 4
+            }
+          },
+          "right": {
+            "sprite": {
+              "type": "animation",
+              "name": "flak/right/flak",
+              "length": 10,
+              "duration": 400000000
+            },
+            "collision": {
+              "type": "penetrate",
+              "x": 0,
+              "y": 0,
+              "w": 18,
+              "h": 4
+            }
+          }
+        }
+      }
+    }
+  },
+  "collision": {
+    "type": "penetrate",
+    "x": 0,
+    "y": 0,
+    "w": 7,
+    "h": 9
+  },
+  "speed": {
+    "min": 0,
+    "max": 0
+  },
+  "ttl":    400000000,
+  "damage": 70,
+  "zIndex": 1000,
+  "tags": ["projectile", "danger", "projectile-penetrate"]
+}

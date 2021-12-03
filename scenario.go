@@ -90,10 +90,11 @@ func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 			Team:      1,
 		})
 	}
+	blList = []string{"wall", "wall", "wall", "water"}
 	for i := 0; i < wallCnt; i++ {
 		spawn = append(spawn, &SpawnRequest{
 			Location:  PosAuto,
-			Blueprint: "wall",
+			Blueprint: blList[rand.Intn(len(blList))],
 			Team:      100,
 		})
 	}
@@ -108,6 +109,7 @@ func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 			"tank-base-projectile",
 			"tank-base-projectile-he",
 			"tank-base-projectile-rail",
+			"tank-base-projectile-flak",
 			"tank-special-projectile-smoke",
 			"tank-special-smokescreen-1",
 			"tank-special-smokescreen-2",
@@ -118,6 +120,7 @@ func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 			"projectile-sharp-apoc-end",
 			"opel",
 			"gun",
+			"water",
 			"wall",
 		},
 		Spawn:  spawn,

@@ -4,18 +4,21 @@ import (
 	"time"
 )
 
-type Updater struct {
-	queue []ObjectInterface
+type Updateable interface {
+	Update(timeLeft time.Duration) error
 }
 
-func (receiver *Updater) Add(object ObjectInterface) {
+type Updater struct {
+	queue []Updateable
+}
+
+func (receiver *Updater) Add(object Updateable) {
 	receiver.queue = append(receiver.queue, object)
 }
 
-func (receiver *Updater) Remove(object ObjectInterface) {
+func (receiver *Updater) Remove(object Updateable) {
 	for indx, candidate := range receiver.queue {
 		if object == candidate {
-			//logger.Println("remove from update", object)
 			receiver.queue[indx] = nil
 		}
 	}
@@ -32,6 +35,6 @@ func (receiver *Updater) Execute(timeLeft time.Duration) {
 
 func NewUpdater(queueSize int) (*Updater, error) {
 	return &Updater{
-		queue: make([]ObjectInterface, queueSize, queueSize),
+		queue: make([]Updateable, queueSize, queueSize),
 	}, nil
 }

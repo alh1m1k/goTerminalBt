@@ -15,6 +15,7 @@ type AnimationManager struct {
 func (receiver *AnimationManager) Add(object *Animation) {
 	receiver.mutex.Lock()
 	receiver.queue = append(receiver.queue, object)
+	object.Manager = receiver
 	receiver.mutex.Unlock()
 }
 
@@ -23,6 +24,7 @@ func (receiver *AnimationManager) Remove(object *Animation) {
 	for indx, candidate := range receiver.queue {
 		if object == candidate {
 			receiver.queue[indx] = nil
+			object.Manager = nil
 		}
 	}
 	receiver.mutex.Unlock()
@@ -45,7 +47,7 @@ func NewAnimationManager(queueSize int) (*AnimationManager, error) {
 	}, nil
 }
 
-func getAnimationManager() (*AnimationManager, error)  {
+func getAnimationManager() (*AnimationManager, error) {
 	var err error
 	if globalAnimationManager == nil {
 		globalAnimationManager, err = NewAnimationManager(100)

@@ -18,56 +18,55 @@ import (
 	"time"
 )
 
-const CYCLE 	= 100 * time.Millisecond
+const CYCLE = 100 * time.Millisecond
 const SLOW_CYCLE = time.Second / 2
 const TIME_FACTOR = time.Second / CYCLE
 
-const DEBUG			= false
+const DEBUG = false
 const DEBUG_COLLIDE = false
-const DEBUG_MOVE 	= false
-const DEBUG_SPAWN 	= false
-const DEBUG_EVENT 	= false
-const DEBUG_EXEC 	= false
-const DEBUG_STATE 	= false
-const DEBUG_NO_AI 	= false
-const DEBUG_SHAKE   = false
-const DEBUG_IMMORTAL_PLAYER = true
+const DEBUG_MOVE = false
+const DEBUG_SPAWN = false
+const DEBUG_EVENT = false
+const DEBUG_EXEC = false
+const DEBUG_STATE = false
+const DEBUG_NO_AI = false
+const DEBUG_SHAKE = false
+const DEBUG_IMMORTAL_PLAYER = false
 
 const RENDERER_WITH_ZINDEX = true
 
 var (
-	buf, _ = os.OpenFile("log.txt", os.O_CREATE|os.O_TRUNC, 644)
-	logger = log.New(buf, "logger: ", log.Lshortfile)
-	profilerHandler interface{
+	buf, _          = os.OpenFile("log.txt", os.O_CREATE|os.O_TRUNC, 644)
+	logger          = log.New(buf, "logger: ", log.Lshortfile)
+	profilerHandler interface {
 		Stop()
 	}
 	CycleID int64 = 0
 )
 
-
 var (
-	gameConfig				  *GameConfig
-	game					  *Game
-	render					  Renderer
-	calibration				  *Calibration
-	endGame 				= false
-	endGameThrottle 		= newThrottle(3 * time.Second, false)
-	endGameCycleThrottle 	= newThrottle(1 * time.Second, true)
+	gameConfig           *GameConfig
+	game                 *Game
+	render               Renderer
+	calibration          *Calibration
+	endGame              = false
+	endGameThrottle      = newThrottle(3*time.Second, false)
+	endGameCycleThrottle = newThrottle(1*time.Second, true)
 )
 
 //flags
 var (
-	seed				int64
-	wallCnt, tankCnt 	int
-	calibrate 			bool
-	lockfreePool 		bool
-	profileMod 			string
-	scenarioName		string
-	profileDelay 		time.Duration
-	osSignal			chan os.Signal
+	seed             int64
+	wallCnt, tankCnt int
+	calibrate        bool
+	lockfreePool     bool
+	profileMod       string
+	scenarioName     string
+	profileDelay     time.Duration
+	osSignal         chan os.Signal
 )
 
-func init()  {
+func init() {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		log.Fatal(err)
@@ -93,10 +92,13 @@ func main() {
 	//EffectAnimInterference("stealth/tank/bottom/tank", 10, 0.3)
 
 	//EffectVerFlip(bytes.NewReader([]byte("123\n456\n789")), os.Stdout)
-/*	EffectAnimNormalizeNewLine("stealth/tank/right/tank", 17)
-	EffectAnimVerFlip("stealth/tank/right/tank", 17)*/
+	/*	EffectAnimNormalizeNewLine("stealth/tank/right/tank", 17)
+		EffectAnimVerFlip("stealth/tank/right/tank", 17)*/
 
-	//os.Exit(0)
+	/*	EffectAnimNormalizeNewLine("flak/left/flak", 10)
+		EffectAnimVerFlip("flak/left/flak", 10)
+
+		os.Exit(0)*/
 
 	flag.Parse()
 
@@ -139,22 +141,22 @@ func main() {
 	}
 	pipe.Render = render
 
-	//effects
-	pipe.EffectManager, _ = NewEffectManager(render)
-
 	//updater
 	updater, _ := NewUpdater(100)
 	pipe.Updater = updater
+
+	//effects
+	pipe.EffectManager, _ = NewEffectManager(render, updater)
 
 	//collider
 	detector, _ := collider.NewCollider(100)
 	pipe.Collider = detector
 
 	//Location
-	location, _ :=  NewLocation(Point{
+	location, _ := NewLocation(Point{
 		X: gameConfig.Box.X,
 		Y: gameConfig.Box.Y,
-	},  Point{
+	}, Point{
 		X: gameConfig.Box.W / gameConfig.ColWidth,
 		Y: gameConfig.Box.H / gameConfig.RowHeight,
 	})
@@ -167,8 +169,8 @@ func main() {
 	//builder
 	buildManager, _ := NewBlueprintManager()
 	buildManager.AddLoaderPackage(NewJsonPackage())
-	buildManager.GameConfig 	= gameConfig
-	buildManager.EventChanel 	= spawner.UnitEventChanel //remove from builder
+	buildManager.GameConfig = gameConfig
+	buildManager.EventChanel = spawner.UnitEventChanel //remove from builder
 
 	//scenario
 	scenario, _ := NewRandomScenario(tankCnt, wallCnt)
@@ -183,8 +185,8 @@ func main() {
 
 	//game
 	game, _ = NewGame(nil, spawner)
-	game.Location 		= location
-	game.EffectManager 	= pipe.EffectManager
+	game.Location = location
+	game.EffectManager = pipe.EffectManager
 
 	//time
 	cycleTime := CYCLE
@@ -201,9 +203,9 @@ func main() {
 	var configurationChanel EventChanel = make(EventChanel)
 
 	if calibrate {
-		calibration, _ 	= NewCalibration(updater, render, detector, location, configurationChanel)
+		calibration, _ = NewCalibration(updater, render, detector, location, configurationChanel)
 		calibration.GameConfig = gameConfig
-		control , _ 	:= controller.NewPlayerControl(keysEvents, controller.Player1DefaultKeyBinding)
+		control, _ := controller.NewPlayerControl(keysEvents, controller.Player1DefaultKeyBinding)
 		go calibration.Run(control)
 	} else {
 		screen, _ = NewPlayerSelectDialog(keysEvents, configurationChanel)
@@ -221,11 +223,11 @@ func main() {
 				for i := 0; i < payload.Value; i++ {
 					//players
 					playerControl, _ := controller.NewPlayerControl(keysEvents, controller.KeyboardBindingPool[i])
-					player       , _ := NewPlayer("Player" + strconv.Itoa(i + 1) , playerControl)
+					player, _ := NewPlayer("Player"+strconv.Itoa(i+1), playerControl)
 					player.CustomizeMap = &CustomizeMap{
-						"gun": 		direct.RED,
-						"armor": 	direct.YELLOW,
-						"track":	direct.CYAN,
+						"gun":   direct.RED,
+						"armor": direct.YELLOW,
+						"track": direct.CYAN,
 					}
 					game.AddPlayer(player)
 				}
@@ -252,24 +254,24 @@ func main() {
 		case gameEvent := <-game.GetEventChanel():
 			switch gameEvent.EType {
 			case GAME_START:
-				cycleTime 	= CYCLE
-				endGame 	= false
+				cycleTime = CYCLE
+				endGame = false
 				render.UI(&UIData{players: game.GetPlayers()})
 				profileStart(profileMod, profileDelay)
 			case GAME_END_LOSE:
-				screen, _ 	= NewLoseScreen()
-				cycleTime 	= SLOW_CYCLE
-				endGame 	= true
+				screen, _ = NewLoseScreen()
+				cycleTime = SLOW_CYCLE
+				endGame = true
 				render.UI(nil)
-				terminateEvent 	= time.After(10 	* time.Second)
-				resultScreen 	= time.After(200 	* time.Millisecond)
+				terminateEvent = time.After(10 * time.Second)
+				resultScreen = time.After(200 * time.Millisecond)
 			case GAME_END_WIN:
-				screen, _ 	= NewWinScreen()
-				cycleTime 	= SLOW_CYCLE
-				endGame 	= true
+				screen, _ = NewWinScreen()
+				cycleTime = SLOW_CYCLE
+				endGame = true
 				render.UI(nil)
-				terminateEvent 	= time.After(10 	* time.Second)
-				resultScreen 	= time.After(200 	* time.Millisecond)
+				terminateEvent = time.After(10 * time.Second)
+				resultScreen = time.After(200 * time.Millisecond)
 			}
 		case <-resultScreen:
 			direct.Clear()
@@ -305,7 +307,7 @@ func newTimer(duration time.Duration) <-chan time.Time {
 
 	go func(duration time.Duration, output chan time.Time) {
 		events := time.After(duration)
-		for  {
+		for {
 			select {
 			case timeLeft := <-events:
 				output <- timeLeft
@@ -344,7 +346,7 @@ func profileStart(mode string, delay time.Duration) {
 	}
 }
 
-func profileStop()  {
+func profileStop() {
 	if profilerHandler != nil {
 		profilerHandler.Stop()
 	}

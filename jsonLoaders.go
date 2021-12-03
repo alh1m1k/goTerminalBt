@@ -145,6 +145,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		co, err = NewControlledObject(control, nil)
 		if !collector.Add(err) {
 			unit, err = NewUnit2(co, oo, motionObj, stateObj)
+			unit.ObservableObject.Owner = unit
 		}
 		if !collector.Add(err) {
 
@@ -229,6 +230,7 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 
 	if !collector.Add(err) {
 		wall, err = NewWall2(*object, stateObj, oo)
+		wall.ObservableObject.Owner = wall
 		collector.Add(err)
 	}
 
@@ -305,6 +307,7 @@ func CollectableLoader(get LoaderGetter, collector *LoadErrors, payload []byte) 
 
 	if !collector.Add(err) {
 		collect, err = NewCollectable2(object, oo, stateObj, nil)
+		collect.ObservableObject.Owner = collect
 		collector.Add(err)
 	}
 
@@ -373,6 +376,7 @@ func ExplosionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 
 	if !collector.Add(err) {
 		explosion, err = NewExplosion2(object, oo, nil)
+		explosion.ObservableObject.Owner = explosion
 		collector.Add(err)
 	}
 
@@ -451,6 +455,7 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, payload []byte) i
 
 	if !collector.Add(err) {
 		projectile, err = NewProjectile2(motionObj, oo, stateObj, nil)
+		projectile.ObservableObject.Owner = projectile
 		if !collector.Add(err) {
 
 		}

@@ -1,6 +1,8 @@
 package main
 
-import "strconv"
+import (
+	"strconv"
+)
 
 func DefaultConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
 	request := config.(*SpawnRequest)
@@ -33,9 +35,6 @@ func PlayerConfigurator(object ObjectInterface, config interface{}) ObjectInterf
 	object.GetAttr().Player = true
 	unit := object.(*Unit)
 	unit.addTag(object.GetAttr().TeamTag)
-	if unit.Control != nil {
-		unit.deactivate()
-	}
 	unit.Control = player.Control
 	player.Unit = unit
 	return object
@@ -79,6 +78,7 @@ func CollectableConfigurator(object ObjectInterface, config interface{}) ObjectI
 func ProjectileConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
 
 	owner := config.(*Unit)
+	projectile := object.(*Projectile)
 	object.GetAttr().Team = -1
 
 	x, y := owner.GetXY()
@@ -89,10 +89,36 @@ func ProjectileConfigurator(object ObjectInterface, config interface{}) ObjectIn
 		dir.Y = -1
 	}
 
-	x = (x + w/2) + (dir.X * (w / 2)) + (dir.X * 1)
-	y = (y + h/2) + (dir.Y * (h / 2)) + (dir.Y * 1)
+	//need for proper aligment
+	if dir.X > 0 {
+		projectile.Enter("right")
+	}
+	if dir.X < 0 {
+		projectile.Enter("left")
+	}
+	if dir.Y < 0 {
+		projectile.Enter("top")
+	}
+	if dir.Y > 0 {
+		projectile.Enter("bottom")
+	}
 
-	projectile := object.(*Projectile)
+	ow, oh := projectile.GetWH()
+
+	centerX := x + w/2
+	centerY := y + h/2
+
+	centerOx := centerX + (dir.X * w / 2) + (dir.X * ow / 2)
+	centerOy := centerY + (dir.Y * h / 2) + (dir.Y * oh / 2)
+
+	x = centerOx - ow/2
+	y = centerOy - oh/2
+
+	/*	if owner.HasTag("tank") {
+		x += owner.Speed.X * dir.X
+		y += owner.Speed.Y * dir.Y //todo remove*/
+	//	}*/
+
 	projectile.GetClBody().Move(x, y)
 	//----- speed modify based at owner speed
 	projectile.Speed.X += owner.Speed.X

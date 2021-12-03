@@ -4,21 +4,19 @@ import (
 	"github.com/tanema/ump"
 )
 
-const COLLISION_AT_LEFT 	= 0x1
-const COLLISION_AT_RIGHT 	= 0x2
-const COLLISION_AT_TOP 		= 0x5
-const COLLISION_AT_BOTTOM   = 0x8
-const COLLISION_IMPACT   	= 0x10
-
+const COLLISION_AT_LEFT = 0x1
+const COLLISION_AT_RIGHT = 0x2
+const COLLISION_AT_TOP = 0x5
+const COLLISION_AT_BOTTOM = 0x8
+const COLLISION_IMPACT = 0x10
 
 type CollisionInfo struct {
-	Object 	Collideable
+	Object  Collideable
 	Details *ump.Collision
 }
 
-
 type ClBody struct {
-	x,y,w,h           float64
+	x, y, w, h        float64
 	static, penetrate bool
 	realBody          *ump.Body
 	collisionInfo     *CollisionInfoSet
@@ -50,7 +48,6 @@ func (receiver *ClBody) Move(x, y float64) {
 
 //after collision correction
 func (receiver *ClBody) Correct(x, y float64) {
-	//do penetrate check in collider
 	receiver.x = x
 	receiver.y = y
 }
@@ -61,9 +58,9 @@ func (receiver *ClBody) Resize(w, h float64) {
 			panic("unable dynamic resize clBody")
 		}
 	}
+	logger.Println(receiver, w, h)
 	receiver.w = w
 	receiver.h = h
-
 }
 
 func (receiver *ClBody) GetXY() (x float64, y float64) {
@@ -89,44 +86,43 @@ func (receiver *ClBody) Copy() *ClBody {
 	return &instance
 }
 
-
-func NewCollision(x,y,w,h float64) *ClBody {
+func NewCollision(x, y, w, h float64) *ClBody {
 	body := &ClBody{
 		x: x, y: y, w: w, h: h,
 	}
-	body.First 		= body
-	body.static 	= false
-	body.penetrate  = false
-	body.filter 	= "base"
+	body.First = body
+	body.static = false
+	body.penetrate = false
+	body.filter = "base"
 	return body
 }
 
-func NewStaticCollision(x,y,w,h float64) *ClBody {
+func NewStaticCollision(x, y, w, h float64) *ClBody {
 	body := &ClBody{
 		x: x, y: y, w: w, h: h,
 	}
-	body.First 		= body
-	body.static 	= true
-	body.penetrate  = false
-	body.filter 	= "static"
+	body.First = body
+	body.static = true
+	body.penetrate = false
+	body.filter = "static"
 	return body
 }
 
-func NewPenetrateCollision(x,y,w,h float64) *ClBody {
+func NewPenetrateCollision(x, y, w, h float64) *ClBody {
 	body := &ClBody{
 		x: x, y: y, w: w, h: h,
 	}
-	body.First 		= body
-	body.static 	= false
-	body.penetrate  = true
-	body.filter 	= "penetrate"
+	body.First = body
+	body.static = false
+	body.penetrate = true
+	body.filter = "penetrate"
 	return body
 }
 
 //no cycle detection!
-func LinkClBody(first, second *ClBody)  {
-	first.First 	= first
-	second.First 	= first
+func LinkClBody(first, second *ClBody) {
+	first.First = first
+	second.First = first
 	for true {
 		if first.Next == nil {
 			first.Next = second

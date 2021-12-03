@@ -108,6 +108,7 @@ type Object struct {
 	zIndex             int
 	tag                []string
 	tagValues          map[string]*TagValue
+	spawnCount         int64
 	Owner, Prototype   ObjectInterface
 }
 
@@ -155,14 +156,23 @@ func (receiver *Object) GetBlueprint() string {
 	return receiver.blueprint
 }
 
+func (receiver *Object) GetZIndex() int {
+	return receiver.zIndex
+}
+
 func (receiver *Object) Destroy(nemesis ObjectInterface) error {
 	receiver.destroyed = true
 	return nil
 }
 
 func (receiver *Object) Spawn() error {
-	SwitchSprite(receiver.sprite, nil)
+	if receiver.spawnCount > 0 {
+		SwitchSprite(receiver.sprite, receiver.sprite)
+	} else {
+		SwitchSprite(receiver.sprite, nil)
+	}
 	receiver.spawned = true
+	receiver.spawnCount++
 	return nil
 }
 
@@ -258,6 +268,7 @@ func (receiver *Object) GetTagValue(tag string, key string, defaultValue string)
 func (receiver *Object) Reset() error {
 	receiver.destroyed = false
 	receiver.Interactions.Clear()
+
 	return nil
 }
 
@@ -298,6 +309,7 @@ func NewObject(s Spriteer, c *collider.ClBody) (*Object, error) {
 		zIndex:       0,
 		tag:          nil,
 		tagValues:    make(map[string]*TagValue),
+		spawnCount:   0,
 		Owner:        nil,
 		Prototype:    nil,
 	}, nil

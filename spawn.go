@@ -153,6 +153,8 @@ func (manager *SpawnManager) Spawn(coordinate Point, blueprint string, configura
 		configurator(object, config)
 	}
 
+	object.Reset()
+
 	if coordinate == PosAuto {
 		if configurator != nil {
 			//set by configurator
@@ -162,8 +164,6 @@ func (manager *SpawnManager) Spawn(coordinate Point, blueprint string, configura
 	} else {
 		object.GetClBody().Move(coordinate.X, coordinate.Y)
 	}
-
-	object.Reset() //todo check animation and other then late reset
 
 	manager.spawnMutex.Lock()
 	manager.pendingSpawn = append(manager.pendingSpawn, object)

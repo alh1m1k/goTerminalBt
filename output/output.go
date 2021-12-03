@@ -1,6 +1,7 @@
 package output
 
 import (
+	"bufio"
 	"fmt"
 	output "github.com/buger/goterm"
 	"strings"
@@ -9,6 +10,8 @@ import (
 func init()  {
 
 }
+
+var Output *bufio.Writer = nil
 
 type ConsoleOutput struct {
 	currX, CurrY   int
