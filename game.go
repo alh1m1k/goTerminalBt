@@ -106,6 +106,8 @@ func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) 
 		} else {
 			location = Point{}
 		}
+	} else {
+		location = payload.Location
 	}
 	receiver.SpawnManager.Spawn(location, payload.Blueprint, DefaultConfigurator, payload)
 }

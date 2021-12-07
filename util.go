@@ -95,3 +95,12 @@ func absMin(arguments ...float64) float64 {
 	}
 	return arguments[curi]
 }
+
+func getDistance(x1, y1, x2, y2 float64) float64 {
+	distX, distY := x1-x2, y1-y2
+	return distX*distX + distY*distY
+}
+
+func divRemF(numenator, denumenator float64) float64 {
+	return numenator - float64(int(math.Round(numenator/denumenator)))*denumenator
+}

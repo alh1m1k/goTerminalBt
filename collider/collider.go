@@ -4,9 +4,12 @@ import (
 	"errors"
 	"github.com/tanema/ump"
 	"log"
+	"math"
 	"os"
 	"time"
 )
+
+const GRID_COORD_TOLERANCE = 1
 
 var (
 	buf, _ = os.OpenFile("collider.log", os.O_CREATE|os.O_TRUNC, 644)
@@ -47,8 +50,8 @@ func (c *Collider) Add(object Collideable) error {
 				body.SetResponse("base", "cross")
 			} else {
 				body.SetResponse("penetrate", "cross")
-				body.SetResponse("static", "slide")
-				body.SetResponse("base", "slide")
+				body.SetResponse("static", "grid")
+				body.SetResponse("base", "grid")
 			}
 
 			clBody.realBody = body
@@ -88,7 +91,7 @@ func (c *Collider) Execute(timeLeft time.Duration) {
 		for clBody != nil {
 			if clBody.static {
 				realBody.Update(float32(x), float32(y))
-				//info must be clear even if no coolision at this time
+				//info must be clear even if no collision at this time
 			} else {
 				newX, newY, collisions := realBody.Move(float32(x), float32(y))
 				for _, collision := range collisions {
@@ -119,82 +122,61 @@ func NewCollider(queueSize int) (*Collider, error) {
 		world:   ump.NewWorld(64),
 		ver:     true,
 	}
+
+	cl.world.AddResponse("grid", gridFilter)
+
+	//reader := bufio.NewReader(os.Stdin)
 	/*
-		reader := bufio.NewReader(os.Stdin)
-		reader.ReadByte()
-
-		bullet := cl.world.Add("bullet", 0,0,1,1)
-		bullet.SetResponse("wall", "cross")
-		wall := cl.world.Add("wall", 10,10, 8, 7)
-		wall.SetResponse("wall", "cross")
-
-		var start float32 = 10.0*/
-
-	/*	_, _, collisions := bullet.Move(start + 0.000000, start + 4.099998)
-
-		if len(collisions) > 0 {
-			fmt.Println("collide")
-		} else {
-			fmt.Println("no collision")
-		}*/
-
-	/*	var i, y float32
-		var errSeq []float32
-		var gotchaCnt, okCnt = 0, 0
-		for i = 0.0; i <= 8; i +=0.1 {
-			for y = 0.0; y <= 7; y +=0.1 {
-				_, _, gotcha := bullet.Move(start + i, start + y)
-				if len(gotcha) == 0 {
-					errSeq = append(errSeq, i, y)
-					gotchaCnt++
-				} else {
-					okCnt++
-				}
-			}
-		}
-		fmt.Printf("total of %f, gotcha %d, ok %d \n", (8 / 0.1) * (7 / 0.1), gotchaCnt, okCnt)*/
-	/*
-		gotchaCnt = 0
-		okCnt	  = 0
-		for i := 0; i < len(errSeq); i+=2 {
-			_, _, gotcha := bullet.Move(errSeq[i], errSeq[i+1])
-			if len(gotcha) == 0 {
-				gotchaCnt++
-				fmt.Printf("gotcha second time %f:%f \n", errSeq[i], errSeq[i+1])
-			} else {
-				okCnt++
-				fmt.Printf("collision %f, %f \n", errSeq[i], errSeq[i+1])
-			}
-		}
-		fmt.Printf("second time total of %d, gotcha %d, ok %d \n", len(errSeq), gotchaCnt, okCnt)
-
-
-		fmt.Printf("########\n")
-		fmt.Printf("#      #\n")
-		fmt.Printf("#      #\n")
-		fmt.Printf("#      #\n")
-		fmt.Printf("#      #\n")
-		fmt.Printf("#      #\n")
-		fmt.Printf("#      #\n")
-		fmt.Printf("########\n")
-
-		for i := 0; i < len(errSeq); i+=2 {
-			_, _, gotcha := bullet.Move(errSeq[i], errSeq[i+1])
-			if len(gotcha) == 0 {
-
-			}
-		}*/
-	/*
-		_, _,cl1 := bullet.Move(12,12)
-		_, _,cl2 := bullet.Move(14,14)
-		_, _,cl3 := bullet.Move(0,0)
-
-		if len(cl1) > 0 && len(cl2) == 0 && len(cl3) > 0 {
-			fmt.Println("done")
-		}
-
-
-		os.Exit(0)*/
+		cl.world.AddResponse("grid", gridFilter)
+		bullet := cl.world.Add("base", 0,20.00,9.998,9.998)
+		bullet.SetResponse("wall", "grid")
+		wall := cl.world.Add("wall", 100,10, 10, 10)
+		wall2 := cl.world.Add("wall", 100,30, 10, 10)
+		wall.SetResponse("wall", "grid")
+		wall2.SetResponse("wall", "grid") */
 
 	return cl, nil
+}
+
+func gridFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goalY float32) (float32, float32, []*ump.Collision) {
+	_, _, w, h, _, _ := body.Extents()
+	ox1, oy1, ow, oh, _, _ := col.Body.Extents()
+
+	centerX := goalX + w/2
+	centerY := goalY + h/2
+
+	ocenterX := ox1 + ow/2
+	ocenterY := oy1 + oh/2
+
+	if col.Move.X != 0 {
+		offset := float64(centerY) - float64(ocenterY)
+		distance := math.Abs(offset) - float64(h/2+oh/2)
+		if distance > -GRID_COORD_TOLERANCE {
+			goalY = goalY + float32(math.Copysign(distance, offset))
+			body.Update(goalX, goalY)
+			return goalX, goalY, world.Project(body, goalX, goalY)
+		}
+	}
+
+	if col.Move.Y != 0 {
+		offset := float64(centerX) - float64(ocenterX)
+		distance := math.Abs(offset) - float64(w/2+ow/2)
+		if distance > -GRID_COORD_TOLERANCE {
+			goalX = goalX + float32(math.Copysign(distance, offset))
+			body.Update(goalX, goalY)
+			return goalX, goalY, world.Project(body, goalX, goalY)
+		}
+	}
+
+	sx, sy := col.Touch.X, col.Touch.Y
+	if col.Move.X != 0 || col.Move.Y != 0 {
+		if col.Normal.X == 0 {
+			sx = goalX
+		} else {
+			sy = goalY
+		}
+	}
+	col.Data = ump.Point{X: sx, Y: sy}
+	body.Update(col.Touch.X, col.Touch.Y)
+	return sx, sy, world.Project(body, sx, sy)
 }

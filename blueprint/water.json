@@ -17,5 +17,5 @@
   },
   "hp": 0,
   "zIndex": 10,
-  "tags": ["water", "obstacle"]
+  "tags": ["water", "obstacle", "tracked"]
 }

@@ -14,65 +14,79 @@ type GPipeline struct {
 	*SpawnManager
 	*AnimationManager
 	*EffectManager
-	stage 	int64
-	pipe 	chan int64
-	ret    	chan bool
+	*Location
+	stage    int64
+	pipe     chan int64
+	ret      chan bool
 	timeLeft time.Duration
 }
 
-func (receiver *GPipeline) Execute(timeLeft time.Duration)  {
+func (receiver *GPipeline) Execute(timeLeft time.Duration) {
 	receiver.timeLeft = timeLeft
 	receiver.pipe <- 1
 	<-receiver.ret
 	receiver.stage = 0
 }
 
-func (receiver *GPipeline) doUpdate()  {
+func (receiver *GPipeline) doUpdate() {
 	receiver.Updater.Execute(receiver.timeLeft)
 	receiver.pipe <- 1
 }
 
-func (receiver *GPipeline) doAnimate()  {
+func (receiver *GPipeline) doAnimate() {
 	receiver.AnimationManager.Execute(receiver.timeLeft)
 	receiver.pipe <- 1
 }
 
-func (receiver *GPipeline) doCollect()  {
+func (receiver *GPipeline) doCollect() {
 	receiver.SpawnManager.Collect()
+	if receiver.Updater.NeedCompact() {
+		receiver.Updater.Compact()
+	}
+	if receiver.Render.NeedCompact() {
+		receiver.Render.Compact()
+	}
+	if receiver.AnimationManager.NeedCompact() {
+		receiver.AnimationManager.Compact()
+	}
 	receiver.pipe <- 1
 }
 
-func (receiver *GPipeline) doCollide()  {
+func (receiver *GPipeline) doCollide() {
 	receiver.Collider.Execute(receiver.timeLeft)
 	receiver.pipe <- 1
 }
 
-func (receiver *GPipeline) doRender()  {
+func (receiver *GPipeline) doRender() {
 	receiver.Render.Execute(receiver.timeLeft)
 	receiver.pipe <- 1
 }
 
-func (receiver *GPipeline) doEffect()  {
+func (receiver *GPipeline) doEffect() {
 	receiver.EffectManager.Execute(receiver.timeLeft)
 	receiver.pipe <- 1
 }
 
+func (receiver *GPipeline) doMap() {
+	receiver.Location.Execute(receiver.timeLeft)
+	receiver.pipe <- 1
+}
 
-func (receiver *GPipeline) doSpawn()  {
+func (receiver *GPipeline) doSpawn() {
 	receiver.SpawnManager.Execute(receiver.timeLeft)
 	receiver.pipe <- 1
 }
 
 func NewGPipeline() (*GPipeline, error) {
 	pl := &GPipeline{
-		Updater:      nil,
-		Collider:     nil,
-		Render:       nil,
-		SpawnManager: nil,
+		Updater:       nil,
+		Collider:      nil,
+		Render:        nil,
+		SpawnManager:  nil,
 		EffectManager: nil,
-		pipe:         make(chan int64),
-		stage:        0,
-		ret:          make(chan bool),
+		pipe:          make(chan int64),
+		stage:         0,
+		ret:           make(chan bool),
 	}
 	go plDispatcher(pl)
 
@@ -80,7 +94,7 @@ func NewGPipeline() (*GPipeline, error) {
 }
 
 func plDispatcher(pl *GPipeline) {
-	for  {
+	for {
 		select {
 		case inc := <-pl.pipe:
 			stage := atomic.AddInt64(&pl.stage, inc)
@@ -93,14 +107,13 @@ func plDispatcher(pl *GPipeline) {
 				go pl.doCollide()
 			case 5:
 				go pl.doRender()
-			case 6:
+				go pl.doMap()
+			case 7:
 				go pl.doSpawn()
 				go pl.doEffect()
-			case 8:
+			case 9:
 				pl.ret <- true
 			}
 		}
 	}
 }
-
-

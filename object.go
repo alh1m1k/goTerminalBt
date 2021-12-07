@@ -65,6 +65,11 @@ type Disappearable interface {
 	GetDisappearDuration() time.Duration
 }
 
+type Tagable interface {
+	HasTag(tag string) bool
+	GetTagValue(tag string, key string, defaultValue string) (string, error)
+}
+
 type Obstacle interface {
 }
 
@@ -81,13 +86,14 @@ type ObjectInterface interface {
 	Prototyped
 	Located
 	Sized
-	Update(timeLeft time.Duration) error
-	GetSprite() Spriteer
-	GetClBody() *collider.ClBody
+	Updateable
+	Renderable
+	Tagable
+	collider.Collideable
+	GetCenter() (float64, float64)
+	GetTracker() *Tracker
 	GetAttr() *Attributes
-	GetTagValue(tag string, key string, defaultValue string) (string, error)
 	GetOwner() ObjectInterface
-	HasTag(tag string) bool
 	Destroy(nemesis ObjectInterface) error //nemesis may be nil
 	Reset() error                          //todo reset by configuration
 	DeSpawn() error
@@ -100,16 +106,17 @@ type Point struct {
 
 type Object struct {
 	*Attributes
+	collision *collider.ClBody
 	*collider.Interactions
+	sprite Spriteer
+	*Tracker
+	Owner, Prototype   ObjectInterface
 	destroyed, spawned bool
 	blueprint          string
-	sprite             Spriteer
-	collision          *collider.ClBody
 	zIndex             int
 	tag                []string
 	tagValues          map[string]*TagValue
 	spawnCount         int64
-	Owner, Prototype   ObjectInterface
 }
 
 func (receiver *Object) Update(timeLeft time.Duration) error {
@@ -117,6 +124,9 @@ func (receiver *Object) Update(timeLeft time.Duration) error {
 		return nil
 	}
 	receiver.Interactions.Interact(receiver, timeLeft)
+	if receiver.Tracker != nil {
+		receiver.Tracker.Update(receiver.GetClBody().GetRect())
+	}
 	return nil
 }
 
@@ -144,12 +154,24 @@ func (receiver *Object) GetXY() (x, y float64) {
 	return receiver.collision.GetXY()
 }
 
-func (receiver *Object) GetAttr() *Attributes {
-	return receiver.Attributes
-}
-
 func (receiver *Object) GetWH() (x, y float64) {
 	return receiver.collision.GetWH()
+}
+
+func (receiver *Object) GetRect() (x, y, w, h float64) {
+	return receiver.collision.GetRect()
+}
+
+func (receiver *Object) GetCenter() (x, y float64) {
+	return receiver.collision.GetCenter()
+}
+
+func (receiver *Object) GetTracker() *Tracker {
+	return receiver.Tracker
+}
+
+func (receiver *Object) GetAttr() *Attributes {
+	return receiver.Attributes
 }
 
 func (receiver *Object) GetBlueprint() string {
@@ -203,23 +225,6 @@ func (receiver *Object) addTag(tags ...string) {
 }
 
 func (receiver *Object) HasTag(tag string) bool {
-
-	/*	switch receiver.GetAttr() {
-		id
-		team
-		blueprint
-		player
-		obstacle
-		danger
-		vulnerable
-		motioner
-		evented
-		controled
-		collided
-		renderable
-		Tagable
-	}*/
-
 	for _, part := range receiver.tag {
 		if part == tag {
 			return true
@@ -283,6 +288,9 @@ func (receiver *Object) Copy() *Object {
 	instance.sprite = CopySprite(receiver.sprite)
 	instance.collision = receiver.collision.Copy()
 	instance.Interactions = receiver.Interactions.Copy()
+	if receiver.Tracker != nil {
+		instance.Tracker = receiver.Tracker.Copy()
+	}
 	if receiver.tag != nil {
 		instance.tag = make([]string, len(receiver.tag), cap(receiver.tag))
 		copy(instance.tag, receiver.tag)

@@ -190,7 +190,7 @@ func (receiver *Unit) GetEventChanel() EventChanel {
 	return receiver.output
 }
 
-func NewUnit2(co *ControlledObject, oo *ObservableObject,
+func NewUnit(co *ControlledObject, oo *ObservableObject,
 	mo *MotionObject, st *State) (*Unit, error) {
 
 	gun, _ := NewGun(nil)
@@ -218,7 +218,7 @@ func NewUnit2(co *ControlledObject, oo *ObservableObject,
 	return instance, nil
 }
 
-func GetTankState(id string) (*State, error) {
+func GetUnitState(id string) (*State, error) {
 	return GetState(id, func(m map[string]interface{}) (interface{}, error) {
 		var sprite Spriteer = nil
 		var err error

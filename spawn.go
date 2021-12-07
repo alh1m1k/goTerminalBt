@@ -64,10 +64,12 @@ func (manager *SpawnManager) Execute(timeLeft time.Duration) {
 	}
 
 	for i, object := range manager.pendingDeSpawn {
-		//logger.Println("despawn updater", object)
 		manager.updater.Remove(object)
 		manager.collider.Remove(object)
 		manager.render.Remove(object)
+		if manager.location != nil {
+			manager.location.Remove(object)
+		}
 		manager.pendingDeSpawn[i] = nil
 		manager.spawned[object] = false
 		object.DeSpawn()
@@ -94,6 +96,9 @@ func (manager *SpawnManager) Execute(timeLeft time.Duration) {
 		manager.updater.Add(object)
 		manager.collider.Add(object)
 		manager.render.Add(object)
+		if manager.location != nil {
+			manager.location.Add(object)
+		}
 		manager.pendingSpawn[i] = nil
 		manager.spawned[object] = true
 		object.Spawn()

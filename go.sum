@@ -17,6 +17,8 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/tanema/ump v0.0.0-20171018143447-d5f261ac1de3 h1:9hXKNpWjknPZbmfNIMwYvRd3322CQmuJDllamOVQt+U=
 github.com/tanema/ump v0.0.0-20171018143447-d5f261ac1de3/go.mod h1:tNcSdB6uG6DwTjn4d4T5zSIFKRxKeGYPS9kR3CtvXCw=
+github.com/xarg/gopathfinding v0.0.0-20170223193223-aefc81ce6658 h1:qN0kxaVubdGpZpfU9HZebHmo+rDXVqZsEGyur2VTvj0=
+github.com/xarg/gopathfinding v0.0.0-20170223193223-aefc81ce6658/go.mod h1:/JsbaapU3uU7JaV80WYSy5q4tdKQeLWwuQb24IsZgeA=
 github.com/xiaonanln/go-lockfree-pool v0.0.0-20181017030802-53ecc7b8f637 h1:+jdnWVgFgO76VDj1W+MegIi0+pC4kWOY0Y+pB4g1FO8=
 github.com/xiaonanln/go-lockfree-pool v0.0.0-20181017030802-53ecc7b8f637/go.mod h1:ZKnkmTtDsE/6j2EwPU5NhhQvul1u0BHaDVXjok5sMrM=
 github.com/xiaonanln/go-lockfree-queue v0.0.0-20181015150615-23113b463d4f h1:ht1WYzBbcJiJTE3gZF4mb0UsDhHfSWVoQnj+yAc1mLQ=

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const DEBUG_DISARM_AI = false
+const DEBUG_DISARM_AI = true
 
 var (
 	buf, _ = os.OpenFile("control.log", os.O_CREATE|os.O_TRUNC, 644)

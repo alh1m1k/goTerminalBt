@@ -29,9 +29,10 @@ const DEBUG_SPAWN = false
 const DEBUG_EVENT = false
 const DEBUG_EXEC = false
 const DEBUG_STATE = false
-const DEBUG_NO_AI = false
+const DEBUG_NO_AI = true
 const DEBUG_SHAKE = false
 const DEBUG_IMMORTAL_PLAYER = false
+const DEBUG_MINIMAP = true
 
 const RENDERER_WITH_ZINDEX = true
 
@@ -161,6 +162,7 @@ func main() {
 		Y: gameConfig.Box.H / gameConfig.RowHeight,
 	})
 	detector.Add(location)
+	pipe.Location = location
 
 	//spawner
 	spawner, _ := NewSpawner(updater, render, detector, location, gameConfig)
@@ -173,8 +175,8 @@ func main() {
 	buildManager.EventChanel = spawner.UnitEventChanel //remove from builder
 
 	//scenario
-	scenario, _ := NewRandomScenario(tankCnt, wallCnt)
-	scenario.DeclareBlueprint(func(blueprint string) { //todo kill it
+	scenario, _ := NewCollisionDemoScenario(tankCnt, wallCnt) //NewRandomScenario(tankCnt, wallCnt)
+	scenario.DeclareBlueprint(func(blueprint string) {
 		builder, _ := buildManager.CreateBuilder(blueprint)
 		if builder == nil { //may cause error on success
 			panic("builder " + blueprint + " not found")
@@ -211,6 +213,61 @@ func main() {
 		screen, _ = NewPlayerSelectDialog(keysEvents, configurationChanel)
 		render.Add(screen)
 	}
+
+	if DEBUG_MINIMAP {
+		var debugMinimap func()
+		debugMinimap = func() {
+			logger.Println("dump minimap...")
+			mmp, _ := location.Minimap(true)
+			minimap.Printf("minimap for %d cycle \n\n", CycleID)
+			for _, slice := range mmp {
+				minimap.Printf("%s \n", slice)
+			}
+			minimap.Printf("\n\n\n")
+			time.AfterFunc(time.Second*5, debugMinimap)
+		}
+		time.AfterFunc(time.Second*5, debugMinimap)
+	}
+
+	/*
+		tank, _ := buildManager.Get("player-tank")
+		pos, _ := location.CoordinateByIndex(10, 10)
+		tank.GetClBody().Move(pos.X, pos.Y)
+		x, y := tank.GetXY()
+		w, h := tank.GetWH()
+		tank.GetTracker().Manager = location
+		tank.GetTracker().Update(x, y, w, h)
+		newIndexX, newIndexY := location.IndexByPos(x, y)
+		log.Printf("unit size x, y  %f %f \n", location.setupUnitSize.X, location.setupUnitSize.Y)
+		if newIndexX != 10 {
+			log.Printf("x index broken %d %d \n", newIndexX, 10)
+		}
+		if newIndexY != 10 {
+			log.Printf("y index broken %d %d \n", newIndexY, 10)
+		}
+		newPos, _, _, _ := location.NearestPos(x, y)
+		if newPos.X != pos.X {
+			log.Printf("x pos broken %f %f \n", newPos.X, pos.X)
+		}
+		if newPos.Y != pos.Y {
+			log.Printf("y pos broken %f %f \n", newPos.Y, pos.Y)
+		}
+		tank.GetClBody().Move(pos.X + 2, pos.Y + 2)
+		x, y = tank.GetXY()
+		tank.GetTracker().Manager = location
+		tank.GetTracker().Update(x, y, w, h)
+		newIndexX, newIndexY = tank.GetTracker().GetIndexes()
+		log.Printf("x index  %d %d \n", newIndexX, 10)
+		log.Printf("y index  %d %d \n", newIndexY, 10)
+		tank.GetClBody().Move(pos.X + 3, pos.Y + 3) //смещение по меньшей оси
+		x, y = tank.GetXY()
+		tank.GetTracker().Manager = location
+		tank.GetTracker().Update(x, y, w, h)
+		newIndexX, newIndexY = tank.GetTracker().GetIndexes()
+		log.Printf("x index  %d %d \n", newIndexX, 10)
+		log.Printf("y index  %d %d \n", newIndexY, 10)
+
+		os.Exit(0)*/
 
 	for {
 		select {

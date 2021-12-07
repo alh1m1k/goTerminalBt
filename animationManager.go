@@ -8,8 +8,9 @@ import (
 var globalAnimationManager *AnimationManager //for now, before blueprints
 
 type AnimationManager struct {
-	queue []*Animation
-	mutex sync.Mutex
+	queue        []*Animation
+	mutex        sync.Mutex
+	total, empty int64
 }
 
 func (receiver *AnimationManager) Add(object *Animation) {
@@ -25,9 +26,30 @@ func (receiver *AnimationManager) Remove(object *Animation) {
 		if object == candidate {
 			receiver.queue[indx] = nil
 			object.Manager = nil
+			object.Spriteer = ErrorSprite //to visible show unmanaged but rendered animation
 		}
 	}
 	receiver.mutex.Unlock()
+}
+
+func (receiver *AnimationManager) Compact() {
+	i, j := 0, 0
+	for i < len(receiver.queue) {
+		if receiver.queue[i] == nil {
+			//
+		} else {
+			receiver.queue[j] = receiver.queue[i]
+			j++
+		}
+		i++
+	}
+	receiver.queue = receiver.queue[0 : j+1]
+	receiver.total = int64(len(receiver.queue))
+	receiver.empty = 0
+}
+
+func (receiver *AnimationManager) NeedCompact() bool {
+	return receiver.total > 100 && receiver.empty > 0 && receiver.total/receiver.empty < 2
 }
 
 func (receiver *AnimationManager) Execute(timeLeft time.Duration) {

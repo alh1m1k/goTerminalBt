@@ -58,7 +58,6 @@ func (receiver *ClBody) Resize(w, h float64) {
 			panic("unable dynamic resize clBody")
 		}
 	}
-	logger.Println(receiver, w, h)
 	receiver.w = w
 	receiver.h = h
 }
@@ -73,6 +72,10 @@ func (receiver *ClBody) GetWH() (w float64, h float64) {
 
 func (receiver *ClBody) GetRect() (x float64, y float64, w float64, h float64) {
 	return receiver.x, receiver.y, receiver.w, receiver.h
+}
+
+func (receiver *ClBody) GetCenter() (float64, float64) {
+	return receiver.x + receiver.w/2, receiver.y + receiver.h/2
 }
 
 func (receiver *ClBody) Copy() *ClBody {

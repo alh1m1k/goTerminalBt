@@ -87,7 +87,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 	switch dType {
 	case jsonparser.String:
 		//todo rename
-		stateObj, err = GetTankState(string(stateCfg))
+		stateObj, err = GetUnitState(string(stateCfg))
 		collector.Add(err)
 	case jsonparser.Object:
 		if loader := get("state"); loader != nil {
@@ -144,7 +144,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		}
 		co, err = NewControlledObject(control, nil)
 		if !collector.Add(err) {
-			unit, err = NewUnit2(co, oo, motionObj, stateObj)
+			unit, err = NewUnit(co, oo, motionObj, stateObj)
 			unit.ObservableObject.Owner = unit
 		}
 		if !collector.Add(err) {
@@ -200,7 +200,7 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 	switch dType {
 	case jsonparser.String:
 		//todo rename
-		stateObj, err = GetTankState(string(stateCfg))
+		stateObj, err = GetUnitState(string(stateCfg))
 		collector.Add(err)
 	case jsonparser.Object:
 		if loader := get("state"); loader != nil {
@@ -229,7 +229,7 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 	oo, err = NewObservableObject(output, nil)
 
 	if !collector.Add(err) {
-		wall, err = NewWall2(*object, stateObj, oo)
+		wall, err = NewWall(*object, stateObj, oo)
 		wall.ObservableObject.Owner = wall
 		collector.Add(err)
 	}
@@ -277,7 +277,7 @@ func CollectableLoader(get LoaderGetter, collector *LoadErrors, payload []byte) 
 	switch dType {
 	case jsonparser.String:
 		//todo rename
-		stateObj, err = GetTankState(string(stateCfg))
+		stateObj, err = GetUnitState(string(stateCfg))
 		collector.Add(err)
 	case jsonparser.Object:
 		if loader := get("state"); loader != nil {
@@ -346,7 +346,7 @@ func ExplosionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 		switch dType {
 		case jsonparser.String:
 			//todo rename
-			stateObj, err = GetTankState(string(stateCfg))
+			stateObj, err = GetUnitState(string(stateCfg))
 			collector.Add(err)
 		case jsonparser.Object:
 			if loader := get("state"); loader != nil {
@@ -425,7 +425,7 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, payload []byte) i
 	switch dType {
 	case jsonparser.String:
 		//todo rename
-		stateObj, err = GetTankState(string(stateCfg))
+		stateObj, err = GetUnitState(string(stateCfg))
 		collector.Add(err)
 	case jsonparser.Object:
 		if loader := get("state"); loader != nil {
@@ -519,7 +519,7 @@ func MotionObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte)
 				}
 				_, spdMin, _, _ := jsonparser.Get(payload, "speed", "min")
 				_, spdMax, _, _ := jsonparser.Get(payload, "speed", "max")
-				object, err = NewMotionObject2(obj.(*Object), config.Direction, Point{
+				object, err = NewMotionObject(obj.(*Object), config.Direction, Point{
 					X: config.Speed.Min,
 					Y: config.Speed.Min,
 				})
@@ -686,6 +686,11 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 		zIndex, err := jsonparser.GetInt(payload, "zIndex")
 		if err != nil {
 			object.zIndex = int(zIndex)
+		}
+
+		if object.HasTag("tracked") {
+			object.Tracker, err = NewTracker()
+			collector.Add(err)
 		}
 	}
 

@@ -12,7 +12,7 @@ type ControlledObjectInterface interface {
 }
 
 type ControlledObject struct {
-	Owner             ControlledObjectInterface
+	Owner            ControlledObjectInterface
 	dispatcherEnable bool
 	*controller.Control
 	terminator chan bool
@@ -62,8 +62,8 @@ func (receiver *ControlledObject) Copy() *ControlledObject {
 func NewControlledObject(cmd *controller.Control, owner ControlledObjectInterface) (*ControlledObject, error) {
 	instance := new(ControlledObject)
 
-	instance.Owner 		= owner
-	instance.Control 	= cmd
+	instance.Owner = owner
+	instance.Control = cmd
 
 	return instance, nil
 }
@@ -87,4 +87,3 @@ func coCmdDispatcher(object ControlledObjectInterface, cmdEvents <-chan controll
 		}
 	}
 }
-

@@ -82,7 +82,7 @@ func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 		return nil, err
 	}
 	spawn := make([]*SpawnRequest, 0, tankCnt+wallCnt)
-	blList := []string{"tank", "tank", "tank", "tank-fast", "tank-fast", "tank-fast", "tank-heavy", "tank-sneaky", "tank-sneaky"}
+	blList := []string{"tank" /*"tank", "tank", "tank-fast", "tank-fast", "tank-fast", "tank-heavy", "tank-sneaky", "tank-sneaky"*/}
 	for i := 0; i < tankCnt; i++ {
 		spawn = append(spawn, &SpawnRequest{
 			Location:  PosAuto,
@@ -121,6 +121,107 @@ func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 			"opel",
 			"gun",
 			"water",
+			"wall",
+		},
+		Spawn:  spawn,
+		Screen: nil,
+	})
+	scenario.State.root.items["start"] = start
+
+	return scenario, nil
+}
+
+func NewCollisionDemoScenario(tankCnt int, wallCnt int) (*Scenario, error) {
+	scenario, err := NewScenario()
+	if err != nil {
+		return nil, err
+	}
+	spawn := make([]*SpawnRequest, 0, tankCnt+wallCnt)
+
+	zXPoint := float64(104)
+	zYPoint := float64(24)
+	wallW := 8.0 * gameConfig.ColWidth
+	wallH := 4.0 * gameConfig.RowHeight
+	spawn = append(spawn, &SpawnRequest{
+		Location: Point{
+			X: zXPoint,
+			Y: zYPoint,
+		},
+		Blueprint: "wall",
+		Team:      100,
+	}, &SpawnRequest{
+		Location: Point{
+			X: zXPoint + wallW*2,
+			Y: zYPoint,
+		},
+		Blueprint: "wall",
+		Team:      100,
+	}, &SpawnRequest{
+		Location: Point{
+			X: zXPoint,
+			Y: zYPoint + wallH*2,
+		},
+		Blueprint: "wall",
+		Team:      100,
+	}, &SpawnRequest{
+		Location: Point{
+			X: zXPoint + wallW*2,
+			Y: zYPoint + wallH*2,
+		},
+		Blueprint: "wall",
+		Team:      100,
+	},
+		&SpawnRequest{
+			Location: Point{
+				X: zXPoint + wallW*3,
+				Y: zYPoint + wallH*2,
+			},
+			Blueprint: "wall",
+			Team:      100,
+		},
+		&SpawnRequest{
+			Location: Point{
+				X: zXPoint + wallW*4,
+				Y: zYPoint + wallH*2,
+			},
+			Blueprint: "wall",
+			Team:      100,
+		},
+		&SpawnRequest{
+			Location: Point{
+				X: zXPoint + wallW*4,
+				Y: zYPoint + wallH*1,
+			},
+			Blueprint: "wall",
+			Team:      100,
+		},
+		&SpawnRequest{
+			Location: Point{
+				X: zXPoint + wallW*4,
+				Y: zYPoint + 0,
+			},
+			Blueprint: "wall",
+			Team:      100,
+		},
+	)
+
+	start, _ := NewStateItem(scenario.State.root, &ScenarioStateInfo{
+		Declare: []string{
+			"player-tank",
+			"tank",
+			"tank-base-explosion",
+			"tank-base-projectile",
+			"tank-base-projectile-he",
+			"tank-base-projectile-rail",
+			"tank-base-projectile-flak",
+			"tank-special-projectile-smoke",
+			"tank-special-smokescreen-1",
+			"tank-special-smokescreen-2",
+			"tank-base-projectile-fanout",
+			"projectile-sharp",
+			"tank-base-projectile-apocalypse",
+			"projectile-sharp-apoc-start",
+			"projectile-sharp-apoc-end",
 			"wall",
 		},
 		Spawn:  spawn,

@@ -105,8 +105,9 @@ func (receiver *Wall) Copy() *Wall {
 	return &instance
 }
 
-func NewWall2(obj Object, state *State, obs *ObservableObject) (*Wall, error) {
+func NewWall(obj Object, state *State, obs *ObservableObject) (*Wall, error) {
 	instance := new(Wall)
+
 	instance.Object = obj
 	instance.ObservableObject = obs
 	instance.ObservableObject.Owner = instance

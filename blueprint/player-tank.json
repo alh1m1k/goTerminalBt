@@ -195,6 +195,7 @@
     "highlights-appear": true,
     "player": true,
     "scored": true,
-    "vulnerable": true
+    "vulnerable": true,
+    "tracked": true
   }
 }

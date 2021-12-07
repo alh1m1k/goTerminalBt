@@ -45,16 +45,18 @@ func (receiver *WeatherEffect) Update(timeLeft time.Duration) error {
 		return nil
 	}
 
+	tf := float64(timeLeft) / float64(time.Second)
+
 	if receiver.Point.X <= 0 {
 		receiver.Point.X = float64(receiver.MaxW)
 	} else {
-		receiver.Point.X = receiver.Point.X - float64(receiver.speed/float64(TIME_FACTOR))
+		receiver.Point.X = receiver.Point.X - float64(receiver.speed)*tf
 	}
 
 	if receiver.Point.Y >= float64(receiver.MaxH) {
 		receiver.Point.Y = 0
 	} else {
-		receiver.Point.Y = receiver.Point.Y + float64(receiver.speed/float64(TIME_FACTOR))
+		receiver.Point.Y = receiver.Point.Y + float64(receiver.speed)*tf
 	}
 
 	receiver.Duration -= timeLeft

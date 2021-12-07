@@ -27,6 +27,12 @@ type Accelerator interface {
 	GetMinSpeed() *Point
 }
 
+type MotionObjectInterface interface {
+	ObjectInterface
+	Motioner
+	Accelerator
+}
+
 type MotionObject struct {
 	*Object
 	Move
@@ -36,6 +42,7 @@ type MotionObject struct {
 	MinSpeed          Point
 	MaxSpeed          Point
 	currAccelDuration time.Duration
+	alignToGrid       bool
 	accelerate        bool
 }
 
@@ -46,10 +53,12 @@ func (receiver *MotionObject) Update(timeLeft time.Duration) error {
 	receiver.Object.Update(timeLeft)
 
 	if receiver.moving {
-		receiver.collision.RelativeMove(
-			receiver.Move.Direction.X*receiver.Move.Speed.X/float64(TIME_FACTOR),
-			receiver.Move.Direction.Y*receiver.Move.Speed.Y/float64(TIME_FACTOR),
-		)
+
+		deltaX := receiver.Move.Direction.X * receiver.Move.Speed.X * (float64(timeLeft) / float64(time.Second))
+		deltaY := receiver.Move.Direction.Y * receiver.Move.Speed.Y * (float64(timeLeft) / float64(time.Second))
+
+		receiver.collision.RelativeMove(deltaX, deltaY)
+
 		if receiver.AccelDuration > 0 {
 			fraction := receiver.AccelTimeFunc(float64(receiver.currAccelDuration) / float64(receiver.AccelDuration))
 			receiver.Move.Speed.X = receiver.MinSpeed.X + ((receiver.MaxSpeed.X - receiver.MinSpeed.X) * fraction)
@@ -113,8 +122,7 @@ func (receiver *MotionObject) Copy() *MotionObject {
 	return &instance
 }
 
-func NewMotionObject(s Spriteer, c *collider.ClBody, direction Point, speed Point) (*MotionObject, error) {
-	obj, _ := NewObject(s, c)
+func NewMotionObject(obj *Object, direction Point, speed Point) (*MotionObject, error) {
 	instance := MotionObject{
 		Object: obj,
 		Move: Move{
@@ -128,24 +136,7 @@ func NewMotionObject(s Spriteer, c *collider.ClBody, direction Point, speed Poin
 		currAccelDuration: 0,
 		accelerate:        true,
 		moving:            false,
-	}
-	return &instance, nil
-}
-
-func NewMotionObject2(obj *Object, direction Point, speed Point) (*MotionObject, error) {
-	instance := MotionObject{
-		Object: obj,
-		Move: Move{
-			Speed:     speed,
-			Direction: direction,
-		},
-		MinSpeed:          speed,
-		MaxSpeed:          speed,
-		AccelTimeFunc:     LinearTimeFunction,
-		AccelDuration:     0,
-		currAccelDuration: 0,
-		accelerate:        true,
-		moving:            false,
+		alignToGrid:       false,
 	}
 	return &instance, nil
 }
