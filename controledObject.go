@@ -14,8 +14,8 @@ type ControlledObjectInterface interface {
 type ControlledObject struct {
 	Owner            ControlledObjectInterface
 	dispatcherEnable bool
-	*controller.Control
-	terminator chan bool
+	Control          controller.Controller
+	terminator       chan bool
 }
 
 func (receiver *ControlledObject) Execute(command controller.Command) error {
@@ -29,6 +29,7 @@ func (receiver *ControlledObject) Execute(command controller.Command) error {
 }
 
 func (receiver *ControlledObject) deactivate() error {
+	receiver.Control.Disable()
 	if receiver.dispatcherEnable {
 		close(receiver.terminator)
 	}
@@ -43,9 +44,10 @@ func (receiver *ControlledObject) activate() error {
 			return CommandChanelNotFoundError
 		}
 		receiver.terminator = make(chan bool)
-		go coCmdDispatcher(receiver, receiver.GetCommandChanel(), receiver.terminator)
+		go coCmdDispatcher(receiver, receiver.Control.GetCommandChanel(), receiver.terminator)
 	}
 	receiver.dispatcherEnable = true
+	receiver.Control.Enable()
 	return nil
 }
 
@@ -59,11 +61,12 @@ func (receiver *ControlledObject) Copy() *ControlledObject {
 	return &instance
 }
 
-func NewControlledObject(cmd *controller.Control, owner ControlledObjectInterface) (*ControlledObject, error) {
+func NewControlledObject(cmd controller.Controller, owner ControlledObjectInterface) (*ControlledObject, error) {
 	instance := new(ControlledObject)
 
 	instance.Owner = owner
 	instance.Control = cmd
+	instance.dispatcherEnable = false
 
 	return instance, nil
 }

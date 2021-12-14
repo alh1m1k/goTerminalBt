@@ -38,8 +38,8 @@ type CalibrationObject struct {
 func (receiver *CalibrationObject) Update(timeLeft time.Duration) error {
 	if receiver.moving {
 		receiver.GetClBody().RelativeMove(
-			receiver.Move.Direction.X*receiver.Move.Speed.X*(float64(timeLeft)/float64(time.Second)),
-			receiver.Move.Direction.Y*receiver.Move.Speed.Y*(float64(timeLeft)/float64(time.Second)),
+			receiver.Moving.Direction.X*receiver.Moving.Speed.X*(float64(timeLeft)/float64(time.Second)),
+			receiver.Moving.Direction.Y*receiver.Moving.Speed.Y*(float64(timeLeft)/float64(time.Second)),
 		)
 	}
 	receiver.moving = false
@@ -48,18 +48,20 @@ func (receiver *CalibrationObject) Update(timeLeft time.Duration) error {
 
 func (receiver *CalibrationObject) Execute(command controller.Command) error {
 
-	receiver.moving = command.Move
+	if command.CType == controller.CTYPE_DIRECTION || command.CType == controller.CTYPE_MOVE {
+		receiver.moving = command.Action
+	}
 
-	if command.Direction.X != command.Direction.Y {
-		receiver.Move.Direction.X = command.Direction.X
-		receiver.Move.Direction.Y = command.Direction.Y
-		receiver.Move.Direction.X = math.Max(math.Min(receiver.Move.Direction.X, 1), -1)
-		receiver.Move.Direction.Y = math.Max(math.Min(receiver.Move.Direction.Y, 1), -1)
+	if command.Pos.X != command.Pos.Y {
+		receiver.Moving.Direction.X = command.Pos.X
+		receiver.Moving.Direction.Y = command.Pos.Y
+		receiver.Moving.Direction.X = math.Max(math.Min(receiver.Moving.Direction.X, 1), -1)
+		receiver.Moving.Direction.Y = math.Max(math.Min(receiver.Moving.Direction.Y, 1), -1)
 	} else {
 		//invalid direction
 	}
 
-	if command.Fire {
+	if command.CType == controller.CTYPE_FIRE && command.Action {
 		receiver.moving = false
 		receiver.Calibrate()
 	}

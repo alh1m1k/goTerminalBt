@@ -5,6 +5,10 @@ type Center struct {
 	Y float64
 }
 
+type IndexTracker interface {
+	OnIndexUpdate(tracker *Tracker)
+}
+
 //todo refactor
 
 type Tracker struct {
@@ -14,6 +18,7 @@ type Tracker struct {
 	lastX, lastY, lastW, lastH float64
 	Manager                    *Location
 	IsNeedUpdateZone           bool
+	subscribers                []IndexTracker
 }
 
 func (receiver *Tracker) Update(x, y, w, h float64) bool {
@@ -28,11 +33,18 @@ func (receiver *Tracker) Update(x, y, w, h float64) bool {
 		return false
 	}
 
+	if receiver.cell.X == receiver.cell.Y && receiver.cell.X == 0 {
+		receiver.MoveTo(x, y)
+		return true
+	}
+
 	dist := getDistance(x+w/2, y+h/2, receiver.cell.X, receiver.cell.Y)
 	//NearestPos check distance < half size (math.round) fix that this
 	if dist > receiver.maxDistance {
 		receiver.MoveTo(x, y)
 		return true
+	} else {
+
 	}
 	return false
 }
@@ -59,6 +71,7 @@ func (receiver *Tracker) MoveTo(x, y float64) error {
 		receiver.xIndex = xi
 		receiver.yIndex = yi
 		receiver.IsNeedUpdateZone = true
+		go receiver.indexUpdate()
 	} else {
 		logger.Println(err)
 		return err
@@ -70,13 +83,35 @@ func (receiver *Tracker) GetIndexes() (int, int) {
 	return receiver.xIndex, receiver.yIndex
 }
 
+func (receiver *Tracker) GetZone() Zone {
+	return Zone{X: receiver.xIndex, Y: receiver.yIndex}
+}
+
 func (receiver *Tracker) Copy() *Tracker {
 	instance := *receiver
 	return &instance
 }
 
-func (receiver *Tracker) OnIndexUpdate(newCenter *Center, newX, newY int64) {
+func (receiver *Tracker) indexUpdate() {
+	//todo make simpler
+	for _, subscriber := range receiver.subscribers {
+		if subscriber == nil {
+			continue
+		}
+		subscriber.OnIndexUpdate(receiver)
+	}
+}
 
+func (receiver *Tracker) Subscribe(subscriber IndexTracker) {
+	receiver.subscribers = append(receiver.subscribers, subscriber)
+}
+
+func (receiver *Tracker) Unsubscribe(subscriber IndexTracker) {
+	for index, candidate := range receiver.subscribers {
+		if subscriber == candidate {
+			receiver.subscribers[index] = nil
+		}
+	}
 }
 
 func NewTracker() (*Tracker, error) {

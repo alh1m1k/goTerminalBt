@@ -10,11 +10,13 @@ import (
 type GPipeline struct {
 	*Updater
 	*collider.Collider
+	*Visioner
 	Render Renderer
 	*SpawnManager
 	*AnimationManager
 	*EffectManager
 	*Location
+	*Navigation
 	stage    int64
 	pipe     chan int64
 	ret      chan bool
@@ -72,6 +74,16 @@ func (receiver *GPipeline) doMap() {
 	receiver.pipe <- 1
 }
 
+func (receiver *GPipeline) doVision() {
+	receiver.Visioner.Execute(receiver.timeLeft)
+	receiver.pipe <- 1
+}
+
+func (receiver *GPipeline) doNav() {
+	receiver.Navigation.Execute(receiver.timeLeft)
+	receiver.pipe <- 1
+}
+
 func (receiver *GPipeline) doSpawn() {
 	receiver.SpawnManager.Execute(receiver.timeLeft)
 	receiver.pipe <- 1
@@ -101,17 +113,19 @@ func plDispatcher(pl *GPipeline) {
 			switch stage {
 			case 1:
 				go pl.doUpdate()
-				go pl.doCollect()
+				go pl.doNav()
 			case 3:
-				go pl.doAnimate()
-				go pl.doCollide()
-			case 5:
-				go pl.doRender()
-				go pl.doMap()
-			case 7:
 				go pl.doSpawn()
+				go pl.doAnimate()
+			case 5:
+				go pl.doCollide()
 				go pl.doEffect()
-			case 9:
+				go pl.doCollect()
+			case 8:
+				go pl.doRender()
+				go pl.doVision()
+				go pl.doMap()
+			case 11:
 				pl.ret <- true
 			}
 		}

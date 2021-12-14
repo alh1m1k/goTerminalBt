@@ -9,16 +9,16 @@ import (
 )
 
 var LoaderNotFoundError = errors.New("loader not found")
-var ParseError 			= errors.New("invalid json value")
-var PrototypeError 		= errors.New("unable to copy from prototype")
-var InstanceError 		= errors.New("unable to instance object")
+var ParseError = errors.New("invalid json value")
+var PrototypeError = errors.New("unable to copy from prototype")
+var InstanceError = errors.New("unable to instance object")
 
 type loadError struct {
-	path   string
-	err    error
+	path string
+	err  error
 }
 
-func (receiver loadError) Error() string  {
+func (receiver loadError) Error() string {
 	return fmt.Sprintf("\"%s\" at path %s", receiver.err, receiver.path)
 }
 
@@ -31,7 +31,7 @@ type LoadErrors struct {
 	t []string //trace
 }
 
-func (receiver *LoadErrors) HasError() bool  {
+func (receiver *LoadErrors) HasError() bool {
 	if len(receiver.e) > 0 {
 		return true
 	} else {
@@ -39,7 +39,7 @@ func (receiver *LoadErrors) HasError() bool  {
 	}
 }
 
-func (receiver *LoadErrors) Error() string  {
+func (receiver *LoadErrors) Error() string {
 	var s []string
 	for _, err := range receiver.e {
 		s = append(s, err.Error()) // Конвертирует ошибки в строки
@@ -48,7 +48,7 @@ func (receiver *LoadErrors) Error() string  {
 }
 
 //add and check error non null
-func (receiver *LoadErrors) Add(error error)  bool  {
+func (receiver *LoadErrors) Add(error error) bool {
 	if error != nil {
 		var sl []string
 		if len(receiver.t) > 1 {
@@ -66,29 +66,29 @@ func (receiver *LoadErrors) Add(error error)  bool  {
 	return false
 }
 
-func (receiver *LoadErrors) tracePush(p string)  {
+func (receiver *LoadErrors) tracePush(p string) {
 	receiver.t = append(receiver.t, p)
 }
 
 func (receiver *LoadErrors) tracePop() string {
 	v := receiver.t[len(receiver.t)-1]
-	receiver.t = receiver.t[0:len(receiver.t)-1]
+	receiver.t = receiver.t[0 : len(receiver.t)-1]
 	return v
 }
 
 func newLoadErrors() (*LoadErrors, error) {
-	instance   := new(LoadErrors)
-	instance.e	= make([]error, 0)
-	instance.t 	= make([]string, 0)
+	instance := new(LoadErrors)
+	instance.e = make([]error, 0)
+	instance.t = make([]string, 0)
 	return instance, nil
 }
 
-type ObjectGetter 	func(blueprint string) interface{} //todo simplify loader by this getter ie encapsulate loader acquire and it's call
-type LoaderGetter 	func(blueprint string) Loader
-type Loader 		func(get LoaderGetter, eCollector *LoadErrors,  payload []byte) interface{}
-type Builder 		func() interface{}
+type ObjectGetter func(blueprint string) interface{} //todo simplify loader by this getter ie encapsulate loader acquire and it's call
+type LoaderGetter func(blueprint string) Loader
+type Loader func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{}
+type Builder func() interface{}
 
-type FileBuf struct{
+type FileBuf struct {
 	buf []byte
 	err error
 }
@@ -99,13 +99,13 @@ type BlueprintManager struct {
 	FilePool      map[string]*FileBuf
 	FilePath      string
 	FileExtension string
-	loaders       map[string] Loader
-	proto         map[string] ObjectInterface
-	protoShadow   map[string] ObjectInterface
+	loaders       map[string]Loader
+	proto         map[string]ObjectInterface
+	protoShadow   map[string]ObjectInterface
 	m             sync.Mutex
 }
 
-func (receiver *BlueprintManager) Get(blueprint string) (ObjectInterface, error)  {
+func (receiver *BlueprintManager) Get(blueprint string) (ObjectInterface, error) {
 	if object, ok := receiver.proto[blueprint]; ok {
 		return receiver.copy(object)
 	}
@@ -122,15 +122,16 @@ func (receiver *BlueprintManager) Get(blueprint string) (ObjectInterface, error)
 			return nil, collector
 		} else {
 			if object, ok := stuff.(ObjectInterface); ok {
+				object.GetAttr().Blueprint = blueprint
 				object = receiver.postProcess(object, collector)
 
 				//add object to map without lock
-/*				receiver.protoShadow[blueprint] = object
-				pShadow := unsafe.Pointer(&receiver.protoShadow)
-				pProto 	:= unsafe.Pointer(&receiver.proto)
-				pShadow  = atomic.SwapPointer(&pProto, pShadow)
-				receiver.proto = *(*map[string] ObjectInterface)(pProto)
-				receiver.protoShadow = *(*map[string] ObjectInterface)(pShadow)*/
+				/*				receiver.protoShadow[blueprint] = object
+								pShadow := unsafe.Pointer(&receiver.protoShadow)
+								pProto 	:= unsafe.Pointer(&receiver.proto)
+								pShadow  = atomic.SwapPointer(&pProto, pShadow)
+								receiver.proto = *(*map[string] ObjectInterface)(pProto)
+								receiver.protoShadow = *(*map[string] ObjectInterface)(pShadow)*/
 
 				receiver.protoShadow[blueprint] = object
 				receiver.proto, receiver.protoShadow = receiver.protoShadow, receiver.proto
@@ -155,7 +156,7 @@ func (receiver *BlueprintManager) Get(blueprint string) (ObjectInterface, error)
 	return nil, LoaderNotFoundError
 }
 
-func (receiver *BlueprintManager) CreateBuilder(blueprint string) (Builder, error)  {
+func (receiver *BlueprintManager) CreateBuilder(blueprint string) (Builder, error) {
 	object, err := receiver.Get(blueprint)
 	if object == nil { //may be error even on success
 		if err != nil {
@@ -181,11 +182,11 @@ func (receiver *BlueprintManager) AddLoaderPackage(p *Package) {
 	for blueprint, loader := range p.M {
 		receiver.loaders[blueprint] = receiver.wrapLoader(loader, blueprint)
 	}
-	receiver.FilePath 		= p.FilePath
-	receiver.FileExtension 	= p.FileExtension
+	receiver.FilePath = p.FilePath
+	receiver.FileExtension = p.FileExtension
 }
 
-func (receiver *BlueprintManager) wrapLoader(loader Loader, blueprint string) Loader  {
+func (receiver *BlueprintManager) wrapLoader(loader Loader, blueprint string) Loader {
 	return func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{} {
 		eCollector.tracePush(blueprint) //trace wrapper
 		ret := loader(get, eCollector, payload)
@@ -194,13 +195,13 @@ func (receiver *BlueprintManager) wrapLoader(loader Loader, blueprint string) Lo
 	}
 }
 
-func (receiver *BlueprintManager) postProcess(object ObjectInterface, collector *LoadErrors) ObjectInterface  {
+func (receiver *BlueprintManager) postProcess(object ObjectInterface, collector *LoadErrors) ObjectInterface {
 	if object == nil {
 		return nil
 	}
 	if object.GetAttr().Collided {
 		w, h := object.GetClBody().GetWH()
-		object.GetClBody().Resize(w * receiver.GameConfig.ColWidth, h * receiver.GameConfig.RowHeight)
+		object.GetClBody().Resize(w*receiver.GameConfig.ColWidth, h*receiver.GameConfig.RowHeight)
 	}
 	if object.GetAttr().Motioner { //todo simplify //todo move to render
 		proxy := object.(Motioner)
@@ -216,7 +217,7 @@ func (receiver *BlueprintManager) postProcess(object ObjectInterface, collector 
 
 func (receiver *BlueprintManager) load(id string) ([]byte, error) {
 	if content, ok := receiver.FilePool[id]; !ok {
-		buf, err := os.ReadFile(receiver.FilePath + "/" + id + "." +  receiver.FileExtension)
+		buf, err := os.ReadFile(receiver.FilePath + "/" + id + "." + receiver.FileExtension)
 		receiver.FilePool[id] = &FileBuf{
 			buf: buf,
 			err: err,
@@ -236,34 +237,39 @@ func (receiver *BlueprintManager) copy(object ObjectInterface) (ObjectInterface,
 	case *Unit:
 		unit := object.(*Unit).Copy()
 		unit.Prototype = object
+		unit.GetAttr().ID = genId()
 		return unit, nil
 	case *Wall:
 		wall := object.(*Wall).Copy()
 		wall.Prototype = object
+		wall.GetAttr().ID = genId()
 		return wall, nil
 	case *Projectile:
 		projectile := object.(*Projectile).Copy()
 		projectile.Prototype = object
+		projectile.GetAttr().ID = genId()
 		return projectile, nil
 	case *Explosion:
 		explosion := object.(*Explosion).Copy()
 		explosion.Prototype = object
+		explosion.GetAttr().ID = genId()
 		return explosion, nil
 	case *Collectable:
 		collectable := object.(*Collectable).Copy()
 		collectable.Prototype = object
+		collectable.GetAttr().ID = genId()
 		return collectable, nil
 	}
 	return nil, PrototypeError
 }
 
-func NewBlueprintManager() (*BlueprintManager, error)  {
+func NewBlueprintManager() (*BlueprintManager, error) {
 	instance := new(BlueprintManager)
 
-	instance.FilePool 	= make(map[string] *FileBuf)
-	instance.loaders 	= make(map[string] Loader)
-	instance.proto 			= make(map[string] ObjectInterface)
-	instance.protoShadow 	= make(map[string] ObjectInterface)
+	instance.FilePool = make(map[string]*FileBuf)
+	instance.loaders = make(map[string]Loader)
+	instance.proto = make(map[string]ObjectInterface)
+	instance.protoShadow = make(map[string]ObjectInterface)
 
 	instance.AddLoader("eventChanel", func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{} {
 		return instance.EventChanel
@@ -274,5 +280,3 @@ func NewBlueprintManager() (*BlueprintManager, error)  {
 
 	return instance, nil
 }
-
-

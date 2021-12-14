@@ -43,17 +43,17 @@ func (receiver *Collectable) Update(timeLeft time.Duration) error {
 	return nil
 }
 
-func (receiver *Collectable) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
+func (receiver *Collectable) OnTickCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
 
 }
 
-func (receiver *Collectable) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
+func (receiver *Collectable) OnStartCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
 	if object.HasTag("tank") {
 		receiver.Collect(object.(*Unit))
 	}
 }
 
-func (receiver *Collectable) OnStopCollide(object collider.Collideable, duration time.Duration) {
+func (receiver *Collectable) OnStopCollide(object collider.Collideable, duration time.Duration, owner *collider.Interactions) {
 
 }
 

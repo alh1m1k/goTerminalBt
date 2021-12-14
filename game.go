@@ -146,6 +146,25 @@ func (receiver *Game) onUnitDamage(object ObjectInterface, payload interface{}) 
 	}
 }
 
+func (receiver *Game) onUnitOnSight(object ObjectInterface, payload interface{}) {
+	/*	if object.HasTag("highlights-appear") {
+		object.(Stater).Enter("appear")
+		delayedEnterState(object.(Stater), "normal", object.(Appearable).GetAppearDuration())
+	}*/
+	receiver.SpawnExplosion2(PosAuto, "effect-onsight", payload.(ObjectInterface))
+	payload.(*Unit).Control.(*BehaviorControl).See(object.(*Unit))
+}
+
+func (receiver *Game) onUnitOffSight(object ObjectInterface, payload interface{}) {
+	/*	if object.HasTag("highlights-appear") {
+		object.(Stater).Enter("appear")
+		delayedEnterState(object.(Stater), "normal", object.(Appearable).GetAppearDuration())
+	}*/
+
+	receiver.SpawnExplosion2(PosAuto, "effect-offsight", payload.(ObjectInterface))
+	payload.(*Unit).Control.(*BehaviorControl).UnSee(object.(*Unit))
+}
+
 func (receiver *Game) onObjectReset(object ObjectInterface, payload interface{}) {
 	/*	if object.HasTag("highlights-appear") {
 		object.(Stater).Enter("appear")
@@ -367,10 +386,14 @@ func gameCmdDispatcher(instance *Game, unitEvent EventChanel, terminator <-chan 
 				logger.Printf("receive Game event %d, %+v", event.EType, event.Object)
 			}
 			switch event.EType {
-			case TANK_EVENT_FIRE:
+			case UNIT_EVENT_FIRE:
 				go instance.onUnitFire(event.Object.(*Unit), event.Payload)
-			case TANK_EVENT_DAMADGE:
+			case UNIT_EVENT_DAMAGE:
 				go instance.onUnitDamage(event.Object.(ObjectInterface), event.Payload)
+			case UNIT_EVENT_ONSIGTH:
+				go instance.onUnitOnSight(event.Object.(ObjectInterface), event.Payload)
+			case UNIT_EVENT_OFFSIGTH:
+				go instance.onUnitOffSight(event.Object.(ObjectInterface), event.Payload)
 			case OBJECT_EVENT_DESTROY:
 				go instance.onObjectDestroy(event.Object.(ObjectInterface), event.Payload)
 			case OBJECT_EVENT_DESPAWN:

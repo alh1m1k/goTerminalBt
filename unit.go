@@ -9,16 +9,28 @@ import (
 	"time"
 )
 
-const TANK_EVENT_FIRE = 100
-const TANK_EVENT_DAMADGE = 101
+const UNIT_EVENT_FIRE = 100
+const UNIT_EVENT_DAMAGE = 101
+const UNIT_EVENT_ONSIGTH = 102
+const UNIT_EVENT_OFFSIGTH = 103
 
 var FireEvent Event = Event{
-	EType:   TANK_EVENT_FIRE,
+	EType:   UNIT_EVENT_FIRE,
 	Payload: nil,
 }
 
 var DamadgeEvent Event = Event{
-	EType:   TANK_EVENT_DAMADGE,
+	EType:   UNIT_EVENT_DAMAGE,
+	Payload: nil,
+}
+
+var OnSightEvent Event = Event{
+	EType:   UNIT_EVENT_ONSIGTH,
+	Payload: nil,
+}
+
+var OffSightEvent Event = Event{
+	EType:   UNIT_EVENT_OFFSIGTH,
 	Payload: nil,
 }
 
@@ -33,37 +45,43 @@ type Unit struct {
 	*MotionObject
 	*State
 	*Gun
-	HP, FullHP, Score int
-	projectile        string
+	vision             *collider.ClBody
+	VisionInteractions *collider.Interactions
+	HP, FullHP, Score  int
+	projectile         string
 }
 
 func (receiver *Unit) Execute(command controller.Command) error {
 
-	receiver.moving = command.Move
-
-	if command.Direction.X != command.Direction.Y {
-		receiver.Move.Direction.X = command.Direction.X
-		receiver.Move.Direction.Y = command.Direction.Y
-		receiver.Move.Direction.X = math.Max(math.Min(receiver.Move.Direction.X, 1), -1)
-		receiver.Move.Direction.Y = math.Max(math.Min(receiver.Move.Direction.Y, 1), -1)
-	} else {
-		//invalid direction
+	if command.CType == controller.CTYPE_DIRECTION || command.CType == controller.CTYPE_MOVE {
+		receiver.moving = command.Action
 	}
 
-	if receiver.Move.Direction.X > 0 {
+	if command.CType == controller.CTYPE_DIRECTION {
+		if command.Pos.X != command.Pos.Y {
+			receiver.Moving.Direction.X = command.Pos.X
+			receiver.Moving.Direction.Y = command.Pos.Y
+			receiver.Moving.Direction.X = math.Max(math.Min(receiver.Moving.Direction.X, 1), -1)
+			receiver.Moving.Direction.Y = math.Max(math.Min(receiver.Moving.Direction.Y, 1), -1)
+		} else {
+			//invalid direction
+		}
+	}
+
+	if receiver.Moving.Direction.X > 0 {
 		receiver.Enter("right")
 	}
-	if receiver.Move.Direction.X < 0 {
+	if receiver.Moving.Direction.X < 0 {
 		receiver.Enter("left")
 	}
-	if receiver.Move.Direction.Y < 0 {
+	if receiver.Moving.Direction.Y < 0 {
 		receiver.Enter("top")
 	}
-	if receiver.Move.Direction.Y > 0 {
+	if receiver.Moving.Direction.Y > 0 {
 		receiver.Enter("bottom")
 	}
 
-	if command.Fire {
+	if command.CType == controller.CTYPE_FIRE && command.Action {
 		err := receiver.Gun.Fire()
 		if errors.Is(err, OutAmmoError) {
 			receiver.Gun.Downgrade()
@@ -73,24 +91,79 @@ func (receiver *Unit) Execute(command controller.Command) error {
 		}
 	}
 
+	if command.CType == controller.CTYPE_SPEED_FACTOR {
+		receiver.speedFactorAI = Point(command.Pos) //x y -> are they same
+	}
+
 	return nil
 }
 
-func (receiver *Unit) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
+func (receiver *Unit) Update(timeLeft time.Duration) error {
+	if DEBUG_FREEZ_AI && receiver.HasTag("ai") {
+		return nil
+	}
+	receiver.MotionObject.Update(timeLeft)
+	if receiver.vision != nil && receiver.VisionInteractions != nil {
+		ccx, ccy := receiver.collision.GetCenter()
+		cvx, cvy := receiver.vision.GetCenter()
+		receiver.vision.RelativeMove(ccx-cvx, ccy-cvy) //pos correction after collide
+		receiver.VisionInteractions.Interact(receiver.vision, timeLeft)
+	}
+	return nil
+}
+
+func (receiver *Unit) OnTickCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
 
 }
 
-func (receiver *Unit) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
-	if object.HasTag("danger") && receiver.HasTag("vulnerable") {
-		if DEBUG_IMMORTAL_PLAYER && receiver.HasTag("player") {
-			return
+func (receiver *Unit) OnStartCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
+	if owner == receiver.VisionInteractions {
+		//todo change tag tank
+		if object.HasTag("tank") && !object.HasTag(receiver.GetAttr().TeamTag) {
+			receiver.Trigger(OnSightEvent, receiver, object)
+			logger.Print("seen")
 		}
-		receiver.ReciveDamage(object.(Danger))
+	} else {
+		if object.HasTag("danger") && receiver.HasTag("vulnerable") {
+			if DEBUG_IMMORTAL_PLAYER && receiver.HasTag("player") {
+				return
+			}
+			receiver.ReciveDamage(object.(Danger))
+		}
 	}
 }
 
-func (receiver *Unit) OnStopCollide(object collider.Collideable, duration time.Duration) {
+func (receiver *Unit) OnStopCollide(object collider.Collideable, duration time.Duration, owner *collider.Interactions) {
+	if owner == receiver.VisionInteractions {
+		if object.HasTag("tank") && !object.HasTag(receiver.GetAttr().TeamTag) {
+			receiver.Trigger(OffSightEvent, receiver, object)
+			logger.Print("unseen")
+		}
+	} else {
 
+	}
+}
+
+func (receiver *Unit) GetVision() *collider.ClBody {
+	return receiver.vision
+}
+
+func (receiver *Unit) Move(x, y float64) {
+	receiver.MotionObject.Move(x, y)
+	if receiver.vision != nil {
+		ccx, ccy := receiver.collision.GetCenter()
+		cvx, cvy := receiver.vision.GetCenter()
+		receiver.vision.RelativeMove(ccx-cvx, ccy-cvy)
+	}
+}
+
+func (receiver *Unit) RelativeMove(x, y float64) {
+	receiver.MotionObject.RelativeMove(x, y)
+	if receiver.vision != nil {
+		ccx, ccy := receiver.collision.GetCenter()
+		cvx, cvy := receiver.vision.GetCenter()
+		receiver.vision.RelativeMove(ccx-cvx, ccy-cvy)
+	}
 }
 
 func (receiver *Unit) ReciveDamage(incoming Danger) {
@@ -165,12 +238,13 @@ func (receiver *Unit) Free() {
 
 func (receiver *Unit) Copy() *Unit {
 	instance := *receiver
-	var control *controller.Control
+	var control controller.Controller
 
 	if DEBUG_NO_AI {
 		control, _ = controller.NewNoneControl()
 	} else {
-		control, _ = controller.NewAIControl()
+		control, _ = AIBUILDER() //controller.NewAIControl()
+		control.(*BehaviorControl).AttachTo(&instance)
 	}
 	instance.ControlledObject, _ = NewControlledObject(control, &instance)
 
@@ -183,6 +257,14 @@ func (receiver *Unit) Copy() *Unit {
 	instance.Gun.Owner = &instance
 	instance.Interactions.Subscribe(&instance)
 
+	if receiver.vision != nil {
+		instance.vision = receiver.vision.Copy()
+	}
+	if receiver.VisionInteractions != nil {
+		instance.VisionInteractions = receiver.VisionInteractions.Copy()
+		instance.VisionInteractions.Subscribe(&instance)
+	}
+
 	return &instance
 }
 
@@ -191,7 +273,7 @@ func (receiver *Unit) GetEventChanel() EventChanel {
 }
 
 func NewUnit(co *ControlledObject, oo *ObservableObject,
-	mo *MotionObject, st *State) (*Unit, error) {
+	mo *MotionObject, st *State, vision *collider.ClBody) (*Unit, error) {
 
 	gun, _ := NewGun(nil)
 	instance := &Unit{
@@ -200,9 +282,14 @@ func NewUnit(co *ControlledObject, oo *ObservableObject,
 		MotionObject:     mo,
 		State:            st,
 		Gun:              gun,
+		vision:           vision,
 	}
 
 	instance.Interactions.Subscribe(instance)
+	if vision != nil {
+		instance.VisionInteractions, _ = collider.NewIteractions()
+		instance.VisionInteractions.Subscribe(instance)
+	}
 
 	instance.Gun.Owner = instance
 	if st != nil {

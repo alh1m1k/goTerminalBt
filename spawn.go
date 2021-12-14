@@ -31,6 +31,7 @@ type SpawnManager struct {
 	animator                     *AnimationManager
 	collider                     *collider.Collider
 	location                     *Location
+	visioner                     *Visioner
 	config                       *GameConfig
 	spawned                      map[ObjectInterface]bool
 	builders                     map[string]Builder
@@ -66,10 +67,15 @@ func (manager *SpawnManager) Execute(timeLeft time.Duration) {
 	for i, object := range manager.pendingDeSpawn {
 		manager.updater.Remove(object)
 		manager.collider.Remove(object)
+		manager.visioner.Remove(object)
 		manager.render.Remove(object)
 		if manager.location != nil {
 			manager.location.Remove(object)
 		}
+		if object.GetAttr().AI {
+			manager.updater.Remove(object.(*Unit).Control.(*BehaviorControl))
+		}
+
 		manager.pendingDeSpawn[i] = nil
 		manager.spawned[object] = false
 		object.DeSpawn()
@@ -95,9 +101,13 @@ func (manager *SpawnManager) Execute(timeLeft time.Duration) {
 	for i, object := range manager.pendingSpawn {
 		manager.updater.Add(object)
 		manager.collider.Add(object)
+		manager.visioner.Add(object)
 		manager.render.Add(object)
 		if manager.location != nil {
 			manager.location.Add(object)
+		}
+		if object.GetAttr().AI {
+			manager.updater.Add(object.(*Unit).Control.(*BehaviorControl))
 		}
 		manager.pendingSpawn[i] = nil
 		manager.spawned[object] = true
@@ -158,16 +168,16 @@ func (manager *SpawnManager) Spawn(coordinate Point, blueprint string, configura
 		configurator(object, config)
 	}
 
-	object.Reset()
+	object.Reset() //todo fix, reset before config but broke control
 
 	if coordinate == PosAuto {
 		if configurator != nil {
 			//set by configurator
 		} else {
-			object.GetClBody().Move(0, 0)
+			object.Move(0, 0)
 		}
 	} else {
-		object.GetClBody().Move(coordinate.X, coordinate.Y)
+		object.Move(coordinate.X, coordinate.Y)
 	}
 
 	manager.spawnMutex.Lock()
@@ -267,7 +277,7 @@ func (manager *SpawnManager) setupPool(blueprint string, size int, builder Build
 	}
 }
 
-func NewSpawner(updater *Updater, render Renderer, collider *collider.Collider, location *Location, config *GameConfig) (*SpawnManager, error) {
+func NewSpawner(updater *Updater, render Renderer, collider *collider.Collider, location *Location, visioner *Visioner, config *GameConfig) (*SpawnManager, error) {
 
 	if location != nil {
 		location.SetupZones(Point{
@@ -283,6 +293,7 @@ func NewSpawner(updater *Updater, render Renderer, collider *collider.Collider, 
 		collider:        collider,
 		location:        location,
 		config:          config,
+		visioner:        visioner,
 		spawned:         make(map[ObjectInterface]bool, 25),
 		builders:        make(map[string]Builder, 5),
 		pendingSpawn:    make([]ObjectInterface, 0, 25),

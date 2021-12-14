@@ -27,6 +27,40 @@ type Collider struct {
 	ver     bool //odd even
 }
 
+//todo remove
+func (c *Collider) AddExtra(clBody *ClBody, object Collideable) error {
+	if clBody == nil {
+		return errors.New("clBody was nil")
+	}
+	clBody = clBody.First
+	clBody.ver = c.ver
+	for clBody != nil {
+		if clBody.realBody == nil {
+			x, y, w, h := clBody.GetRect()
+			body := c.world.Add(clBody.filter, float32(x), float32(y), float32(w), float32(h))
+			body.SetStatic(clBody.static)
+
+			//penetrate will not affect on other object (its coordinates)
+			if clBody.First.penetrate {
+				body.SetResponse("penetrate", "cross")
+				body.SetResponse("static", "cross")
+				body.SetResponse("base", "cross")
+			} else {
+				body.SetResponse("penetrate", "cross")
+				body.SetResponse("static", "grid")
+				body.SetResponse("base", "grid")
+			}
+
+			clBody.realBody = body
+		} else {
+			//reenter
+		}
+		c.bodyMap[clBody.realBody] = object
+		clBody = clBody.Next
+	}
+	return nil
+}
+
 func (c *Collider) Add(object Collideable) error {
 	clBody := object.GetClBody()
 	if clBody == nil {
@@ -70,9 +104,19 @@ func (c *Collider) Remove(object Collideable) {
 			delete(c.bodyMap, indx)
 			indx.Remove() //todo reenther
 			object.GetClBody().realBody = nil
-			if object.GetClBody().First.collisionInfo != nil {
-				object.GetClBody().First.collisionInfo.Clear()
-			}
+			object.GetClBody().First.collisionInfo.Clear()
+		}
+	}
+}
+
+//todo remove
+func (c *Collider) RemoveExtra(clBody *ClBody, object Collideable) {
+	for indx, candidate := range c.bodyMap {
+		if object == candidate {
+			delete(c.bodyMap, indx)
+			indx.Remove() //todo reenther
+			clBody.realBody = nil
+			clBody.First.collisionInfo.Clear()
 		}
 	}
 }
@@ -116,6 +160,43 @@ func (c *Collider) Execute(timeLeft time.Duration) {
 	c.ver = !c.ver
 }
 
+// QueryRect will take the rectangle arguments and return any bodies that are in
+// that rectangle
+//
+// If tags are passed into the query then it will only return the bodies with those
+// tags.
+func (c *Collider) QueryRect(x, y, w, h float64, tags ...string) []Collideable {
+	return c.bodyList2Collideable(c.world.QueryRect(float32(x), float32(y), float32(w), float32(h), tags...))
+}
+
+// QueryPoint will return any bodies that are underneathe the point.
+//
+// If tags are passed into the query then it will only return the bodies with those
+// tags.
+func (c *Collider) QueryPoint(x, y float64, tags ...string) []Collideable {
+	bodyList := c.world.QueryPoint(float32(x), float32(y), tags...)
+	return c.bodyList2Collideable(bodyList)
+}
+
+// QuerySegment will return any bodies that are underneathe the segment/line.
+//
+// If tags are passed into the query then it will only return the bodies with those
+// tags.
+func (c *Collider) QuerySegment(x1, y1, x2, y2 float64, tags ...string) []Collideable {
+	bodyList := c.world.QuerySegment(float32(x1), float32(y1), float32(x2), float32(y2), tags...)
+	return c.bodyList2Collideable(bodyList)
+}
+
+func (c *Collider) bodyList2Collideable(bodyList []*ump.Body) []Collideable {
+	result := make([]Collideable, 0, len(bodyList))
+	for _, body := range bodyList {
+		if object, ok := c.bodyMap[body]; ok {
+			result = append(result, object)
+		}
+	}
+	return result
+}
+
 func NewCollider(queueSize int) (*Collider, error) {
 	cl := &Collider{
 		bodyMap: make(map[*ump.Body]Collideable, queueSize),
@@ -124,16 +205,7 @@ func NewCollider(queueSize int) (*Collider, error) {
 	}
 
 	cl.world.AddResponse("grid", gridFilter)
-
-	//reader := bufio.NewReader(os.Stdin)
-	/*
-		cl.world.AddResponse("grid", gridFilter)
-		bullet := cl.world.Add("base", 0,20.00,9.998,9.998)
-		bullet.SetResponse("wall", "grid")
-		wall := cl.world.Add("wall", 100,10, 10, 10)
-		wall2 := cl.world.Add("wall", 100,30, 10, 10)
-		wall.SetResponse("wall", "grid")
-		wall2.SetResponse("wall", "grid") */
+	cl.world.AddResponse("none", noneFilter)
 
 	return cl, nil
 }
@@ -179,4 +251,12 @@ func gridFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goa
 	col.Data = ump.Point{X: sx, Y: sy}
 	body.Update(col.Touch.X, col.Touch.Y)
 	return sx, sy, world.Project(body, sx, sy)
+}
+
+/*func visionFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goalY float32) (float32, float32, []*ump.Collision) {
+	return goalX, goalY, world.Project(body, goalX, goalY)
+}*/
+
+func noneFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goalY float32) (float32, float32, []*ump.Collision) {
+	return goalX, goalY, []*ump.Collision{}
 }

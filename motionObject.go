@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Move struct {
+type Moving struct {
 	Speed     Point
 	Direction Point
 }
@@ -35,7 +35,8 @@ type MotionObjectInterface interface {
 
 type MotionObject struct {
 	*Object
-	Move
+	Moving
+	speedFactorAI     Point //todo remove
 	moving            bool
 	AccelDuration     time.Duration
 	AccelTimeFunc     timeFunction
@@ -54,15 +55,15 @@ func (receiver *MotionObject) Update(timeLeft time.Duration) error {
 
 	if receiver.moving {
 
-		deltaX := receiver.Move.Direction.X * receiver.Move.Speed.X * (float64(timeLeft) / float64(time.Second))
-		deltaY := receiver.Move.Direction.Y * receiver.Move.Speed.Y * (float64(timeLeft) / float64(time.Second))
+		deltaX := receiver.Moving.Direction.X * (receiver.Moving.Speed.X * receiver.speedFactorAI.X) * (float64(timeLeft) / float64(time.Second))
+		deltaY := receiver.Moving.Direction.Y * (receiver.Moving.Speed.Y * receiver.speedFactorAI.Y) * (float64(timeLeft) / float64(time.Second))
 
-		receiver.collision.RelativeMove(deltaX, deltaY)
+		receiver.RelativeMove(deltaX, deltaY)
 
 		if receiver.AccelDuration > 0 {
 			fraction := receiver.AccelTimeFunc(float64(receiver.currAccelDuration) / float64(receiver.AccelDuration))
-			receiver.Move.Speed.X = receiver.MinSpeed.X + ((receiver.MaxSpeed.X - receiver.MinSpeed.X) * fraction)
-			receiver.Move.Speed.Y = receiver.MinSpeed.Y + ((receiver.MaxSpeed.Y - receiver.MinSpeed.Y) * fraction)
+			receiver.Moving.Speed.X = receiver.MinSpeed.X + ((receiver.MaxSpeed.X - receiver.MinSpeed.X) * fraction)
+			receiver.Moving.Speed.Y = receiver.MinSpeed.Y + ((receiver.MaxSpeed.Y - receiver.MinSpeed.Y) * fraction)
 			receiver.currAccelDuration += timeLeft
 			if receiver.currAccelDuration > receiver.AccelDuration {
 				receiver.currAccelDuration = receiver.AccelDuration
@@ -103,20 +104,21 @@ func (receiver *MotionObject) Reset() error {
 	receiver.currAccelDuration = 0
 	receiver.accelerate = true
 	receiver.moving = false
+	receiver.speedFactorAI.X, receiver.speedFactorAI.Y = 1.0, 1.0
 	return nil
 }
 
 func (receiver *MotionObject) Copy() *MotionObject {
 	instance := *receiver
 	instance.Object = instance.Object.Copy()
-	instance.Move = Move{
+	instance.Moving = Moving{
 		Speed: Point{
-			X: receiver.Move.Speed.X,
-			Y: receiver.Move.Speed.Y,
+			X: receiver.Moving.Speed.X,
+			Y: receiver.Moving.Speed.Y,
 		},
 		Direction: Point{
-			X: receiver.Move.Direction.X,
-			Y: receiver.Move.Direction.Y,
+			X: receiver.Moving.Direction.X,
+			Y: receiver.Moving.Direction.Y,
 		},
 	}
 	return &instance
@@ -125,7 +127,7 @@ func (receiver *MotionObject) Copy() *MotionObject {
 func NewMotionObject(obj *Object, direction Point, speed Point) (*MotionObject, error) {
 	instance := MotionObject{
 		Object: obj,
-		Move: Move{
+		Moving: Moving{
 			Speed:     speed,
 			Direction: direction,
 		},
@@ -137,6 +139,7 @@ func NewMotionObject(obj *Object, direction Point, speed Point) (*MotionObject, 
 		accelerate:        true,
 		moving:            false,
 		alignToGrid:       false,
+		speedFactorAI:     Point{1.0, 1.0},
 	}
 	return &instance, nil
 }

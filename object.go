@@ -4,6 +4,7 @@ import (
 	"GoConsoleBT/collider"
 	"errors"
 	"github.com/tanema/ump"
+	"math"
 	"time"
 )
 
@@ -89,6 +90,7 @@ type ObjectInterface interface {
 	Updateable
 	Renderable
 	Tagable
+	Seen
 	collider.Collideable
 	GetCenter() (float64, float64)
 	GetTracker() *Tracker
@@ -98,10 +100,26 @@ type ObjectInterface interface {
 	Reset() error                          //todo reset by configuration
 	DeSpawn() error
 	Spawn() error
+	Move(x, y float64)
+	RelativeMove(x, y float64)
 }
 
 type Point struct {
 	X, Y float64
+}
+
+func (receiver Point) Equal(to Point, precision float64) bool {
+	if math.Abs(receiver.X-to.X) <= precision && math.Abs(receiver.Y-to.Y) <= precision {
+		return true
+	}
+	return false
+}
+
+func (receiver Point) Plus(to Point) Point {
+	return Point{
+		X: receiver.X + to.X,
+		Y: receiver.Y + to.Y,
+	}
 }
 
 type Object struct {
@@ -130,15 +148,15 @@ func (receiver *Object) Update(timeLeft time.Duration) error {
 	return nil
 }
 
-func (receiver *Object) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
+func (receiver *Object) OnTickCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
 	logger.Println("warning: empty tick collide")
 }
 
-func (receiver *Object) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
+func (receiver *Object) OnStartCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
 	logger.Println("warning: empty start collide")
 }
 
-func (receiver *Object) OnStopCollide(object collider.Collideable, duration time.Duration) {
+func (receiver *Object) OnStopCollide(object collider.Collideable, duration time.Duration, owner *collider.Interactions) {
 	logger.Println("warning: empty stop collide")
 }
 
@@ -150,8 +168,24 @@ func (receiver *Object) GetClBody() *collider.ClBody {
 	return receiver.collision
 }
 
+func (receiver *Object) Move(x, y float64) {
+	receiver.collision.Move(x, y)
+}
+
+func (receiver *Object) RelativeMove(x, y float64) {
+	receiver.collision.RelativeMove(x, y)
+}
+
 func (receiver *Object) GetXY() (x, y float64) {
 	return receiver.collision.GetXY()
+}
+
+func (receiver *Object) GetXY2() Point {
+	x, y := receiver.collision.GetXY()
+	return Point{
+		X: x,
+		Y: y,
+	}
 }
 
 func (receiver *Object) GetWH() (x, y float64) {
@@ -164,6 +198,14 @@ func (receiver *Object) GetRect() (x, y, w, h float64) {
 
 func (receiver *Object) GetCenter() (x, y float64) {
 	return receiver.collision.GetCenter()
+}
+
+func (receiver *Object) GetCenter2() Center {
+	x, y := receiver.collision.GetCenter()
+	return Center{
+		X: x,
+		Y: y,
+	}
 }
 
 func (receiver *Object) GetTracker() *Tracker {
@@ -201,6 +243,10 @@ func (receiver *Object) Spawn() error {
 func (receiver *Object) DeSpawn() error {
 	SwitchSprite(nil, receiver.sprite)
 	receiver.spawned = false
+	return nil
+}
+
+func (receiver *Object) GetVision() *collider.ClBody {
 	return nil
 }
 

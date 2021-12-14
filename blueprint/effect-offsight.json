@@ -1,0 +1,14 @@
+{
+  "type":   "explosion",
+  "sprite": "unseen",
+  "collision": {
+    "type": "penetrate",
+    "x": 0,
+    "y": 0,
+    "w": 7,
+    "h": 10
+  },
+  "ttl": 1000000000,
+  "damage": 0,
+  "tags": ["effect"]
+}

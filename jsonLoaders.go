@@ -57,7 +57,7 @@ func RootLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 	if object == nil {
 		return nil
 	}
-	object.(ObjectInterface).GetAttr().Blueprint = uType
+	object.(ObjectInterface).GetAttr().Type = uType
 
 	return object
 }
@@ -71,6 +71,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		co        *ControlledObject
 		unit      *Unit
 		gun       *Gun
+		vision    *collider.ClBody
 		control   *controller.Control
 		err       error
 	)
@@ -120,6 +121,24 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		collector.Add(fmt.Errorf("gun: %w", ParseError))
 	}
 
+	visionCfg, dType, _, _ := jsonparser.Get(payload, "vision")
+	switch dType {
+	case jsonparser.Object:
+		loader := get("collision")
+		if loader != nil {
+			proxy := loader(get, collector, visionCfg)
+			if proxy != nil {
+				vision = proxy.(*collider.ClBody)
+			}
+		} else {
+			collector.Add(fmt.Errorf("collision: %w", LoaderNotFoundError))
+		}
+	case jsonparser.Null:
+	case jsonparser.NotExist:
+	default:
+		collector.Add(fmt.Errorf("vision: %w", ParseError))
+	}
+
 	if loader := get("eventChanel"); loader != nil {
 		if outObj := loader(get, collector, payload); outObj != nil {
 			output = outObj.(EventChanel)
@@ -144,7 +163,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		}
 		co, err = NewControlledObject(control, nil)
 		if !collector.Add(err) {
-			unit, err = NewUnit(co, oo, motionObj, stateObj)
+			unit, err = NewUnit(co, oo, motionObj, stateObj, vision)
 			unit.ObservableObject.Owner = unit
 		}
 		if !collector.Add(err) {
@@ -161,6 +180,13 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		unit.Attributes.Motioner = true
 		unit.Attributes.Evented = true
 		unit.Attributes.Controled = true
+		if unit.HasTag("ai") {
+			unit.Attributes.AI = true
+		}
+		if unit.vision != nil {
+			//todo remove
+			unit.Attributes.Visioned = true
+		}
 
 		hp, err := jsonparser.GetInt(payload, "hp")
 		if !collector.Add(err) {
@@ -240,13 +266,13 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		wall.Attributes.Evented = true
 
 		hp, err := jsonparser.GetInt(payload, "hp")
-		if !collector.Add(err) {
+		if err != nil {
 			wall.FullHP = int(hp)
 			wall.HP = int(hp)
 		}
 
 		score, err := jsonparser.GetInt(payload, "score")
-		if !collector.Add(err) {
+		if err != nil {
 			wall.Score = int(score)
 		}
 	}
@@ -722,6 +748,10 @@ func CollisionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 		collision = collider.NewStaticCollision(x, y, w, h)
 	case "penetrate":
 		collision = collider.NewPenetrateCollision(x, y, w, h)
+	case "nocollision":
+		collision = collider.NewFakeCollision(x, y, w, h)
+	case "vision":
+		collision = collider.NewPenetrateCollision(x, y, w, h)
 	default:
 		collision = collider.NewCollision(x, y, w, h)
 	}
@@ -861,7 +891,7 @@ func AnimationLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 		collector.Add(fmt.Errorf("animation %s length must be > 0: %w", config.Name, ParseError))
 		return ErrorAnimation
 	} else if config.Name == "" {
-		collector.Add(fmt.Errorf("name must be set: %w", ParseError))
+		collector.Add(fmt.Errorf("Name must be set: %w", ParseError))
 		return ErrorAnimation
 	}
 

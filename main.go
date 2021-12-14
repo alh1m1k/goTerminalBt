@@ -23,15 +23,17 @@ const SLOW_CYCLE = time.Second / 2
 const TIME_FACTOR = time.Second / CYCLE
 
 const DEBUG = false
-const DEBUG_COLLIDE = false
-const DEBUG_MOVE = false
 const DEBUG_SPAWN = false
 const DEBUG_EVENT = false
 const DEBUG_EXEC = false
 const DEBUG_STATE = false
-const DEBUG_NO_AI = true
+const DEBUG_NO_AI = false
 const DEBUG_SHAKE = false
-const DEBUG_IMMORTAL_PLAYER = false
+const DEBUG_IMMORTAL_PLAYER = true
+const DEBUG_FREEZ_AI = false
+const DEBUG_AI_PATH = true
+const DEBUG_AI_BEHAVIOR = false
+const DEBUG_FIRE_SOLUTION = false
 const DEBUG_MINIMAP = true
 
 const RENDERER_WITH_ZINDEX = true
@@ -53,6 +55,7 @@ var (
 	endGame              = false
 	endGameThrottle      = newThrottle(3*time.Second, false)
 	endGameCycleThrottle = newThrottle(1*time.Second, true)
+	AIBUILDER            func() (*BehaviorControl, error)
 )
 
 //flags
@@ -153,6 +156,10 @@ func main() {
 	detector, _ := collider.NewCollider(100)
 	pipe.Collider = detector
 
+	//vision
+	vision, _ := NewVisioner(detector, 100)
+	pipe.Visioner = vision
+
 	//Location
 	location, _ := NewLocation(Point{
 		X: gameConfig.Box.X,
@@ -165,8 +172,11 @@ func main() {
 	pipe.Location = location
 
 	//spawner
-	spawner, _ := NewSpawner(updater, render, detector, location, gameConfig)
+	spawner, _ := NewSpawner(updater, render, detector, location, vision, gameConfig)
 	pipe.SpawnManager = spawner
+
+	navigation, _ := NewNavigation(location, detector)
+	pipe.Navigation = navigation
 
 	//builder
 	buildManager, _ := NewBlueprintManager()
@@ -174,14 +184,25 @@ func main() {
 	buildManager.GameConfig = gameConfig
 	buildManager.EventChanel = spawner.UnitEventChanel //remove from builder
 
+	//ai
+	aibuilder, _ := NewAIControlBuilder(detector, location, navigation)
+	AIBUILDER = aibuilder.Build
+	//AIBUILDER()
+
 	//scenario
-	scenario, _ := NewCollisionDemoScenario(tankCnt, wallCnt) //NewRandomScenario(tankCnt, wallCnt)
+	scenario, _ := /*NewCollisionDemoScenario(tankCnt, wallCnt)*/ NewRandomScenario(tankCnt, wallCnt)
 	scenario.DeclareBlueprint(func(blueprint string) {
 		builder, _ := buildManager.CreateBuilder(blueprint)
 		if builder == nil { //may cause error on success
 			panic("builder " + blueprint + " not found")
 		} else {
 			spawner.AddBuilder(blueprint, builder)
+		}
+		object, _ := buildManager.Get(blueprint)
+		if projectile, ok := object.(*Projectile); ok {
+			if err := aibuilder.RegisterProjectile(projectile); err != nil {
+				logger.Println(err)
+			}
 		}
 	})
 
@@ -217,57 +238,69 @@ func main() {
 	if DEBUG_MINIMAP {
 		var debugMinimap func()
 		debugMinimap = func() {
+
+			/*if game.inProgress {
+				navigation.SchedulePath(Zone{X:0, Y:0}, Zone{
+					X: game.players[0].Unit.Tracker.xIndex,
+					Y: game.players[0].Unit.Tracker.yIndex,
+				}, game.players[0].Unit)
+				logger.Printf("track from %d, %d to %d, %d \n", 0, 0, game.players[0].Unit.Tracker.xIndex, game.players[0].Unit.Tracker.yIndex)
+				if len(navigation.NavData) > 0 {
+					logger.Printf("last nav pos: ", navigation.NavData[0][len(navigation.NavData[0]) -1])
+				}
+			}*/
 			logger.Println("dump minimap...")
-			mmp, _ := location.Minimap(true)
+			mmp, _ := location.Minimap(true, navigation.NavData)
 			minimap.Printf("minimap for %d cycle \n\n", CycleID)
 			for _, slice := range mmp {
 				minimap.Printf("%s \n", slice)
 			}
 			minimap.Printf("\n\n\n")
 			time.AfterFunc(time.Second*5, debugMinimap)
+			navigation.NavData = navigation.NavData[0:0]
 		}
 		time.AfterFunc(time.Second*5, debugMinimap)
 	}
 
-	/*
-		tank, _ := buildManager.Get("player-tank")
-		pos, _ := location.CoordinateByIndex(10, 10)
-		tank.GetClBody().Move(pos.X, pos.Y)
-		x, y := tank.GetXY()
-		w, h := tank.GetWH()
-		tank.GetTracker().Manager = location
-		tank.GetTracker().Update(x, y, w, h)
-		newIndexX, newIndexY := location.IndexByPos(x, y)
-		log.Printf("unit size x, y  %f %f \n", location.setupUnitSize.X, location.setupUnitSize.Y)
-		if newIndexX != 10 {
-			log.Printf("x index broken %d %d \n", newIndexX, 10)
-		}
-		if newIndexY != 10 {
-			log.Printf("y index broken %d %d \n", newIndexY, 10)
-		}
-		newPos, _, _, _ := location.NearestPos(x, y)
-		if newPos.X != pos.X {
-			log.Printf("x pos broken %f %f \n", newPos.X, pos.X)
-		}
-		if newPos.Y != pos.Y {
-			log.Printf("y pos broken %f %f \n", newPos.Y, pos.Y)
-		}
-		tank.GetClBody().Move(pos.X + 2, pos.Y + 2)
-		x, y = tank.GetXY()
-		tank.GetTracker().Manager = location
-		tank.GetTracker().Update(x, y, w, h)
-		newIndexX, newIndexY = tank.GetTracker().GetIndexes()
-		log.Printf("x index  %d %d \n", newIndexX, 10)
-		log.Printf("y index  %d %d \n", newIndexY, 10)
-		tank.GetClBody().Move(pos.X + 3, pos.Y + 3) //смещение по меньшей оси
-		x, y = tank.GetXY()
-		tank.GetTracker().Manager = location
-		tank.GetTracker().Update(x, y, w, h)
-		newIndexX, newIndexY = tank.GetTracker().GetIndexes()
-		log.Printf("x index  %d %d \n", newIndexX, 10)
-		log.Printf("y index  %d %d \n", newIndexY, 10)
+	/*tank, _ := buildManager.Get("player-tank")
+	startIndexX, startIndexY := 0, 0
+	pos, _ := location.PosByIndex(startIndexX, startIndexY)
+	tank.GetClBody().Moving(pos.X, pos.Y)
+	x, y := tank.GetXY()
+	w, h := tank.GetWH()
+	tank.GetTracker().Manager = location
+	tank.GetTracker().Update(x, y, w, h)
+	newIndexX, newIndexY := tank.GetTracker().GetIndexes()
+	log.Printf("unit size x, y  %f %f \n", location.setupUnitSize.X, location.setupUnitSize.Y)
+	if newIndexX != startIndexX {
+		log.Printf("x index broken %d %d \n", newIndexX, startIndexX)
+	}
+	if newIndexY != startIndexY {
+		log.Printf("y index broken %d %d \n", newIndexY, startIndexY)
+	}
+	newPos, _, _, _ := location.NearestPos(x, y)
+	if newPos.X != pos.X {
+		log.Printf("x pos broken %f %f \n", newPos.X, pos.X)
+	}
+	if newPos.Y != pos.Y {
+		log.Printf("y pos broken %f %f \n", newPos.Y, pos.Y)
+	}
+	tank.GetClBody().Moving(pos.X + 2, pos.Y + 2)
+	x, y = tank.GetXY()
+	tank.GetTracker().Manager = location
+	tank.GetTracker().Update(x, y, w, h)
+	newIndexX, newIndexY = tank.GetTracker().GetIndexes()
+	log.Printf("x index  %d %d \n", newIndexX, startIndexX)
+	log.Printf("y index  %d %d \n", newIndexY, startIndexY)
+	tank.GetClBody().Moving(pos.X + 3, pos.Y + 3) //смещение по меньшей оси
+	x, y = tank.GetXY()
+	tank.GetTracker().Manager = location
+	tank.GetTracker().Update(x, y, w, h)
+	newIndexX, newIndexY = tank.GetTracker().GetIndexes()
+	log.Printf("x index  %d %d \n", newIndexX, startIndexX)
+	log.Printf("y index  %d %d \n", newIndexY, startIndexY)
 
-		os.Exit(0)*/
+	os.Exit(0)*/
 
 	for {
 		select {
@@ -349,6 +382,7 @@ func main() {
 			timeCurrent = timeEvent
 			pipe.Execute(timeLeft)
 
+			//todo dynamic cycleTime
 			timeEvents = time.After(cycleTime)
 			if CycleID == math.MaxInt64 {
 				CycleID = 0

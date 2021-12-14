@@ -6,9 +6,9 @@ import (
 )
 
 type CollisionReceiver interface {
-	OnTickCollide(object Collideable, collision *ump.Collision)
-	OnStartCollide(object Collideable, collision *ump.Collision)
-	OnStopCollide(object Collideable, duration time.Duration)
+	OnTickCollide(object Collideable, collision *ump.Collision, owner *Interactions)
+	OnStartCollide(object Collideable, collision *ump.Collision, owner *Interactions)
+	OnStopCollide(object Collideable, duration time.Duration, owner *Interactions)
 }
 
 type Interactions struct {
@@ -21,22 +21,26 @@ func (receiver *Interactions) Subscribe(collideable CollisionReceiver) {
 	receiver.subscribers = append(receiver.subscribers, collideable)
 }
 
+func (receiver *Interactions) Unsubscribe(collideable CollisionReceiver) {
+	receiver.subscribers = receiver.subscribers[0:0]
+}
+
 func (receiver *Interactions) Interact(source Collideable, timeLeft time.Duration) {
 	collisions := source.GetClBody().CollisionInfo().I()
 	for collideable, collisionTime := range receiver.iteractions {
 		if _, ok := collisions[collideable]; !ok {
-			receiver.OnStopCollide(collideable, collisionTime)
+			receiver.OnStopCollide(collideable, collisionTime, receiver)
 			delete(receiver.iteractions, collideable)
 		}
 	}
 
 	for collideable, collision := range collisions {
 		if _, ok := receiver.iteractions[collideable]; ok {
-			receiver.OnTickCollide(collideable, collision)
+			receiver.OnTickCollide(collideable, collision, receiver)
 			receiver.iteractions[collideable] += timeLeft
 		} else {
-			receiver.OnStartCollide(collideable, collision)
-			receiver.OnTickCollide(collideable, collision)
+			receiver.OnStartCollide(collideable, collision, receiver)
+			receiver.OnTickCollide(collideable, collision, receiver)
 			receiver.iteractions[collideable] = timeLeft
 		}
 	}
@@ -48,21 +52,21 @@ func (receiver *Interactions) Clear() {
 	}
 }
 
-func (receiver *Interactions) OnTickCollide(object Collideable, collision *ump.Collision) {
+func (receiver *Interactions) OnTickCollide(object Collideable, collision *ump.Collision, owner *Interactions) {
 	for _, subscribe := range receiver.subscribers {
-		subscribe.OnTickCollide(object, collision)
+		subscribe.OnTickCollide(object, collision, owner)
 	}
 }
 
-func (receiver *Interactions) OnStartCollide(object Collideable, collision *ump.Collision) {
+func (receiver *Interactions) OnStartCollide(object Collideable, collision *ump.Collision, owner *Interactions) {
 	for _, subscribe := range receiver.subscribers {
-		subscribe.OnStartCollide(object, collision)
+		subscribe.OnStartCollide(object, collision, owner)
 	}
 }
 
-func (receiver *Interactions) OnStopCollide(object Collideable, duration time.Duration) {
+func (receiver *Interactions) OnStopCollide(object Collideable, duration time.Duration, owner *Interactions) {
 	for _, subscribe := range receiver.subscribers {
-		subscribe.OnStopCollide(object, duration)
+		subscribe.OnStopCollide(object, duration, owner)
 	}
 }
 

@@ -52,7 +52,7 @@ func ExplosionConfigurator(object ObjectInterface, config interface{}) ObjectInt
 	expW, expH := explosion.GetWH()
 
 	explosion.Owner = owner
-	explosion.GetClBody().Move(gX-expW/2, gY-expH/2)
+	explosion.Move(gX-expW/2, gY-expH/2)
 
 	explosion.GetAttr().ID = -100
 	explosion.GetAttr().Team = -1
@@ -67,7 +67,7 @@ func CollectableConfigurator(object ObjectInterface, config interface{}) ObjectI
 	x, y := from.GetXY()
 
 	collectable.Owner = from
-	collectable.GetClBody().Move(x, y)
+	collectable.Move(x, y)
 	collectable.GetAttr().ID = -1
 	collectable.GetAttr().Team = -100
 	collectable.GetAttr().TeamTag = "team--100"
@@ -119,14 +119,9 @@ func ProjectileConfigurator(object ObjectInterface, config interface{}) ObjectIn
 		y += owner.Speed.Y * dir.Y //todo remove*/
 	//	}*/
 
-	projectile.GetClBody().Move(x, y)
+	projectile.Move(x, y)
 	//----- speed modify based at owner speed
-	projectile.Speed.X += owner.Speed.X
-	projectile.Speed.Y += owner.Speed.Y
-	projectile.MaxSpeed.X += owner.Speed.X
-	projectile.MaxSpeed.Y += owner.Speed.Y
-	projectile.MinSpeed.X += owner.Speed.X
-	projectile.MinSpeed.Y += owner.Speed.Y
+	projectile.ApplySpeed(owner.Speed)
 	//-----
 	projectile.Direction.X = owner.Direction.X
 	projectile.Direction.Y = owner.Direction.Y

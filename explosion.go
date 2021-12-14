@@ -59,7 +59,7 @@ func (receiver *Explosion) Update(timeLeft time.Duration) error {
 	return nil
 }
 
-func (receiver *Explosion) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
+func (receiver *Explosion) OnTickCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
 
 	if receiver.DotDamage > 0 {
 		//todo refactor this
@@ -72,11 +72,11 @@ func (receiver *Explosion) OnTickCollide(object collider.Collideable, collision 
 	}
 }
 
-func (receiver *Explosion) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
+func (receiver *Explosion) OnStartCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
 
 }
 
-func (receiver *Explosion) OnStopCollide(object collider.Collideable, duration time.Duration) {
+func (receiver *Explosion) OnStopCollide(object collider.Collideable, duration time.Duration, owner *collider.Interactions) {
 
 }
 

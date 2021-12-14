@@ -9,11 +9,20 @@ import (
 	"time"
 )
 
-const DEBUG_DISARM_AI = true
+const DEBUG_DISARM_AI = false
+
+const (
+	CTYPE_DIRECTION = iota
+	CTYPE_MOVE
+	CTYPE_SPEED_FACTOR
+	CTYPE_FIRE
+	CTYPE_ALT_FIRE
+)
 
 var (
 	buf, _ = os.OpenFile("control.log", os.O_CREATE|os.O_TRUNC, 644)
 	logger = log.New(buf, "logger: ", log.Lshortfile)
+	PosIrrelevant = Point{-100, -100}
 )
 
 var Player1DefaultKeyBinding KeyBind = KeyBind{
@@ -41,9 +50,9 @@ type Point struct {
 }
 
 type Command struct {
-	Direction Point
-	Move      bool
-	Fire      bool
+	CType  int
+	Pos    Point
+	Action bool
 }
 
 type Event struct {
@@ -57,6 +66,8 @@ type EventChanel 		chan Event
 
 type Controller interface {
 	GetCommandChanel() CommandChanel
+	Enable() error
+	Disable() error
 }
 
 type AwaredController interface {
@@ -70,15 +81,17 @@ type Control struct {
 	eventChanel 	EventChanel
 }
 
-func (receiver Control) Enable() error  {
+func (receiver *Control) Enable() error  {
 	receiver.enabled = true
 	return nil
 }
 
-func (receiver Control) Disable() error {
+func (receiver *Control) Disable() error {
 	receiver.enabled = false
 	return nil
 }
+
+
 
 func (receiver *Control) GetCommandChanel() CommandChanel  {
 	return receiver.commandChanel
@@ -90,9 +103,8 @@ func (receiver *Control) SetEventChanel(chanel EventChanel) {
 
 func NewPlayerControl(event <-chan keyboard.KeyEvent, keyMapping KeyBind) (*Control, error) {
 	command := Command{
-		Direction: Point{X:0, Y:0},
-		Move:      false,
-		Fire:      false,
+		Pos:  Point{},
+		Action: false,
 	}
 	commandChanel := make(chan Command)
 	go func(event <-chan keyboard.KeyEvent, keyMapping KeyBind, output chan Command) {
@@ -103,29 +115,34 @@ func NewPlayerControl(event <-chan keyboard.KeyEvent, keyMapping KeyBind) (*Cont
 					close(commandChanel)
 					return
 				}
-				command.Fire = false
 				if keyEvent.Key == 0 {
 					keyEvent.Key = keyboard.Key(keyEvent.Rune)
 				}
 				switch keyEvent.Key {
 				case keyMapping.Up:
-					command.Direction.Y = -1
-					command.Direction.X =  0
-					command.Move = true
+					command.CType = CTYPE_DIRECTION
+					command.Pos.Y = -1
+					command.Pos.X =  0
+					command.Action = true
 				case keyMapping.Down:
-					command.Direction.Y =  1
-					command.Direction.X =  0
-					command.Move = true
+					command.CType = CTYPE_DIRECTION
+					command.Pos.Y =  1
+					command.Pos.X =  0
+					command.Action = true
 				case keyMapping.Left:
-					command.Direction.X = -1
-					command.Direction.Y =  0
-					command.Move = true
+					command.CType = CTYPE_DIRECTION
+					command.Pos.X = -1
+					command.Pos.Y =  0
+					command.Action = true
 				case keyMapping.Right:
-					command.Direction.X =  1
-					command.Direction.Y =  0
-					command.Move = true
+					command.CType = CTYPE_DIRECTION
+					command.Pos.X =  1
+					command.Pos.Y =  0
+					command.Action = true
 				case keyMapping.Fire:
-					command.Fire = true
+					command.CType = CTYPE_FIRE
+					command.Pos 	= PosIrrelevant
+					command.Action 	= true
 				}
 			}
 			logger.Printf("send: %T, %+v \n", command, command)
@@ -152,12 +169,18 @@ func NewNoneControl()(*Control, error)  {
 }
 
 func NewAIControl()(*Control, error)  {
-	command := Command{
-		Direction: Point{X:0, Y:0},
-		Move:      false,
-		Fire:      false,
-	}
 	commandChanel := make(chan Command)
+	instance := &Control{
+		enabled:       true, //todo legacy
+		commandChanel: commandChanel,
+		eventChanel:   nil,
+		IsPlayer: 	   false,
+	}
+	command := Command{
+		Pos:  Point{},
+		Action: false,
+	}
+
 	go func(output chan Command) {
 		timeEvents := time.After(time.Duration(rand.Intn(3000)) * time.Millisecond + 500)
 		for {
@@ -167,47 +190,49 @@ func NewAIControl()(*Control, error)  {
 					close(commandChanel)
 					return
 				}
-				command.Fire = false
 				switch rand.Intn(8) {
 				case 0:
-					command.Direction.Y = -1
-					command.Direction.X =  0
-					command.Move = true
+					command.CType = CTYPE_DIRECTION
+					command.Pos.Y = -1
+					command.Pos.X =  0
+					command.Action = true
 				case 1:
-					command.Direction.Y =  1
-					command.Direction.X =  0
-					command.Move = true
+					command.CType = CTYPE_DIRECTION
+					command.Pos.Y =  1
+					command.Pos.X =  0
+					command.Action = true
 				case 2:
-					command.Direction.X = -1
-					command.Direction.Y =  0
-					command.Move = true
+					command.CType = CTYPE_DIRECTION
+					command.Pos.X = -1
+					command.Pos.Y =  0
+					command.Action = true
 				case 3:
-					command.Direction.X =  1
-					command.Direction.Y =  0
-					command.Move = true
+					command.CType = CTYPE_DIRECTION
+					command.Pos.X =  1
+					command.Pos.Y =  0
+					command.Action = true
 				}
 
 				if rand.Intn(3) == 1 {
 					if !DEBUG_DISARM_AI {
-						command.Fire = true
+						command.CType = CTYPE_FIRE
+						command.Pos = PosIrrelevant
+						command.Action = true
 					}
 				}
 			}
-			commandChanel <- command
+			if instance.enabled {
+				commandChanel <- command
+			}
 			timeEvents = time.After(time.Duration(rand.Intn(3000)) * time.Millisecond + 500)
 		}
 	}(commandChanel)
 
-	return &Control{
-		enabled:       false,
-		commandChanel: commandChanel,
-		eventChanel:   nil,
-		IsPlayer: 	   false,
-	}, nil
+	return instance, nil
 }
 
 func (c Command) String()string  {
-	return fmt.Sprintf("direction %v, moving: %v, firing: %v", c.Direction, c.Move, c.Fire)
+	return fmt.Sprintf("direction %v, moving: %v, firing: %v", c.CType, c.Pos, c.Action)
 }
 
 type KeyBind struct {

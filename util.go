@@ -104,3 +104,63 @@ func getDistance(x1, y1, x2, y2 float64) float64 {
 func divRemF(numenator, denumenator float64) float64 {
 	return numenator - float64(int(math.Round(numenator/denumenator)))*denumenator
 }
+
+func triang(x int64) int64 {
+	return int64(float64(x) / float64(2) * float64(x+1))
+}
+
+//rand betwen [1, max] with probability of n
+func triangRand(max int64) int64 {
+	rand := int64(rand.Intn(int(triang(max)))) + 1
+	for i := int64(1); i <= max; i++ {
+		tri := triang(i)
+		if rand <= tri {
+			return i
+		}
+	}
+	return 0
+}
+
+func absInt64(n int64) int64 {
+	y := n >> 63
+	return (n ^ y) - y
+}
+
+//no special cases check :(
+func absInt(n int) int {
+	if n > 0 {
+		return n
+	} else {
+		return n * -1
+	}
+}
+
+// no special cases
+func maxInt64(x, y int64) int64 {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+func maxInt(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+func minInt(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
+
+func IsInf(f int64, sign int) bool {
+	// Test for infinity by comparing against maximum float.
+	// To avoid the floating-point hardware, could use:
+	//	x := Float64bits(f);
+	//	return sign >= 0 && x == uvinf || sign <= 0 && x == uvneginf;
+	return sign >= 0 && f > math.MaxInt64 || sign <= 0 && f < -math.MaxInt64
+}

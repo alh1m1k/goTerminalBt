@@ -38,32 +38,24 @@ func (receiver *Projectile) Update(timeLeft time.Duration) error {
 		receiver.Destroy(nil)
 	}
 
-	/*	if receiver.moving {
-			collision.RelativeMove(
-				receiver.Move.Direction.X*receiver.Move.Speed.X/float64(TIME_FACTOR),
-				receiver.Move.Direction.Y*receiver.Move.Speed.Y/float64(TIME_FACTOR),
-			)
-			if receiver.AccelDuration > 0 {
-				fraction := receiver.AccelTimeFunc(float64(receiver.currAccelDuration) / float64(receiver.AccelDuration))
-				receiver.Move.Speed.X = receiver.MinSpeed.X + ((receiver.MaxSpeed.X - receiver.MinSpeed.X) * fraction)
-				receiver.Move.Speed.Y = receiver.MinSpeed.Y + ((receiver.MaxSpeed.Y - receiver.MinSpeed.Y) * fraction)
-				receiver.currAccelDuration += timeLeft
-				if receiver.currAccelDuration > receiver.AccelDuration {
-					receiver.currAccelDuration = receiver.AccelDuration
-				}
-			}
-		} else {
-			receiver.currAccelDuration = 0
-		}*/
-
 	return nil
 }
 
-func (receiver *Projectile) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
+func (receiver *Projectile) ApplySpeed(Speed Point) error {
+	receiver.Speed.X += Speed.X
+	receiver.Speed.Y += Speed.Y
+	receiver.MaxSpeed.X += Speed.X
+	receiver.MaxSpeed.Y += Speed.Y
+	receiver.MinSpeed.X += Speed.X
+	receiver.MinSpeed.Y += Speed.Y
+	return nil
+}
+
+func (receiver *Projectile) OnTickCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
 
 }
 
-func (receiver *Projectile) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
+func (receiver *Projectile) OnStartCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
 	if object.HasTag("obstacle") {
 		if !object.HasTag(receiver.GetAttr().TeamTag) {
 			if !receiver.HasTag("projectile-penetrate") {
@@ -79,7 +71,7 @@ func (receiver *Projectile) OnStartCollide(object collider.Collideable, collisio
 	receiver.collisionsCnt++
 }
 
-func (receiver *Projectile) OnStopCollide(object collider.Collideable, duration time.Duration) {
+func (receiver *Projectile) OnStopCollide(object collider.Collideable, duration time.Duration, owner *collider.Interactions) {
 
 }
 
@@ -102,6 +94,8 @@ func (receiver *Projectile) Destroy(nemesis ObjectInterface) error {
 
 func (receiver *Projectile) Reset() error {
 	receiver.MotionObject.Reset()
+
+	//warn bug zero life time if mix with receiver.throttle != nil
 	if receiver.Ttl > 0 {
 		receiver.throttle = newThrottle(receiver.Ttl, false)
 	} else {
@@ -109,21 +103,23 @@ func (receiver *Projectile) Reset() error {
 	}
 	if receiver.throttle != nil {
 		receiver.throttle.Reset()
+	} else {
+
 	}
 	receiver.moving = true
 
 	//todo guidance nav
 	//this because of collision resize
-	if receiver.Move.Direction.X > 0 {
+	if receiver.Moving.Direction.X > 0 {
 		receiver.Enter("right")
 	}
-	if receiver.Move.Direction.X < 0 {
+	if receiver.Moving.Direction.X < 0 {
 		receiver.Enter("left")
 	}
-	if receiver.Move.Direction.Y < 0 {
+	if receiver.Moving.Direction.Y < 0 {
 		receiver.Enter("top")
 	}
-	if receiver.Move.Direction.Y > 0 {
+	if receiver.Moving.Direction.Y > 0 {
 		receiver.Enter("bottom")
 	}
 

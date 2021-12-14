@@ -82,7 +82,7 @@ func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 		return nil, err
 	}
 	spawn := make([]*SpawnRequest, 0, tankCnt+wallCnt)
-	blList := []string{"tank" /*"tank", "tank", "tank-fast", "tank-fast", "tank-fast", "tank-heavy", "tank-sneaky", "tank-sneaky"*/}
+	blList := []string{"tank", "tank", "tank", "tank-fast", "tank-fast", "tank-fast", "tank-heavy", "tank-sneaky", "tank-sneaky"}
 	for i := 0; i < tankCnt; i++ {
 		spawn = append(spawn, &SpawnRequest{
 			Location:  PosAuto,
@@ -118,6 +118,8 @@ func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 			"tank-base-projectile-apocalypse",
 			"projectile-sharp-apoc-start",
 			"projectile-sharp-apoc-end",
+			"effect-onsight",
+			"effect-offsight",
 			"opel",
 			"gun",
 			"water",

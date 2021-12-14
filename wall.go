@@ -21,17 +21,17 @@ func (receiver *Wall) Update(timeLeft time.Duration) error {
 	return nil
 }
 
-func (receiver *Wall) OnTickCollide(object collider.Collideable, collision *ump.Collision) {
+func (receiver *Wall) OnTickCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
 
 }
 
-func (receiver *Wall) OnStartCollide(object collider.Collideable, collision *ump.Collision) {
+func (receiver *Wall) OnStartCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
 	if object.HasTag("danger") && receiver.HasTag("vulnerable") {
 		receiver.ReciveDamage(object.(Danger))
 	}
 }
 
-func (receiver *Wall) OnStopCollide(object collider.Collideable, duration time.Duration) {
+func (receiver *Wall) OnStopCollide(object collider.Collideable, duration time.Duration, owner *collider.Interactions) {
 
 }
 
