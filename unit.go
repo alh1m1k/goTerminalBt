@@ -187,14 +187,13 @@ func (receiver *Unit) Destroy(nemesis ObjectInterface) error {
 	if receiver.destroyed {
 		return nil
 	} //collision in cycle may cause multiple destroy
-	receiver.ControlledObject.deactivate()
+	receiver.ControlledObject.Deactivate()
 	receiver.MotionObject.Destroy(nemesis)
 	receiver.Trigger(DestroyEvent, receiver, nemesis)
 	return nil
 }
 
 func (receiver *Unit) Reset() error {
-	receiver.ControlledObject.activate()
 	receiver.MotionObject.Reset()
 	receiver.State.Reset()
 	receiver.Gun.Reset()
@@ -206,7 +205,7 @@ func (receiver *Unit) Reset() error {
 
 func (receiver *Unit) DeSpawn() error {
 	if receiver.Control != nil {
-		receiver.ControlledObject.deactivate()
+		receiver.ControlledObject.Deactivate()
 	}
 	receiver.MotionObject.DeSpawn()
 	receiver.Trigger(DeSpawnEvent, receiver, nil)
@@ -215,8 +214,8 @@ func (receiver *Unit) DeSpawn() error {
 
 func (receiver *Unit) Spawn() error {
 	receiver.MotionObject.Spawn()
+	receiver.ControlledObject.Activate()
 	receiver.Trigger(SpawnEvent, receiver, nil)
-
 	return nil
 }
 

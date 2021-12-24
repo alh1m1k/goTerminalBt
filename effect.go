@@ -36,7 +36,7 @@ type EffectManager struct {
 	m sync.Mutex
 }
 
-func (receiver *EffectManager) applyGlobalShake(power float64, duration time.Duration) error {
+func (receiver *EffectManager) ApplyGlobalShake(power float64, duration time.Duration) error {
 	if duration <= 0 {
 		return EffectZeroDurationError
 	}
@@ -78,7 +78,7 @@ func (receiver *EffectManager) applyGlobalShake(power float64, duration time.Dur
 	return nil
 }
 
-func (receiver *EffectManager) applyGlobalWeather(name string, power float64, duration time.Duration) error {
+func (receiver *EffectManager) ApplyGlobalWeather(name string, power float64, duration time.Duration) error {
 	w := receiver.render.(*RenderZIndex).output.Width() //todo refactor
 	h := receiver.render.(*RenderZIndex).output.Height()
 	totalSpace := w * h
@@ -100,6 +100,18 @@ func (receiver *EffectManager) applyGlobalWeather(name string, power float64, du
 		receiver.render.Add(effect)
 		receiver.update.Add(effect)
 	}
+
+	return nil
+}
+
+func (receiver *EffectManager) CancelAllEffects() error {
+	receiver.m.Lock()
+	defer receiver.m.Unlock()
+
+	receiver.shakeDuration = 0
+	receiver.shakeFrame = 0
+	receiver.shakeSeq = receiver.shakeSeq[0:0]
+	receiver.render.SetOffset(0, 0)
 
 	return nil
 }

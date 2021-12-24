@@ -42,12 +42,9 @@ func (receiver *Projectile) Update(timeLeft time.Duration) error {
 }
 
 func (receiver *Projectile) ApplySpeed(Speed Point) error {
-	receiver.Speed.X += Speed.X
-	receiver.Speed.Y += Speed.Y
-	receiver.MaxSpeed.X += Speed.X
-	receiver.MaxSpeed.Y += Speed.Y
-	receiver.MinSpeed.X += Speed.X
-	receiver.MinSpeed.Y += Speed.Y
+	receiver.Speed = receiver.Speed.Plus(Speed)
+	receiver.MaxSpeed = receiver.MaxSpeed.Plus(Speed)
+	receiver.MinSpeed = receiver.MinSpeed.Plus(Speed)
 	return nil
 }
 
@@ -94,6 +91,12 @@ func (receiver *Projectile) Destroy(nemesis ObjectInterface) error {
 
 func (receiver *Projectile) Reset() error {
 	receiver.MotionObject.Reset()
+
+	//bypass speed bug caused by applySpeed, restore from prototype
+	prototype := receiver.Prototype.(*Projectile)
+	receiver.MotionObject.Speed = prototype.Speed
+	receiver.MotionObject.MaxSpeed = prototype.MaxSpeed
+	receiver.MotionObject.MinSpeed = prototype.MinSpeed
 
 	//warn bug zero life time if mix with receiver.throttle != nil
 	if receiver.Ttl > 0 {

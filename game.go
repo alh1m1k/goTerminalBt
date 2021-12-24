@@ -30,14 +30,15 @@ type Game struct {
 	*ObservableObject
 	*Location
 	*EffectManager
-	scenario                 *Scenario
-	terminator               chan bool
-	spawnedPlayer, spawnedAi int64
-	inProgress               bool
-	mutex, delay             sync.Mutex
-	delayedAction            []*GameAction
-	nextDelayedTaskExec      time.Time
-	delayedTaskChan          <-chan time.Time
+	scenario                   *Scenario
+	terminator                 chan bool
+	spawnedPlayer, spawnedAi   int64
+	inProgress                 bool
+	mutex, delay, aiCountMutex sync.Mutex
+	delayedAction              []*GameAction
+	nextDelayedTaskExec        time.Time
+	delayedTaskChan            <-chan time.Time
+	calcUnit                   int
 }
 
 func (receiver *Game) AddPlayer(player *Player) error {
@@ -74,7 +75,7 @@ func (receiver *Game) Run(scenario *Scenario) error {
 	if err != nil {
 		close(receiver.terminator)
 		receiver.scenario = nil
-		receiver.SpawnManager.DeSpawnAll()
+		receiver.SpawnManager.DeSpawnAll(nil)
 		receiver.inProgress = false
 		logger.Print(err)
 		return err
@@ -82,7 +83,7 @@ func (receiver *Game) Run(scenario *Scenario) error {
 
 	for _, player := range receiver.players {
 		location, _ := receiver.location.Coordinate2Spawn(true)
-		err := receiver.SpawnManager.SpawnPlayerTank2(location, "player-tank", player)
+		err := receiver.SpawnManager.SpawnPlayerTank(location, "player-tank", player)
 		if err != nil {
 			logger.Println("at spawning player error: ", err)
 		}
@@ -114,7 +115,7 @@ func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) 
 
 func (receiver *Game) onUnitFire(object *Unit, payload interface{}) {
 	if object.Gun != nil && object.Gun.GetProjectile() != "" {
-		err := receiver.SpawnManager.SpawnProjectile2(PosAuto, object.Gun.GetProjectile(), object)
+		err := receiver.SpawnManager.SpawnProjectile(PosAuto, object.Gun.GetProjectile(), object)
 		if err != nil {
 			logger.Printf("unable to fire %s due: %s \n", object.Gun.GetProjectile(), err)
 		}
@@ -151,7 +152,7 @@ func (receiver *Game) onUnitOnSight(object ObjectInterface, payload interface{})
 		object.(Stater).Enter("appear")
 		delayedEnterState(object.(Stater), "normal", object.(Appearable).GetAppearDuration())
 	}*/
-	receiver.SpawnExplosion2(PosAuto, "effect-onsight", payload.(ObjectInterface))
+	receiver.SpawnExplosion(PosAuto, "effect-onsight", payload.(ObjectInterface))
 	payload.(*Unit).Control.(*BehaviorControl).See(object.(*Unit))
 }
 
@@ -161,7 +162,7 @@ func (receiver *Game) onUnitOffSight(object ObjectInterface, payload interface{}
 		delayedEnterState(object.(Stater), "normal", object.(Appearable).GetAppearDuration())
 	}*/
 
-	receiver.SpawnExplosion2(PosAuto, "effect-offsight", payload.(ObjectInterface))
+	receiver.SpawnExplosion(PosAuto, "effect-offsight", payload.(ObjectInterface))
 	payload.(*Unit).Control.(*BehaviorControl).UnSee(object.(*Unit))
 }
 
@@ -194,11 +195,11 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 
 	if object.HasTag("explosive") {
 		bl, _ := object.GetTagValue("explosive", "blueprint", "tank-base-explosion")
-		err := receiver.SpawnManager.SpawnExplosion2(PosAuto, bl, object)
+		err := receiver.SpawnManager.SpawnExplosion(PosAuto, bl, object)
 		if err != nil {
 			logger.Printf("unable to spawn explosion: %s \n", err)
 		}
-		receiver.EffectManager.applyGlobalShake(0.3, time.Second*1)
+		receiver.EffectManager.ApplyGlobalShake(0.3, time.Second*1)
 	}
 
 	if object.HasTag("fanout") {
@@ -279,7 +280,7 @@ func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{
 					}
 				} else {
 					location, _ := receiver.location.Coordinate2Spawn(true)
-					receiver.SpawnManager.SpawnPlayerTank2(location, "player-tank", player)
+					receiver.SpawnManager.SpawnPlayerTank(location, "player-tank", player)
 				}
 			}
 		}
@@ -294,22 +295,26 @@ func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{
 			case 1:
 				bl = "gun"
 			}
-			receiver.SpawnManager.SpawnCollectable2(PosAuto, bl, object.(*Unit))
+			receiver.SpawnManager.SpawnCollectable(PosAuto, bl, object.(*Unit))
 		}
 
-		receiver.mutex.Lock()
-		if receiver.spawnedAi == -1 {
-			receiver.spawnedAi = receiver.SpawnManager.QuerySpawnedByTagCount("ai")
-		} else {
-			receiver.spawnedAi--
-			if receiver.spawnedAi <= 0 {
-				receiver.spawnedAi = receiver.SpawnManager.QuerySpawnedByTagCount("ai")
-			}
-		}
-		receiver.mutex.Unlock()
-		if receiver.spawnedAi <= 0 {
+		if v := receiver.DecrSpawnedAi(); v == 0 {
 			receiver.End(GAME_END_WIN)
 		}
+	}
+}
+
+func (receiver *Game) DecrSpawnedAi() int64 {
+	if newValue := atomic.AddInt64(&receiver.spawnedAi, -1); newValue <= 0 {
+		receiver.aiCountMutex.Lock() //todo fix possible deadLock with spawn
+		defer receiver.aiCountMutex.Unlock()
+		if receiver.spawnedAi > 0 {
+			return receiver.spawnedAi
+		} //todo possible rc
+		receiver.spawnedAi = receiver.SpawnManager.QuerySpawnedByTagCount("ai")
+		return receiver.spawnedAi
+	} else {
+		return newValue
 	}
 }
 
@@ -321,11 +326,10 @@ func (receiver *Game) End(code int) {
 		return
 	}
 	receiver.inProgress = false
-	receiver.SpawnManager.DeSpawnAll()
-
-	time.AfterFunc(time.Millisecond*500, func() {
-		//todo after despawn callback
+	receiver.EffectManager.CancelAllEffects()
+	receiver.SpawnManager.DeSpawnAll(func() {
 		close(receiver.terminator)
+
 		receiver.scenario = nil
 		receiver.terminator = nil
 		receiver.mutex.Unlock()
@@ -346,8 +350,8 @@ func NewGame(players []*Player, spm *SpawnManager) (*Game, error) {
 			Owner:  nil,
 			output: make(EventChanel),
 		},
-		spawnedPlayer: -1,
-		spawnedAi:     -1,
+		spawnedPlayer: 0,
+		spawnedAi:     0,
 	}
 	game.ObservableObject.Owner = game
 	game.inProgress = false

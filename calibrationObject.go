@@ -93,7 +93,7 @@ func (receiver *CalibrationObject) Calibrate() {
 }
 
 func (receiver *CalibrationObject) Reset() error {
-	receiver.ControlledObject.activate()
+	receiver.ControlledObject.Activate()
 	receiver.MotionObject.Reset()
 	receiver.moving = false
 	return nil

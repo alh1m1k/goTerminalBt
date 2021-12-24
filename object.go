@@ -287,7 +287,6 @@ func (receiver *Object) GetTagValue(tag string, key string, defaultValue string)
 func (receiver *Object) Reset() error {
 	receiver.destroyed = false
 	receiver.Interactions.Clear()
-
 	return nil
 }
 

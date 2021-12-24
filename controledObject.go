@@ -28,7 +28,7 @@ func (receiver *ControlledObject) Execute(command controller.Command) error {
 	return nil
 }
 
-func (receiver *ControlledObject) deactivate() error {
+func (receiver *ControlledObject) Deactivate() error {
 	receiver.Control.Disable()
 	if receiver.dispatcherEnable {
 		close(receiver.terminator)
@@ -37,7 +37,7 @@ func (receiver *ControlledObject) deactivate() error {
 	return nil
 }
 
-func (receiver *ControlledObject) activate() error {
+func (receiver *ControlledObject) Activate() error {
 	if !receiver.dispatcherEnable {
 		if receiver.Control == nil {
 			logger.Println("command chanel not found")

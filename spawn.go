@@ -40,6 +40,7 @@ type SpawnManager struct {
 	UnitEventChanel              EventChanel
 	spawnMutex, deSpawnMutex     sync.Mutex
 	planeDeSpawnAll              bool
+	planeDeSpawnAllCb            func()
 	cycleSpawned                 int64 //only pooled
 	cycleCreated                 int64 //only pooled
 	Flags                        struct {
@@ -96,6 +97,10 @@ func (manager *SpawnManager) Execute(timeLeft time.Duration) {
 
 	if deSpawnAll {
 		manager.pendingSpawn = manager.pendingSpawn[0:0]
+		if manager.planeDeSpawnAllCb != nil {
+			go manager.planeDeSpawnAllCb()
+			manager.planeDeSpawnAllCb = nil
+		}
 	}
 
 	for i, object := range manager.pendingSpawn {
@@ -164,11 +169,11 @@ func (manager *SpawnManager) Spawn(coordinate Point, blueprint string, configura
 	}
 	object := candidate.(ObjectInterface)
 
+	object.Reset()
+
 	if configurator != nil {
 		configurator(object, config)
 	}
-
-	object.Reset() //todo fix, reset before config but broke control
 
 	if coordinate == PosAuto {
 		if configurator != nil {
@@ -191,14 +196,14 @@ func (manager *SpawnManager) Spawn(coordinate Point, blueprint string, configura
 	return nil
 }
 
-func (manager *SpawnManager) SpawnPlayerTank2(coordinate Point, blueprint string, player *Player) error {
+func (manager *SpawnManager) SpawnPlayerTank(coordinate Point, blueprint string, player *Player) error {
 	if DEBUG_SPAWN {
 		logger.Printf("spawn<user-item> attempt %s \n", blueprint)
 	}
 	return manager.Spawn(coordinate, blueprint, PlayerConfigurator, player)
 }
 
-func (manager *SpawnManager) SpawnProjectile2(coordinate Point, blueprint string, owner *Unit) error {
+func (manager *SpawnManager) SpawnProjectile(coordinate Point, blueprint string, owner *Unit) error {
 	//coordinate no sense
 	if DEBUG_SPAWN {
 		logger.Printf("spawn<user-item> attempt %s \n", blueprint)
@@ -206,14 +211,14 @@ func (manager *SpawnManager) SpawnProjectile2(coordinate Point, blueprint string
 	return manager.Spawn(coordinate, blueprint, ProjectileConfigurator, owner)
 }
 
-func (manager *SpawnManager) SpawnExplosion2(coordinate Point, blueprint string, from ObjectInterface) error {
+func (manager *SpawnManager) SpawnExplosion(coordinate Point, blueprint string, from ObjectInterface) error {
 	if DEBUG_SPAWN {
 		logger.Printf("spawn<user-item> attempt %s \n", blueprint)
 	}
 	return manager.Spawn(coordinate, blueprint, ExplosionConfigurator, from)
 }
 
-func (manager *SpawnManager) SpawnCollectable2(coordinate Point, blueprint string, from *Unit) error {
+func (manager *SpawnManager) SpawnCollectable(coordinate Point, blueprint string, from *Unit) error {
 	if DEBUG_SPAWN {
 		logger.Printf("spawn<user-item> attempt %s \n", blueprint)
 	}
@@ -226,8 +231,9 @@ func (manager *SpawnManager) DeSpawn(object ObjectInterface) {
 	manager.deSpawnMutex.Unlock()
 }
 
-func (manager *SpawnManager) DeSpawnAll() {
+func (manager *SpawnManager) DeSpawnAll(callback func()) {
 	manager.planeDeSpawnAll = true
+	manager.planeDeSpawnAllCb = callback
 }
 
 func (manager *SpawnManager) QuerySpawnedByTag(tag string) []ObjectInterface {

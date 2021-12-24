@@ -112,10 +112,10 @@ func plDispatcher(pl *GPipeline) {
 			stage := atomic.AddInt64(&pl.stage, inc)
 			switch stage {
 			case 1:
+				go pl.doSpawn()
+			case 2:
 				go pl.doUpdate()
 				go pl.doNav()
-			case 3:
-				go pl.doSpawn()
 				go pl.doAnimate()
 			case 5:
 				go pl.doCollide()

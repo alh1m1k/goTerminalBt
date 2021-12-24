@@ -114,11 +114,6 @@ func ProjectileConfigurator(object ObjectInterface, config interface{}) ObjectIn
 	x = centerOx - ow/2
 	y = centerOy - oh/2
 
-	/*	if owner.HasTag("tank") {
-		x += owner.Speed.X * dir.X
-		y += owner.Speed.Y * dir.Y //todo remove*/
-	//	}*/
-
 	projectile.Move(x, y)
 	//----- speed modify based at owner speed
 	projectile.ApplySpeed(owner.Speed)

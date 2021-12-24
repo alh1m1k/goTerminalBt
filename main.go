@@ -30,7 +30,7 @@ const DEBUG_STATE = false
 const DEBUG_NO_AI = false
 const DEBUG_SHAKE = false
 const DEBUG_IMMORTAL_PLAYER = true
-const DEBUG_FREEZ_AI = true
+const DEBUG_FREEZ_AI = false
 const DEBUG_AI_PATH = true
 const DEBUG_AI_BEHAVIOR = false
 const DEBUG_FIRE_SOLUTION = false
@@ -345,20 +345,17 @@ func main() {
 		case gameEvent := <-game.GetEventChanel():
 			switch gameEvent.EType {
 			case GAME_START:
-				cycleTime = CYCLE
 				endGame = false
 				render.UI(&UIData{players: game.GetPlayers()})
 				profileStart(profileMod, profileDelay)
 			case GAME_END_LOSE:
 				screen, _ = NewLoseScreen()
-				cycleTime = SLOW_CYCLE
 				endGame = true
 				render.UI(nil)
 				terminateEvent = time.After(10 * time.Second)
 				resultScreen = time.After(200 * time.Millisecond)
 			case GAME_END_WIN:
 				screen, _ = NewWinScreen()
-				cycleTime = SLOW_CYCLE
 				endGame = true
 				render.UI(nil)
 				terminateEvent = time.After(10 * time.Second)
