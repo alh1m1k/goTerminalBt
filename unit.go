@@ -92,7 +92,7 @@ func (receiver *Unit) Execute(command controller.Command) error {
 	}
 
 	if command.CType == controller.CTYPE_SPEED_FACTOR {
-		receiver.speedFactorAI = Point(command.Pos) //x y -> are they same
+		receiver.speedAccelerator = Point(command.Pos) //x y -> are they same
 	}
 
 	return nil

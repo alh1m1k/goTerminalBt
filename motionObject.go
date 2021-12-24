@@ -36,7 +36,7 @@ type MotionObjectInterface interface {
 type MotionObject struct {
 	*Object
 	Moving
-	speedFactorAI     Point //todo remove
+	speedAccelerator  Point //todo remove
 	moving            bool
 	AccelDuration     time.Duration
 	AccelTimeFunc     timeFunction
@@ -55,8 +55,8 @@ func (receiver *MotionObject) Update(timeLeft time.Duration) error {
 
 	if receiver.moving {
 
-		deltaX := receiver.Moving.Direction.X * (receiver.Moving.Speed.X * receiver.speedFactorAI.X) * (float64(timeLeft) / float64(time.Second))
-		deltaY := receiver.Moving.Direction.Y * (receiver.Moving.Speed.Y * receiver.speedFactorAI.Y) * (float64(timeLeft) / float64(time.Second))
+		deltaX := receiver.Moving.Direction.X * (receiver.Moving.Speed.X * receiver.speedAccelerator.X) * (float64(timeLeft) / float64(time.Second))
+		deltaY := receiver.Moving.Direction.Y * (receiver.Moving.Speed.Y * receiver.speedAccelerator.Y) * (float64(timeLeft) / float64(time.Second))
 
 		receiver.RelativeMove(deltaX, deltaY)
 
@@ -74,6 +74,10 @@ func (receiver *MotionObject) Update(timeLeft time.Duration) error {
 	}
 
 	return nil
+}
+
+func (receiver *MotionObject) Accelerate(factorX, factorY float64) {
+	receiver.speedAccelerator.X, receiver.speedAccelerator.Y = factorX, factorY
 }
 
 func (receiver *MotionObject) GetSpeed() *Point {
@@ -104,7 +108,7 @@ func (receiver *MotionObject) Reset() error {
 	receiver.currAccelDuration = 0
 	receiver.accelerate = true
 	receiver.moving = false
-	receiver.speedFactorAI.X, receiver.speedFactorAI.Y = 1.0, 1.0
+	receiver.speedAccelerator.X, receiver.speedAccelerator.Y = 1.0, 1.0
 	return nil
 }
 
@@ -139,7 +143,7 @@ func NewMotionObject(obj *Object, direction Point, speed Point) (*MotionObject, 
 		accelerate:        true,
 		moving:            false,
 		alignToGrid:       false,
-		speedFactorAI:     Point{1.0, 1.0},
+		speedAccelerator:  Point{1.0, 1.0},
 	}
 	return &instance, nil
 }

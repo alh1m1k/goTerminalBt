@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const DEBUG_DISARM_AI = false
+const DEBUG_DISARM_AI = true
 
 const (
 	CTYPE_DIRECTION = iota

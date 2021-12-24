@@ -27,9 +27,14 @@ var (
 	ErrorSprite = NewContentSprite([]byte("!!!Error!!!"))
 )
 
+type SizeI struct {
+	X, Y int
+}
+
 type Spriteer interface {
 	io.Writer
 	fmt.Stringer
+	GetWH() GeoSize
 }
 
 type CustomizeMap map[string]int
@@ -37,7 +42,12 @@ type CustomizeMap map[string]int
 type Sprite struct {
 	Parent        *Sprite
 	Buf           *bytes.Buffer
+	Size          GeoSize
 	isTransparent bool
+}
+
+func (s *Sprite) GetWH() GeoSize {
+	return s.Size
 }
 
 func (s *Sprite) Write(p []byte) (int, error) {
@@ -46,6 +56,14 @@ func (s *Sprite) Write(p []byte) (int, error) {
 
 func (s *Sprite) String() (out string) {
 	return s.Buf.String()
+}
+
+func (s *Sprite) CalculateSize() {
+	strings := strings.Split(s.Buf.String(), "\n")
+	s.Size.W, s.Size.H = 0, len(strings)
+	for i := 0; i < s.Size.H; i++ {
+		s.Size.W = maxInt(s.Size.W, len(strings[i]))
+	}
 }
 
 func NewSprite() *Sprite {
@@ -64,6 +82,7 @@ func NewContentSprite(buffer []byte) *Sprite {
 	box.Parent = nil
 	box.Buf = bytes.NewBuffer(buffer)
 	box.isTransparent = true
+	box.CalculateSize()
 
 	return box
 }
@@ -87,6 +106,7 @@ func GetSprite(id string, load bool, processTransparent bool) (*Sprite, error) {
 		sprite.Write(buffer)
 		sprite.isTransparent = false
 	}
+	sprite.CalculateSize()
 	sprites[id] = sprite
 
 	return sprite, nil
@@ -113,6 +133,7 @@ func LoadSprite2(path string, processTransparent bool) (*Sprite, error) {
 		sprite.Write(buffer)
 		sprite.isTransparent = false
 	}
+	sprite.CalculateSize()
 	return sprite, nil
 }
 

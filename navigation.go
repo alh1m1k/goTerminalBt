@@ -7,10 +7,6 @@ import (
 	"time"
 )
 
-type Zone struct {
-	X, Y int
-}
-
 type PathReceiver interface {
 	ReceivePath(path []Zone, jobId int64)
 }

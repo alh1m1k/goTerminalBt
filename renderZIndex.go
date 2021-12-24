@@ -15,7 +15,7 @@ type RenderZIndex struct {
 	zIndex           []int
 	needReorder      bool
 	zQueue           map[int][]Renderable
-	output           *output.ConsoleOutput
+	output           output.ConsoleOutput
 	*UIData
 	uiThrottle       *throttle
 	UIDraw           bool
@@ -92,10 +92,11 @@ func (receiver *RenderZIndex) Execute(timeLeft time.Duration) {
 			}
 			sprite := object.GetSprite()
 			x, y := receiver.translateXY(object.GetXY())
-			receiver.draw(sprite, x, y)
+			wh := sprite.GetWH()
+			receiver.draw(sprite, x, y, wh.W, wh.H)
 		}
 	}
-	if (receiver.uiThrottle.Reach(timeLeft) || receiver.output.IsFullRepaint) && receiver.UIDraw {
+	if receiver.uiThrottle.Reach(timeLeft) && receiver.UIDraw {
 		receiver.drawUI(timeLeft)
 	}
 	receiver.output.MoveCursor(0, 0)
@@ -121,9 +122,8 @@ func (receiver *RenderZIndex) translateXY(x, y float64) (int, int) {
 	return int(math.Round(x)) + receiver.offsetX, int(math.Round(y)) + 3 + receiver.offsetY
 }
 
-func (receiver *RenderZIndex) draw(sprite Spriteer, x, y int) {
-
-	receiver.output.PrintSprite(sprite, x, y, 0)
+func (receiver *RenderZIndex) draw(sprite Spriteer, x, y, w, h int) {
+	receiver.output.PrintSprite(sprite, x, y, w, h, 0)
 }
 
 func (receiver *RenderZIndex) drawUI(timeLeft time.Duration) {
@@ -152,7 +152,7 @@ func (receiver *RenderZIndex) drawUI(timeLeft time.Duration) {
 }
 
 func NewRenderZIndex(queueSize int) (*RenderZIndex, error) {
-	output, _ := output.NewConsoleOutput()
+	output, _ := output.NewConsoleOutputLine()
 	return &RenderZIndex{
 		zIndex:           make([]int, 0, 5),
 		zQueue:           make(map[int][]Renderable),

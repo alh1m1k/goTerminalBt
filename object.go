@@ -4,7 +4,6 @@ import (
 	"GoConsoleBT/collider"
 	"errors"
 	"github.com/tanema/ump"
-	"math"
 	"time"
 )
 
@@ -35,14 +34,6 @@ var SpawnEvent Event = Event{
 }
 
 var Tag404Error = errors.New("tag not found")
-
-type Located interface {
-	GetXY() (x float64, y float64)
-}
-
-type Sized interface {
-	GetWH() (w float64, h float64)
-}
 
 type Scored interface {
 	GetScore() int
@@ -78,12 +69,7 @@ type Prototyped interface {
 	GetPrototype() ObjectInterface
 }
 
-type BlueprintMaked interface {
-	GetBlueprint() string
-}
-
 type ObjectInterface interface {
-	BlueprintMaked
 	Prototyped
 	Located
 	Sized
@@ -102,24 +88,6 @@ type ObjectInterface interface {
 	Spawn() error
 	Move(x, y float64)
 	RelativeMove(x, y float64)
-}
-
-type Point struct {
-	X, Y float64
-}
-
-func (receiver Point) Equal(to Point, precision float64) bool {
-	if math.Abs(receiver.X-to.X) <= precision && math.Abs(receiver.Y-to.Y) <= precision {
-		return true
-	}
-	return false
-}
-
-func (receiver Point) Plus(to Point) Point {
-	return Point{
-		X: receiver.X + to.X,
-		Y: receiver.Y + to.Y,
-	}
 }
 
 type Object struct {

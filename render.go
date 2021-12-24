@@ -37,7 +37,7 @@ type UIData struct {
 
 type Render struct {
 	queue  []Renderable
-	output *output.ConsoleOutput
+	output output.ConsoleOutput
 	*UIData
 	uiThrottle       *throttle
 	UIDraw           bool
@@ -90,7 +90,7 @@ func (receiver *Render) Execute(timeLeft time.Duration) {
 		receiver.draw(sprite, x, y)
 	}
 
-	if (receiver.uiThrottle.Reach(timeLeft) || receiver.output.IsFullRepaint) && receiver.UIDraw {
+	if receiver.uiThrottle.Reach(timeLeft) && receiver.UIDraw {
 		receiver.drawUI(timeLeft)
 	}
 	receiver.output.MoveCursor(0, 0)
@@ -118,7 +118,7 @@ func (receiver *Render) translateXY(x, y float64) (int, int) {
 
 func (receiver *Render) draw(sprite Spriteer, x, y int) {
 
-	receiver.output.PrintSprite(sprite, x, y, 0)
+	receiver.output.PrintSprite(sprite, x, y, 0, 0, 0)
 }
 
 func (receiver *Render) drawUI(timeLeft time.Duration) {
@@ -147,7 +147,7 @@ func (receiver *Render) drawUI(timeLeft time.Duration) {
 }
 
 func NewRender(queueSize int) (*Render, error) {
-	output, _ := output.NewConsoleOutput()
+	output, _ := output.NewConsoleOutputLine()
 	return &Render{
 		queue:      make([]Renderable, 0, queueSize),
 		output:     output,

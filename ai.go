@@ -301,7 +301,7 @@ func (receiver *BehaviorControl) GetDirection2Zone(zone Zone) Point {
 	return direction
 }
 
-func (receiver *BehaviorControl) Stop(zone Zone) (done bool) {
+func (receiver *BehaviorControl) Stop() (done bool) {
 	if receiver.IsStop() {
 		return true
 	}

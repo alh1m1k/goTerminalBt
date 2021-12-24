@@ -30,7 +30,7 @@ const DEBUG_STATE = false
 const DEBUG_NO_AI = false
 const DEBUG_SHAKE = false
 const DEBUG_IMMORTAL_PLAYER = true
-const DEBUG_FREEZ_AI = false
+const DEBUG_FREEZ_AI = true
 const DEBUG_AI_PATH = true
 const DEBUG_AI_BEHAVIOR = false
 const DEBUG_FIRE_SOLUTION = false
@@ -307,6 +307,7 @@ func main() {
 		case configuration := <-configurationChanel:
 			switch configuration.EType {
 			case DIALOG_EVENT_PLAYER_SELECT:
+				direct.Print("\033[?25l")
 				screen.(*Dialog).Activate()
 
 				payload := configuration.Payload.(*DialogInfo)

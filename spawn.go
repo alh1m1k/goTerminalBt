@@ -79,7 +79,7 @@ func (manager *SpawnManager) Execute(timeLeft time.Duration) {
 		manager.pendingDeSpawn[i] = nil
 		manager.spawned[object] = false
 		object.DeSpawn()
-		bl := object.GetBlueprint()
+		bl := object.GetAttr().Blueprint
 		if bl != "" && !deSpawnAll && manager.Flags.lockFree {
 			if poll, ok := manager.respawn[bl]; ok {
 				poll.Put(object)
@@ -141,7 +141,7 @@ func (manager *SpawnManager) Collect() {
 
 	for object, spawned := range manager.spawned {
 		if !spawned {
-			bl := object.GetBlueprint()
+			bl := object.GetAttr().Blueprint
 			if bl == "" {
 				continue
 			}

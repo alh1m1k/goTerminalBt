@@ -790,7 +790,7 @@ func SpriteLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 			var sprite *Sprite
 			sprite, err = GetSprite(sId, true, isTransparent)
 			if !collector.Add(err) {
-				collector.Add(fmt.Errorf("sprite: %w", ParseError))
+				sprite.CalculateSize()
 				customBytes, dataType, _, _ := jsonparser.Get(payload, "custom")
 				switch dataType {
 				case jsonparser.Object:
@@ -822,6 +822,7 @@ func SpriteLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 	if sprite == nil {
 		collector.Add(fmt.Errorf("sprite is nil, use default: %w", InstanceError))
 		sprite = ErrorSprite
+
 	}
 
 	return sprite
