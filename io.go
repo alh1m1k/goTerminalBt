@@ -5,27 +5,32 @@ import (
 	"os"
 )
 
-const spritePath 	= "./sprite/"
-const statePath 	= "./state/"
+const spritePath = "./sprite/"
+const statePath = "./state/"
+const scenarioPath = "./scenario/"
 
-func loadSprite(filename string) ([]byte, error)   {
+func loadSprite(filename string) ([]byte, error) {
 	return os.ReadFile(spritePath + filename)
 }
 
-func loadState(filename string) ([]byte, error)   {
+func loadState(filename string) ([]byte, error) {
 	return os.ReadFile(statePath + filename + ".json")
 }
 
-func saveConfig(config *GameConfig) (int, error)   {
+func loadScenario(filename string) ([]byte, error) {
+	return os.ReadFile(scenarioPath + filename + ".json")
+}
+
+func saveConfig(config *GameConfig) (int, error) {
 	payload, err := json.Marshal(config)
 	if err != nil {
 		return 0, err
 	}
-	return len(payload), os.WriteFile( "config.json", payload, 644)
+	return len(payload), os.WriteFile("config.json", payload, 644)
 }
 
-func loadConfig() (*GameConfig, error)   {
-	payload, err := os.ReadFile( "config.json")
+func loadConfig() (*GameConfig, error) {
+	payload, err := os.ReadFile("config.json")
 	if err != nil {
 		return nil, err
 	}

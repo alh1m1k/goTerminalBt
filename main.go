@@ -13,14 +13,11 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strconv"
 	"syscall"
 	"time"
 )
 
 const CYCLE = 100 * time.Millisecond
-const SLOW_CYCLE = time.Second / 2
-const TIME_FACTOR = time.Second / CYCLE
 
 const DEBUG = false
 const DEBUG_SPAWN = false
@@ -35,6 +32,7 @@ const DEBUG_AI_PATH = true
 const DEBUG_AI_BEHAVIOR = false
 const DEBUG_FIRE_SOLUTION = false
 const DEBUG_MINIMAP = true
+const DEBUG_DISABLE_VISION = true
 
 const RENDERER_WITH_ZINDEX = true
 
@@ -48,14 +46,12 @@ var (
 )
 
 var (
-	gameConfig           *GameConfig
-	game                 *Game
-	render               Renderer
-	calibration          *Calibration
-	endGame              = false
-	endGameThrottle      = newThrottle(3*time.Second, false)
-	endGameCycleThrottle = newThrottle(1*time.Second, true)
-	AIBUILDER            func() (*BehaviorControl, error)
+	gameConfig  *GameConfig
+	game        *Game
+	render      Renderer
+	calibration *Calibration
+	AIBUILDER   func() (*BehaviorControl, error)
+	scenario    *Scenario
 )
 
 //flags
@@ -63,7 +59,6 @@ var (
 	seed             int64
 	wallCnt, tankCnt int
 	calibrate        bool
-	lockfreePool     bool
 	profileMod       string
 	scenarioName     string
 	profileDelay     time.Duration
@@ -180,36 +175,32 @@ func main() {
 
 	//builder
 	buildManager, _ := NewBlueprintManager()
-	buildManager.AddLoaderPackage(NewJsonPackage())
-	buildManager.GameConfig = gameConfig
-	buildManager.EventChanel = spawner.UnitEventChanel //remove from builder
 
 	//ai
 	aibuilder, _ := NewAIControlBuilder(detector, location, navigation)
 	AIBUILDER = aibuilder.Build
-	//AIBUILDER()
 
 	//scenario
-	scenario, _ := /*NewCollisionDemoScenario(tankCnt, wallCnt)*/ NewRandomScenario(tankCnt, wallCnt)
-	scenario.DeclareBlueprint(func(blueprint string) {
-		builder, _ := buildManager.CreateBuilder(blueprint)
-		if builder == nil { //may cause error on success
-			panic("builder " + blueprint + " not found")
-		} else {
-			spawner.AddBuilder(blueprint, builder)
-		}
-		object, _ := buildManager.Get(blueprint)
-		if projectile, ok := object.(*Projectile); ok {
-			if err := aibuilder.RegisterProjectile(projectile); err != nil {
-				logger.Println(err)
-			}
-		}
-	})
+	if scenarioName == "random" {
+		scenario, _ = NewRandomScenario(tankCnt, wallCnt)
+	} else {
+		scenario, _ = GetScenario(scenarioName)
+	}
 
 	//game
 	game, _ = NewGame(nil, spawner)
 	game.Location = location
 	game.EffectManager = pipe.EffectManager
+
+	//runner
+	runner, _ := NewGameRunner()
+	runner.Keyboard = keysEvents
+	runner.Game = game
+	runner.Scenario = scenario
+	runner.BlueprintManager = buildManager
+	runner.BehaviorControlBuilder = aibuilder
+	runner.SpawnManager = spawner
+	runner.Renderer = render
 
 	//time
 	cycleTime := CYCLE
@@ -221,34 +212,19 @@ func main() {
 	direct.MoveCursor(0, 0)
 	direct.Flush()
 
-	var terminateEvent, resultScreen <-chan time.Time
-	var screen Screener
-	var configurationChanel EventChanel = make(EventChanel)
-
+	var finChanel EventChanel = make(EventChanel)
 	if calibrate {
-		calibration, _ = NewCalibration(updater, render, detector, location, configurationChanel)
+		calibration, _ = NewCalibration(updater, render, detector, location, finChanel)
 		calibration.GameConfig = gameConfig
 		control, _ := controller.NewPlayerControl(keysEvents, controller.Player1DefaultKeyBinding)
 		go calibration.Run(control)
 	} else {
-		screen, _ = NewPlayerSelectDialog(keysEvents, configurationChanel)
-		render.Add(screen)
+		go runner.Run(game, scenario, finChanel)
 	}
 
 	if DEBUG_MINIMAP {
 		var debugMinimap func()
 		debugMinimap = func() {
-
-			/*if game.inProgress {
-				navigation.SchedulePath(Zone{X:0, Y:0}, Zone{
-					X: game.players[0].Unit.Tracker.xIndex,
-					Y: game.players[0].Unit.Tracker.yIndex,
-				}, game.players[0].Unit)
-				logger.Printf("track from %d, %d to %d, %d \n", 0, 0, game.players[0].Unit.Tracker.xIndex, game.players[0].Unit.Tracker.yIndex)
-				if len(navigation.NavData) > 0 {
-					logger.Printf("last nav pos: ", navigation.NavData[0][len(navigation.NavData[0]) -1])
-				}
-			}*/
 			logger.Println("dump minimap...")
 			mmp, _ := location.Minimap(true, navigation.NavData)
 			minimap.Printf("minimap for %d cycle \n\n", CycleID)
@@ -304,32 +280,8 @@ func main() {
 
 	for {
 		select {
-		case configuration := <-configurationChanel:
-			switch configuration.EType {
-			case DIALOG_EVENT_PLAYER_SELECT:
-				direct.Print("\033[?25l")
-				screen.(*Dialog).Activate()
-
-				payload := configuration.Payload.(*DialogInfo)
-				for i := 0; i < payload.Value; i++ {
-					//players
-					playerControl, _ := controller.NewPlayerControl(keysEvents, controller.KeyboardBindingPool[i])
-					player, _ := NewPlayer("Player"+strconv.Itoa(i+1), playerControl)
-					player.CustomizeMap = &CustomizeMap{
-						"gun":   direct.RED,
-						"armor": direct.YELLOW,
-						"track": direct.CYAN,
-					}
-					game.AddPlayer(player)
-				}
-
-				render.Remove(screen)
-				screen.(*Dialog).Deactivate()
-
-				direct.Clear()
-				direct.Flush()
-
-				go game.Run(scenario)
+		case fin := <-finChanel:
+			switch fin.EType {
 			case CALIBRATION_COMPLETE:
 				direct.Clear()
 				direct.Flush()
@@ -341,35 +293,14 @@ func main() {
 				}
 				direct.Flush()
 				return
-			}
-		case gameEvent := <-game.GetEventChanel():
-			switch gameEvent.EType {
-			case GAME_START:
-				endGame = false
-				render.UI(&UIData{players: game.GetPlayers()})
-				profileStart(profileMod, profileDelay)
-			case GAME_END_LOSE:
-				screen, _ = NewLoseScreen()
-				endGame = true
-				render.UI(nil)
-				terminateEvent = time.After(10 * time.Second)
-				resultScreen = time.After(200 * time.Millisecond)
 			case GAME_END_WIN:
-				screen, _ = NewWinScreen()
-				endGame = true
-				render.UI(nil)
-				terminateEvent = time.After(10 * time.Second)
-				resultScreen = time.After(200 * time.Millisecond)
+				fallthrough
+			case GAME_END_LOSE:
+				direct.Clear()
+				direct.Printf("game seed is: %d \n", seed)
+				direct.Flush()
+				return
 			}
-		case <-resultScreen:
-			direct.Clear()
-			direct.Flush()
-			render.Add(screen)
-		case <-terminateEvent:
-			direct.Clear()
-			direct.Printf("game seed is: %d \n", seed)
-			direct.Flush()
-			return
 		case <-osSignal:
 			direct.Clear()
 			direct.Printf("game seed is: %d \n", seed)
@@ -389,23 +320,6 @@ func main() {
 			}
 		}
 	}
-}
-
-func newTimer(duration time.Duration) <-chan time.Time {
-	output := make(chan time.Time)
-
-	go func(duration time.Duration, output chan time.Time) {
-		events := time.After(duration)
-		for {
-			select {
-			case timeLeft := <-events:
-				output <- timeLeft
-				events = time.After(duration)
-			}
-		}
-	}(duration, output)
-
-	return output
 }
 
 func profileStart(mode string, delay time.Duration) {

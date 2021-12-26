@@ -55,6 +55,7 @@ func (receiver *BehaviorControlBuilder) Build() (*BehaviorControl, error) {
 	instance.Location = receiver.Location
 	instance.Navigation = receiver.Navigation
 	instance.projectileProto = receiver.projectileProto
+	instance.builder = receiver
 	return instance, nil
 }
 
@@ -65,6 +66,7 @@ type BehaviorControl struct {
 	*Location
 	*Navigation
 	*Behavior
+	builder                      *BehaviorControlBuilder
 	nextBehavior                 *Behavior
 	avatar                       *Unit
 	target                       *Unit
@@ -165,6 +167,11 @@ func (receiver *BehaviorControl) Next(behavior *Behavior) {
 		panic("atatat")
 	}
 	receiver.nextBehavior = behavior
+}
+
+func (receiver *BehaviorControl) Copy() *BehaviorControl {
+	instance, _ := receiver.builder.Build()
+	return instance
 }
 
 func (receiver *BehaviorControl) next(behavior *Behavior) {

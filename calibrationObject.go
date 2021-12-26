@@ -102,6 +102,7 @@ func (receiver *CalibrationObject) Reset() error {
 func NewCalibrationObject(control *controller.Control, chanel EventChanel, x, y float64) (*CalibrationObject, error) {
 	sprite := NewSprite()
 	sprite.Write([]byte("****\n****\n****\n****"))
+	sprite.CalculateSize()
 	collision := collider.NewPenetrateCollision(x, y, 4, 4)
 	obj, _ := NewObject(sprite, collision)
 	mm, _ := NewMotionObject(obj, Point{

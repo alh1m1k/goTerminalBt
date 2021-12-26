@@ -133,12 +133,16 @@ func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 	return scenario, nil
 }
 
-func NewCollisionDemoScenario(tankCnt int, wallCnt int) (*Scenario, error) {
+func NewFileScenario(filepath string) (*Scenario, error) {
+	return &Scenario{}, nil
+}
+
+func NewCollisionDemoScenario() (*Scenario, error) {
 	scenario, err := NewScenario()
 	if err != nil {
 		return nil, err
 	}
-	spawn := make([]*SpawnRequest, 0, tankCnt+wallCnt)
+	spawn := make([]*SpawnRequest, 0, 10)
 
 	zXPoint := float64(104)
 	zYPoint := float64(24)
@@ -205,6 +209,62 @@ func NewCollisionDemoScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 			Blueprint: "wall",
 			Team:      100,
 		},
+		&SpawnRequest{
+			Location: Point{
+				X: zXPoint + wallW*5,
+				Y: zYPoint + 0,
+			},
+			Blueprint: "wall",
+			Team:      100,
+		},
+		&SpawnRequest{
+			Location: Point{
+				X: zXPoint + wallW*6,
+				Y: zYPoint + 0,
+			},
+			Blueprint: "wall",
+			Team:      100,
+		},
+		&SpawnRequest{
+			Location: Point{
+				X: zXPoint + wallW*7,
+				Y: zYPoint + 0,
+			},
+			Blueprint: "wall",
+			Team:      100,
+		},
+		&SpawnRequest{
+			Location: Point{
+				X: zXPoint + wallW*7,
+				Y: zYPoint - wallH*1,
+			},
+			Blueprint: "wall",
+			Team:      100,
+		},
+		&SpawnRequest{
+			Location: Point{
+				X: zXPoint + wallW*7,
+				Y: zYPoint - wallH*2,
+			},
+			Blueprint: "wall",
+			Team:      100,
+		},
+		&SpawnRequest{
+			Location: Point{
+				X: zXPoint + wallW*6,
+				Y: zYPoint - wallH*2,
+			},
+			Blueprint: "wall",
+			Team:      100,
+		},
+		&SpawnRequest{
+			Location: Point{
+				X: zXPoint + wallW*5,
+				Y: zYPoint - wallH*2,
+			},
+			Blueprint: "wall",
+			Team:      100,
+		},
 	)
 
 	start, _ := NewStateItem(scenario.State.root, &ScenarioStateInfo{
@@ -232,4 +292,13 @@ func NewCollisionDemoScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 	scenario.State.root.items["start"] = start
 
 	return scenario, nil
+}
+
+func GetScenario(name string) (*Scenario, error) {
+	switch name {
+	case "collisionTest":
+		return NewCollisionDemoScenario()
+	default:
+		return NewFileScenario(name)
+	}
 }

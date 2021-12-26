@@ -53,6 +53,7 @@ func (receiver *Game) GetPlayers() []*Player {
 	return receiver.players
 }
 
+//MUST RUN async
 func (receiver *Game) Run(scenario *Scenario) error {
 
 	receiver.mutex.Lock()
@@ -320,16 +321,18 @@ func (receiver *Game) DecrSpawnedAi() int64 {
 
 //async
 func (receiver *Game) End(code int) {
+	if !receiver.inProgress {
+		return
+	}
 	receiver.mutex.Lock()
 	if !receiver.inProgress {
-		receiver.mutex.Unlock()
 		return
 	}
 	receiver.inProgress = false
 	receiver.EffectManager.CancelAllEffects()
 	receiver.SpawnManager.DeSpawnAll(func() {
+		//todo after despawn callback
 		close(receiver.terminator)
-
 		receiver.scenario = nil
 		receiver.terminator = nil
 		receiver.mutex.Unlock()

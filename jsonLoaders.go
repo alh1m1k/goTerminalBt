@@ -121,22 +121,24 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		collector.Add(fmt.Errorf("gun: %w", ParseError))
 	}
 
-	visionCfg, dType, _, _ := jsonparser.Get(payload, "vision")
-	switch dType {
-	case jsonparser.Object:
-		loader := get("collision")
-		if loader != nil {
-			proxy := loader(get, collector, visionCfg)
-			if proxy != nil {
-				vision = proxy.(*collider.ClBody)
+	if !DEBUG_DISABLE_VISION {
+		visionCfg, dType, _, _ := jsonparser.Get(payload, "vision")
+		switch dType {
+		case jsonparser.Object:
+			loader := get("collision")
+			if loader != nil {
+				proxy := loader(get, collector, visionCfg)
+				if proxy != nil {
+					vision = proxy.(*collider.ClBody)
+				}
+			} else {
+				collector.Add(fmt.Errorf("collision: %w", LoaderNotFoundError))
 			}
-		} else {
-			collector.Add(fmt.Errorf("collision: %w", LoaderNotFoundError))
+		case jsonparser.Null:
+		case jsonparser.NotExist:
+		default:
+			collector.Add(fmt.Errorf("vision: %w", ParseError))
 		}
-	case jsonparser.Null:
-	case jsonparser.NotExist:
-	default:
-		collector.Add(fmt.Errorf("vision: %w", ParseError))
 	}
 
 	if loader := get("eventChanel"); loader != nil {

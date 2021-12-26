@@ -242,7 +242,7 @@ func (receiver *Unit) Copy() *Unit {
 	if DEBUG_NO_AI {
 		control, _ = controller.NewNoneControl()
 	} else {
-		control, _ = AIBUILDER() //controller.NewAIControl()
+		control, _ = AIBUILDER()
 		control.(*BehaviorControl).AttachTo(&instance)
 	}
 	instance.ControlledObject, _ = NewControlledObject(control, &instance)
