@@ -7,7 +7,7 @@ import (
 )
 
 type Wall struct {
-	Object
+	*Object
 	*ObservableObject
 	*State
 	HP, FullHP, Score int
@@ -64,7 +64,9 @@ func (receiver *Wall) Destroy(nemesis ObjectInterface) error {
 func (receiver *Wall) Reset() error {
 	receiver.HP = receiver.FullHP
 	receiver.Object.Reset()
-	receiver.State.Reset()
+	if receiver.State != nil {
+		receiver.State.Reset()
+	}
 	receiver.Trigger(ResetEvent, receiver, nil)
 	return nil
 }
@@ -97,22 +99,26 @@ func (receiver *Wall) Copy() *Wall {
 
 	instance.ObservableObject = receiver.ObservableObject.Copy()
 	instance.ObservableObject.Owner = instance
-	instance.Object = *receiver.Object.Copy()
-	instance.State = receiver.State.Copy()
-	instance.State.Owner = &instance
+	instance.Object = receiver.Object.Copy()
+	if receiver.State != nil {
+		instance.State = receiver.State.Copy()
+		instance.State.Owner = &instance
+	}
 	instance.Interactions.Subscribe(&instance)
 
 	return &instance
 }
 
-func NewWall(obj Object, state *State, obs *ObservableObject) (*Wall, error) {
+func NewWall(obj *Object, state *State, obs *ObservableObject) (*Wall, error) {
 	instance := new(Wall)
 
 	instance.Object = obj
 	instance.ObservableObject = obs
 	instance.ObservableObject.Owner = instance
-	instance.State = state
-	instance.State.Owner = instance
+	if state != nil {
+		instance.State = state
+		instance.State.Owner = instance
+	}
 	instance.Interactions.Subscribe(instance)
 
 	instance.destroyed = false

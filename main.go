@@ -26,13 +26,13 @@ const DEBUG_EXEC = false
 const DEBUG_STATE = false
 const DEBUG_NO_AI = false
 const DEBUG_SHAKE = false
-const DEBUG_IMMORTAL_PLAYER = true
+const DEBUG_IMMORTAL_PLAYER = false
 const DEBUG_FREEZ_AI = false
 const DEBUG_AI_PATH = true
-const DEBUG_AI_BEHAVIOR = false
+const DEBUG_AI_BEHAVIOR = true
 const DEBUG_FIRE_SOLUTION = false
-const DEBUG_MINIMAP = true
-const DEBUG_DISABLE_VISION = true
+const DEBUG_MINIMAP = false
+const DEBUG_DISABLE_VISION = false
 
 const RENDERER_WITH_ZINDEX = true
 
@@ -50,7 +50,6 @@ var (
 	game        *Game
 	render      Renderer
 	calibration *Calibration
-	AIBUILDER   func() (*BehaviorControl, error)
 	scenario    *Scenario
 )
 
@@ -178,7 +177,6 @@ func main() {
 
 	//ai
 	aibuilder, _ := NewAIControlBuilder(detector, location, navigation)
-	AIBUILDER = aibuilder.Build
 
 	//scenario
 	if scenarioName == "random" {

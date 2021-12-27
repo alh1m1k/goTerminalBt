@@ -30,6 +30,9 @@ func (receiver *ControlledObject) Execute(command controller.Command) error {
 
 func (receiver *ControlledObject) Deactivate() error {
 	receiver.Control.Disable()
+	/*	if bc, ok := receiver.Control.(*BehaviorControl); ok {
+		bc.Deattach()
+	}*/
 	if receiver.dispatcherEnable {
 		close(receiver.terminator)
 	}
@@ -47,6 +50,11 @@ func (receiver *ControlledObject) Activate() error {
 		go coCmdDispatcher(receiver, receiver.Control.GetCommandChanel(), receiver.terminator)
 	}
 	receiver.dispatcherEnable = true
+	if bc, ok := receiver.Control.(*BehaviorControl); ok {
+		if unit, ok := receiver.Owner.(*Unit); ok {
+			bc.AttachTo(unit) //todo simplify
+		}
+	}
 	receiver.Control.Enable()
 	return nil
 }
@@ -58,6 +66,22 @@ func (receiver *ControlledObject) Free() error {
 
 func (receiver *ControlledObject) Copy() *ControlledObject {
 	instance := *receiver
+	instance.terminator = nil
+	instance.dispatcherEnable = false
+	if receiver.Control != nil {
+		switch receiver.Control.(type) {
+		case *controller.Control:
+			instance.Control = receiver.Control.(*controller.Control).Copy()
+		case *BehaviorControl:
+			instance.Control = receiver.Control.(*BehaviorControl).Copy()
+		default:
+			logger.Println("unknown type of Control")
+		}
+	}
+	if receiver.dispatcherEnable {
+		logger.Println("dispatcher already enable")
+		go coCmdDispatcher(receiver, receiver.Control.GetCommandChanel(), receiver.terminator)
+	}
 	return &instance
 }
 

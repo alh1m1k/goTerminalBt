@@ -224,7 +224,6 @@ func gridFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goa
 		offset := float64(centerY) - float64(ocenterY)
 		distance := math.Abs(offset) - float64(h/2+oh/2)
 		if distance > -GRID_COORD_TOLERANCE {
-			logger.Printf("stick to y %f", distance)
 			goalY = goalY + float32(math.Copysign(distance, offset))
 			body.Update(col.Touch.X, col.Touch.Y)
 			return goalX, goalY, world.Project(body, goalX, goalY)
@@ -234,14 +233,12 @@ func gridFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goa
 		offset := float64(centerX) - float64(ocenterX)
 		distance := math.Abs(offset) - float64(w/2+ow/2)
 		if distance > -GRID_COORD_TOLERANCE {
-			logger.Printf("stick to x %f", distance)
 			goalX = goalX + float32(math.Copysign(distance, offset))
 			body.Update(col.Touch.X, col.Touch.Y)
 			return goalX, goalY, world.Project(body, goalX, goalY)
 		}
 	}
 
-	logger.Printf("touch ", col.Touch, col.Normal)
 	sx, sy := col.Touch.X, col.Touch.Y
 	if col.Move.X != 0 || col.Move.Y != 0 {
 		if col.Normal.X == col.Normal.Y && col.Normal.X == 0 {

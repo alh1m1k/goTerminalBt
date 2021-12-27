@@ -32,6 +32,7 @@ func NewJsonPackage() *Package {
 	instance.M["collectable"] = CollectableLoader
 	instance.M["gun"] = GunLoader
 	instance.M["motionObject"] = MotionObjectLoader
+	instance.M["controlledObject"] = ControlledObjectLoader
 	instance.M["object"] = ObjectLoader
 	instance.M["state"] = StateLoader
 	instance.M["stateItem"] = StateItemLoader
@@ -64,16 +65,16 @@ func RootLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 
 func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
 	var (
-		output    EventChanel
-		motionObj *MotionObject
-		stateObj  *State
-		oo        *ObservableObject
-		co        *ControlledObject
-		unit      *Unit
-		gun       *Gun
-		vision    *collider.ClBody
-		control   *controller.Control
-		err       error
+		output     EventChanel
+		motionObj  *MotionObject
+		stateObj   *State
+		oo         *ObservableObject
+		co         *ControlledObject
+		unit       *Unit
+		gun        *Gun
+		vision     *collider.ClBody
+		behaviorAi bool
+		err        error
 	)
 
 	if loader := get("motionObject"); loader != nil {
@@ -151,19 +152,29 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 
 	oo, err = NewObservableObject(output, nil)
 	if !collector.Add(err) {
-		//skip error because of dataType validation
-		_, dataType, _, _ := jsonparser.Get(payload, "control")
-		switch dataType {
-		case jsonparser.Null:
-			control = nil
-		default:
-			if DEBUG_NO_AI {
-				control, _ = controller.NewNoneControl()
-			} else {
-				control, _ = controller.NewAIControl()
+		if !DEBUG_NO_AI {
+			//skip error because of dataType validation
+			_, dataType, _, _ := jsonparser.Get(payload, "control")
+			switch dataType {
+			case jsonparser.Null:
+				fallthrough
+			case jsonparser.NotExist:
+				obj, _ := controller.NewAIControl()
+				co, err = NewControlledObject(obj, nil)
+			default:
+				if loader := get("controlledObject"); loader != nil {
+					if outObj := loader(get, collector, payload); outObj != nil {
+						co = outObj.(*ControlledObject)
+						behaviorAi = true
+					}
+				} else {
+					collector.Add(fmt.Errorf("%s: %w", "controlledObject", LoaderNotFoundError))
+				}
 			}
+		} else {
+			obj, _ := controller.NewNoneControl()
+			co, err = NewControlledObject(obj, nil)
 		}
-		co, err = NewControlledObject(control, nil)
 		if !collector.Add(err) {
 			unit, err = NewUnit(co, oo, motionObj, stateObj, vision)
 			unit.ObservableObject.Owner = unit
@@ -182,7 +193,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		unit.Attributes.Motioner = true
 		unit.Attributes.Evented = true
 		unit.Attributes.Controled = true
-		if unit.HasTag("ai") {
+		if behaviorAi {
 			unit.Attributes.AI = true
 		}
 		if unit.vision != nil {
@@ -226,6 +237,8 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 	//skip error because of dataType validation
 	stateCfg, dType, _, _ := jsonparser.Get(payload, "state")
 	switch dType {
+	case jsonparser.NotExist:
+		//nope
 	case jsonparser.String:
 		//todo rename
 		stateObj, err = GetUnitState(string(stateCfg))
@@ -257,7 +270,7 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 	oo, err = NewObservableObject(output, nil)
 
 	if !collector.Add(err) {
-		wall, err = NewWall(*object, stateObj, oo)
+		wall, err = NewWall(object, stateObj, oo)
 		wall.ObservableObject.Owner = wall
 		collector.Add(err)
 	}
@@ -584,6 +597,31 @@ func MotionObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte)
 	return object
 }
 
+func ControlledObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+	var (
+		object *ControlledObject
+		//err    error
+	)
+
+	if loader := get("ai"); loader != nil {
+		if obj := loader(get, collector, payload); obj != nil {
+			object, _ = NewControlledObject(obj.(controller.Controller), nil)
+			//collector.Add(err)
+		} else {
+			return nil
+		}
+	} else {
+		collector.Add(fmt.Errorf("%s: %w", "ai", LoaderNotFoundError))
+	}
+
+	if object == nil {
+		obj, _ := controller.NewNoneControl()
+		object, _ = NewControlledObject(obj, nil)
+	}
+
+	return object
+}
+
 func ObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
 	var (
 		sprite    Spriteer
@@ -712,7 +750,7 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 		}
 
 		zIndex, err := jsonparser.GetInt(payload, "zIndex")
-		if err != nil {
+		if err == nil {
 			object.zIndex = int(zIndex)
 		}
 

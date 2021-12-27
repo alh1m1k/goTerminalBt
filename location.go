@@ -53,8 +53,8 @@ func (receiver *Location) Add(object Trackable) {
 		tracker.Update(x, y, w, h)
 		err := receiver.putInZone(object)
 		if err != nil {
-			x, y := tracker.GetIndexes()
-			logger.Printf("error on add object to location %d, %d %w \n", x, y, err)
+			xi, yi := tracker.GetIndexes()
+			logger.Printf("error on add object to location %d, %d, %s \n", xi, yi, err)
 		}
 		receiver.zoneLock.Unlock()
 	}

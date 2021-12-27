@@ -43,7 +43,7 @@ func (receiver *AnimationManager) Compact() {
 		}
 		i++
 	}
-	receiver.queue = receiver.queue[0 : j+1]
+	receiver.queue = receiver.queue[0:j]
 	receiver.total = int64(len(receiver.queue))
 	receiver.empty = 0
 }

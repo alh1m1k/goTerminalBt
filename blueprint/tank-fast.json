@@ -186,6 +186,9 @@
     "reloadTime": 2000000000,
     "shotQueue":  3
   },
+  "control": {
+
+  },
   "hp":     40,
   "score": 100,
   "tags": ["tank", "obstacle", "explosive", "highlights-damage", "ai", "scored", "vulnerable", "tracked"]

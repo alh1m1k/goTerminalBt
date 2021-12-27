@@ -121,7 +121,6 @@ func (receiver *Unit) OnStartCollide(object collider.Collideable, collision *ump
 		//todo change tag tank
 		if object.HasTag("tank") && !object.HasTag(receiver.GetAttr().TeamTag) {
 			receiver.Trigger(OnSightEvent, receiver, object)
-			logger.Print("seen")
 		}
 	} else {
 		if object.HasTag("danger") && receiver.HasTag("vulnerable") {
@@ -137,7 +136,6 @@ func (receiver *Unit) OnStopCollide(object collider.Collideable, duration time.D
 	if owner == receiver.VisionInteractions {
 		if object.HasTag("tank") && !object.HasTag(receiver.GetAttr().TeamTag) {
 			receiver.Trigger(OffSightEvent, receiver, object)
-			logger.Print("unseen")
 		}
 	} else {
 
@@ -237,15 +235,11 @@ func (receiver *Unit) Free() {
 
 func (receiver *Unit) Copy() *Unit {
 	instance := *receiver
-	var control controller.Controller
 
-	if DEBUG_NO_AI {
-		control, _ = controller.NewNoneControl()
-	} else {
-		control, _ = AIBUILDER()
-		control.(*BehaviorControl).AttachTo(&instance)
+	if receiver.ControlledObject != nil {
+		instance.ControlledObject = instance.ControlledObject.Copy()
+		instance.ControlledObject.Owner = &instance
 	}
-	instance.ControlledObject, _ = NewControlledObject(control, &instance)
 
 	instance.ObservableObject = receiver.ObservableObject.Copy()
 	instance.ObservableObject.Owner = &instance

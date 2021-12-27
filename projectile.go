@@ -53,7 +53,7 @@ func (receiver *Projectile) OnTickCollide(object collider.Collideable, collision
 }
 
 func (receiver *Projectile) OnStartCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
-	if object.HasTag("obstacle") {
+	if object.HasTag("obstacle") && !object.HasTag("low") {
 		if !object.HasTag(receiver.GetAttr().TeamTag) {
 			if !receiver.HasTag("projectile-penetrate") {
 				receiver.Destroy(nil)

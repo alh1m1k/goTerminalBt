@@ -191,7 +191,6 @@
           "name": "tank_top",
           "duration": 300000000,
           "cycled": true,
-          "blink": 10000000000,
           "length": 2
         },
         "items": {
@@ -456,6 +455,9 @@
     "projectile": "tank-base-projectile-he",
     "reloadTime": 2000000000,
     "shotQueue":  1
+  },
+  "control": {
+
   },
   "hp":     50,
   "score": 150,

@@ -69,7 +69,7 @@ func (receiver *RenderZIndex) Compact() {
 			}
 			i++
 		}
-		receiver.zQueue[zIndex] = receiver.zQueue[zIndex][0 : j+1]
+		receiver.zQueue[zIndex] = receiver.zQueue[zIndex][0:j]
 		receiver.total += int64(len(receiver.zQueue[zIndex]))
 	}
 	receiver.empty = 0
@@ -96,7 +96,7 @@ func (receiver *RenderZIndex) Execute(timeLeft time.Duration) {
 			receiver.draw(sprite, x, y, wh.W, wh.H)
 		}
 	}
-	if receiver.uiThrottle.Reach(timeLeft) && receiver.UIDraw {
+	if receiver.UIDraw {
 		receiver.drawUI(timeLeft)
 	}
 	receiver.output.MoveCursor(0, 0)
@@ -131,10 +131,12 @@ func (receiver *RenderZIndex) drawUI(timeLeft time.Duration) {
 	fps := 1 * time.Second / frameTime
 	minFps = math.Min(float64(fps), minFps)
 	maxFps = math.Max(float64(fps), maxFps)
-	direct.MoveCursor(0, 0)
-	direct.Println(direct.Color("Press CTRL+C to quit", direct.YELLOW))
-	direct.Print(direct.MoveTo("frame time: "+(frameTime).String(), 25, 0))
-	direct.Print(direct.MoveTo(fmt.Sprintf("fps c|mi|mx: %d | %3.2f | %3.2f", fps, minFps, maxFps), 25, 0))
+	receiver.output.MoveCursor(0, 0)
+	receiver.output.Print(receiver.output.Color("Press CTRL+C to quit", direct.YELLOW))
+	receiver.output.Print(receiver.output.MoveTo("frame time: "+(frameTime).String(), 25, 0))
+	receiver.output.Print(receiver.output.MoveTo(fmt.Sprintf("fps c|mi|mx: %d | %3.2f | %3.2f", fps, minFps, maxFps), 25, 0))
+	receiver.output.Print(receiver.output.MoveTo("", 0, 1))
+	receiver.output.Print(receiver.output.MoveTo("", 0, 2))
 	if receiver.UIData != nil {
 		var buf string
 		var xOffset = 55

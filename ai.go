@@ -169,7 +169,7 @@ func (receiver *BehaviorControl) Next(behavior *Behavior) {
 	receiver.nextBehavior = behavior
 }
 
-func (receiver *BehaviorControl) Copy() *BehaviorControl {
+func (receiver *BehaviorControl) Copy() controller.Controller {
 	instance, _ := receiver.builder.Build()
 	return instance
 }
@@ -181,7 +181,6 @@ func (receiver *BehaviorControl) next(behavior *Behavior) {
 	if receiver.Behavior != nil {
 		if DEBUG_AI_BEHAVIOR {
 			logger.Printf("cycleId: %d, objectId: %d behavior %s -> %s", CycleID, receiver.avatar.ID, receiver.Behavior.Name(), behavior.Name())
-
 		}
 		receiver.Behavior.Leave(receiver)
 	} else {

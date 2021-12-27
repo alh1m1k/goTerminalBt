@@ -70,7 +70,7 @@ func (receiver *Render) Compact() {
 		}
 		i++
 	}
-	receiver.queue = receiver.queue[0 : j+1]
+	receiver.queue = receiver.queue[0:j]
 	receiver.total = int64(len(receiver.queue))
 	receiver.empty = 0
 }
@@ -126,10 +126,12 @@ func (receiver *Render) drawUI(timeLeft time.Duration) {
 	fps := 1 * time.Second / frameTime
 	minFps = math.Min(float64(fps), minFps)
 	maxFps = math.Max(float64(fps), maxFps)
-	direct.MoveCursor(0, 0)
-	direct.Println(direct.Color("Press CTRL+C to quit", direct.YELLOW))
-	direct.Print(direct.MoveTo("frame time: "+(frameTime).String(), 25, 0))
-	direct.Print(direct.MoveTo(fmt.Sprintf("fps c|mi|mx: %d | %3.2f | %3.2f", fps, minFps, maxFps), 25, 0))
+	receiver.output.MoveCursor(0, 0)
+	receiver.output.Print(receiver.output.Color("Press CTRL+C to quit", direct.YELLOW))
+	receiver.output.Print(receiver.output.MoveTo("frame time: "+(frameTime).String(), 25, 0))
+	receiver.output.Print(receiver.output.MoveTo(fmt.Sprintf("fps c|mi|mx: %d | %3.2f | %3.2f", fps, minFps, maxFps), 25, 0))
+	receiver.output.Print(receiver.output.MoveTo("", 0, 1))
+	receiver.output.Print(receiver.output.MoveTo("", 0, 2))
 	if receiver.UIData != nil {
 		var buf string
 		var xOffset = 55

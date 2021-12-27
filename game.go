@@ -102,9 +102,14 @@ func (receiver *Game) Run(scenario *Scenario) error {
 
 func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) {
 	var location Point
+	var err error
 	if payload.Location == PosAuto {
 		if receiver.Location != nil {
-			location, _ = receiver.Location.Coordinate2Spawn(true)
+			location, err = receiver.Location.Coordinate2Spawn(true)
+			if err != nil {
+				logger.Printf("unable to spawn: %s", err)
+				return
+			}
 		} else {
 			location = Point{}
 		}
@@ -154,7 +159,13 @@ func (receiver *Game) onUnitOnSight(object ObjectInterface, payload interface{})
 		delayedEnterState(object.(Stater), "normal", object.(Appearable).GetAppearDuration())
 	}*/
 	receiver.SpawnExplosion(PosAuto, "effect-onsight", payload.(ObjectInterface))
-	payload.(*Unit).Control.(*BehaviorControl).See(object.(*Unit))
+	if unit, ok := payload.(*Unit); ok {
+		if unit.GetAttr().AI {
+			if bc, ok := unit.Control.(*BehaviorControl); ok {
+				bc.See(object.(*Unit))
+			}
+		}
+	}
 }
 
 func (receiver *Game) onUnitOffSight(object ObjectInterface, payload interface{}) {
@@ -164,7 +175,13 @@ func (receiver *Game) onUnitOffSight(object ObjectInterface, payload interface{}
 	}*/
 
 	receiver.SpawnExplosion(PosAuto, "effect-offsight", payload.(ObjectInterface))
-	payload.(*Unit).Control.(*BehaviorControl).UnSee(object.(*Unit))
+	if unit, ok := payload.(*Unit); ok {
+		if unit.GetAttr().AI {
+			if bc, ok := unit.Control.(*BehaviorControl); ok {
+				bc.UnSee(object.(*Unit))
+			}
+		}
+	}
 }
 
 func (receiver *Game) onObjectReset(object ObjectInterface, payload interface{}) {

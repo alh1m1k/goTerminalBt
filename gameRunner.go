@@ -29,6 +29,10 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 	receiver.BlueprintManager.AddLoaderPackage(NewJsonPackage())
 	receiver.BlueprintManager.GameConfig = gameConfig
 	receiver.BlueprintManager.EventChanel = receiver.SpawnManager.UnitEventChanel //remove from builder
+	receiver.BlueprintManager.AddLoader("ai", func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{} {
+		ai, _ := receiver.BehaviorControlBuilder.Build()
+		return ai
+	})
 
 	scenario.DeclareBlueprint(func(blueprint string) {
 		builder, _ := receiver.BlueprintManager.CreateBuilder(blueprint)

@@ -1,9 +1,10 @@
 package output
 
 import (
-	"bufio"
 	"fmt"
 	output "github.com/buger/goterm"
+	"io"
+	"os"
 	"strings"
 )
 
@@ -11,7 +12,7 @@ func init()  {
 
 }
 
-var Output *bufio.Writer = nil
+var Output  = os.Stdout
 
 //convert 00 coord system to 11 coord system
 
@@ -127,7 +128,13 @@ func (co *ConsoleOutputLine) Height() int  {
 
 func (co *ConsoleOutputLine) Flush(){
 	//bypass original flush op due blink issue
-	output.Output.Write(output.Screen.Bytes())
+	io.Copy(output.Output, output.Screen)
+	//output.Output.Flush()
+	//output.Screen.Reset()
+	go co.doFlush()
+}
+
+func (co *ConsoleOutputLine) doFlush(){
 	output.Output.Flush()
 	output.Screen.Reset()
 }

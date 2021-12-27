@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const DEBUG_DISARM_AI = true
+const DEBUG_DISARM_AI = false
 
 const (
 	CTYPE_DIRECTION = iota
@@ -77,21 +77,42 @@ type AwaredController interface {
 type Control struct {
 	IsPlayer bool
 	enabled bool
-	commandChanel 	CommandChanel
+	commandChanel 	chan Command
 	eventChanel 	EventChanel
+	dispatcher      func(instance *Control, output chan Command, done chan bool)
+	terminator      chan bool
 }
 
 func (receiver *Control) Enable() error  {
+/*	if receiver.enabled != true {
+		go receiver.dispatcher(receiver, receiver.commandChanel, receiver.terminator)
+	}*/
 	receiver.enabled = true
+	logger.Printf("enable %p \n", receiver)
 	return nil
 }
 
 func (receiver *Control) Disable() error {
+/*	if receiver.enabled != false {
+		receiver.terminator <- true
+	}*/
 	receiver.enabled = false
 	return nil
 }
 
-
+func (receiver *Control) Copy() *Control {
+	var control *Control
+	if receiver.IsPlayer {
+		control, _ = NewNoneControl()
+	} else {
+		copy := *receiver
+		control = &copy
+		control.terminator 		= make(chan bool)
+		control.commandChanel 	= make(chan Command)
+		go control.dispatcher(control, control.commandChanel, control.terminator)
+	}
+	return control
+}
 
 func (receiver *Control) GetCommandChanel() CommandChanel  {
 	return receiver.commandChanel
@@ -102,12 +123,21 @@ func (receiver *Control) SetEventChanel(chanel EventChanel) {
 }
 
 func NewPlayerControl(event <-chan keyboard.KeyEvent, keyMapping KeyBind) (*Control, error) {
+	commandChanel := make(chan Command)
+	instance := &Control{
+		enabled:       	false,
+		commandChanel: 	commandChanel,
+		terminator: 	make(chan bool),
+		eventChanel:   	nil,
+		IsPlayer: 	   	true,
+	}
+
 	command := Command{
 		Pos:  Point{},
 		Action: false,
 	}
-	commandChanel := make(chan Command)
-	go func(event <-chan keyboard.KeyEvent, keyMapping KeyBind, output chan Command) {
+
+	instance.dispatcher = func(instance *Control, output chan Command, done chan bool) {
 		for {
 			select {
 			case keyEvent, ok := <-event:
@@ -146,42 +176,45 @@ func NewPlayerControl(event <-chan keyboard.KeyEvent, keyMapping KeyBind) (*Cont
 				}
 			}
 			logger.Printf("send: %T, %+v \n", command, command)
-			commandChanel <- command
+			if instance.enabled {
+				output <- command
+			}
 		}
-	}(event, keyMapping, commandChanel)
+	}
+	go instance.dispatcher(instance, instance.commandChanel, instance.terminator)
 
-
-	return &Control{
-		enabled:       false,
-		commandChanel: commandChanel,
-		eventChanel:   nil,
-		IsPlayer: 	   true,
-	}, nil
+	return  instance, nil
 }
 
 func NewNoneControl()(*Control, error)  {
 	return &Control{
 		enabled:       false,
-		commandChanel: make(CommandChanel),
+		commandChanel: make(chan Command),
 		eventChanel:   nil,
 		IsPlayer: 	   false,
+		terminator: make(chan bool),
+		dispatcher: func(instance *Control, output chan Command, done chan bool) {
+			
+		},
 	}, nil
 }
 
 func NewAIControl()(*Control, error)  {
 	commandChanel := make(chan Command)
 	instance := &Control{
-		enabled:       true, //todo legacy
+		enabled:       false,
 		commandChanel: commandChanel,
+		terminator: make(chan bool),
 		eventChanel:   nil,
 		IsPlayer: 	   false,
 	}
+
 	command := Command{
 		Pos:  Point{},
 		Action: false,
 	}
 
-	go func(output chan Command) {
+	instance.dispatcher = func(instance *Control, output chan Command, done chan bool) {
 		timeEvents := time.After(time.Duration(rand.Intn(3000)) * time.Millisecond + 500)
 		for {
 			select {
@@ -222,11 +255,12 @@ func NewAIControl()(*Control, error)  {
 				}
 			}
 			if instance.enabled {
-				commandChanel <- command
+				output <- command
 			}
 			timeEvents = time.After(time.Duration(rand.Intn(3000)) * time.Millisecond + 500)
 		}
-	}(commandChanel)
+	}
+	go instance.dispatcher(instance, instance.commandChanel, instance.terminator)
 
 	return instance, nil
 }
