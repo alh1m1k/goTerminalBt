@@ -30,9 +30,6 @@ func (receiver *ControlledObject) Execute(command controller.Command) error {
 
 func (receiver *ControlledObject) Deactivate() error {
 	receiver.Control.Disable()
-	/*	if bc, ok := receiver.Control.(*BehaviorControl); ok {
-		bc.Deattach()
-	}*/
 	if receiver.dispatcherEnable {
 		close(receiver.terminator)
 	}

@@ -49,18 +49,21 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 		}
 	})
 
+	receiver.clear()
 	receiver.setupPlayers()
+	receiver.wait(200 * time.Millisecond)
+	receiver.clear()
 	exitEvt := receiver.runGame()
-	<-time.After(200 * time.Millisecond)
-	exitEvt = receiver.resultScreen(exitEvt)
-	if done != nil { //todo remove
+	receiver.wait(200 * time.Millisecond)
+	receiver.clear()
+	exitEvt = receiver.resultScreen(exitEvt) //warn for async render
+	if done != nil {                         //todo remove
 		done <- exitEvt
 	}
 	return exitEvt
 }
 
 func (receiver *GameRunner) setupPlayers() {
-	direct.Print("\033[?25l")
 
 	var configurationChanel EventChanel = make(EventChanel) //todo remove
 	screen, _ := NewPlayerSelectDialog(receiver.Keyboard, configurationChanel)
@@ -84,16 +87,23 @@ func (receiver *GameRunner) setupPlayers() {
 					game.AddPlayer(player)
 				}
 
-				render.Remove(screen)
 				screen.Deactivate()
-
-				direct.Clear()
-				direct.Flush()
+				render.Remove(screen)
 				return
 			}
 		}
 	}
 }
+
+func (receiver *GameRunner) wait(duration time.Duration) {
+	<-time.After(duration)
+}
+
+func (receiver *GameRunner) clear() {
+	/*	direct.Clear()
+		direct.Flush()*/
+}
+
 func (receiver *GameRunner) runGame() (exitEvent Event) {
 	go receiver.Game.Run(receiver.Scenario)
 	for {
@@ -106,6 +116,7 @@ func (receiver *GameRunner) runGame() (exitEvent Event) {
 			case GAME_END_WIN:
 				fallthrough
 			case GAME_END_LOSE:
+				receiver.Renderer.UI(nil)
 				return gameEvent
 			}
 		}
@@ -113,18 +124,14 @@ func (receiver *GameRunner) runGame() (exitEvent Event) {
 }
 func (receiver *GameRunner) resultScreen(exitEvent Event) Event {
 	var screen Screener
-	direct.Clear()
-	direct.Flush()
 	switch exitEvent.EType {
 	case GAME_END_LOSE:
-		receiver.Renderer.UI(nil)
 		screen, _ = NewLoseScreen()
 	case GAME_END_WIN:
-		receiver.Renderer.UI(nil)
 		screen, _ = NewWinScreen()
 	}
 	receiver.Renderer.Add(screen)
-	<-time.After(10 * time.Second)
+	receiver.wait(10 * time.Second)
 	receiver.Renderer.Remove(screen)
 	return exitEvent
 }

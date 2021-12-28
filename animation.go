@@ -49,7 +49,6 @@ func (receiver *Animation) updateCollection(timeLeft time.Duration) (done bool, 
 	} else {
 		index = int64(math.Round(offset * float64(len(receiver.keyFrames)-1)))
 	}
-	logger.Printf("%f %d", offset, index)
 
 	if receiver.BlinkRate > 0 {
 		if receiver.blinkIndex > receiver.BlinkRate {

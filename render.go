@@ -90,7 +90,7 @@ func (receiver *Render) Execute(timeLeft time.Duration) {
 		receiver.draw(sprite, x, y)
 	}
 
-	if receiver.uiThrottle.Reach(timeLeft) && receiver.UIDraw {
+	if receiver.UIDraw {
 		receiver.drawUI(timeLeft)
 	}
 	receiver.output.MoveCursor(0, 0)

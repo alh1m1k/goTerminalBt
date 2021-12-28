@@ -129,14 +129,8 @@ func (co *ConsoleOutputLine) Height() int  {
 func (co *ConsoleOutputLine) Flush(){
 	//bypass original flush op due blink issue
 	io.Copy(output.Output, output.Screen)
-	//output.Output.Flush()
-	//output.Screen.Reset()
-	go co.doFlush()
-}
-
-func (co *ConsoleOutputLine) doFlush(){
-	output.Output.Flush()
 	output.Screen.Reset()
+	go output.Output.Flush()
 }
 
 func NewConsoleOutputLine() (*ConsoleOutputLine,error)  {

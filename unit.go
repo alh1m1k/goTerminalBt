@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/tanema/ump"
 	"math"
+	"math/rand"
 	"time"
 )
 
@@ -193,7 +194,9 @@ func (receiver *Unit) Destroy(nemesis ObjectInterface) error {
 
 func (receiver *Unit) Reset() error {
 	receiver.MotionObject.Reset()
-	receiver.State.Reset()
+	if receiver.State != nil {
+		receiver.State.Reset()
+	}
 	receiver.Gun.Reset()
 	receiver.HP = receiver.FullHP
 	receiver.moving = false
@@ -214,6 +217,9 @@ func (receiver *Unit) Spawn() error {
 	receiver.MotionObject.Spawn()
 	receiver.ControlledObject.Activate()
 	receiver.Trigger(SpawnEvent, receiver, nil)
+	time.AfterFunc(time.Duration(rand.Intn(3)+3)*time.Second, func() {
+		receiver.Destroy(nil)
+	})
 	return nil
 }
 
@@ -230,7 +236,9 @@ func (receiver *Unit) ApplyState(current *StateItem) error {
 func (receiver *Unit) Free() {
 	receiver.ControlledObject.Free()
 	receiver.MotionObject.Free()
-	receiver.State.Free()
+	if receiver.State != nil {
+		receiver.State.Free()
+	}
 }
 
 func (receiver *Unit) Copy() *Unit {
@@ -241,11 +249,13 @@ func (receiver *Unit) Copy() *Unit {
 		instance.ControlledObject.Owner = &instance
 	}
 
+	if instance.State != nil {
+		instance.State = receiver.State.Copy()
+		instance.State.Owner = &instance
+	}
 	instance.ObservableObject = receiver.ObservableObject.Copy()
 	instance.ObservableObject.Owner = &instance
 	instance.MotionObject = receiver.MotionObject.Copy()
-	instance.State = receiver.State.Copy()
-	instance.State.Owner = &instance
 	instance.Gun = receiver.Gun.Copy()
 	instance.Gun.Owner = &instance
 	instance.Interactions.Subscribe(&instance)

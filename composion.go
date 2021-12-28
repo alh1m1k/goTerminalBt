@@ -14,37 +14,40 @@ type frameInfo struct {
 type Composition struct {
 	*Sprite
 	writeProxy *Sprite
-	frames []*frameInfo
+	frames     []*frameInfo
 }
 
-//warn offset is absolute i.e screen offset (relstive not supported :9)
-func (receiver *Composition) addFrame(frame Spriteer, offsetX, offsetY, zIndex int)  {
+//warn offset is absolute i.e screen offset (relative not supported :9)
+func (receiver *Composition) addFrame(frame Spriteer, offsetX, offsetY, zIndex int) {
 	receiver.frames = append(receiver.frames, &frameInfo{
-		Spriteer:    frame,
-		zIndex:      zIndex,
-		offsetX: 	 offsetX,
-		offsetY: 	 offsetY,
+		Spriteer: frame,
+		zIndex:   zIndex,
+		offsetX:  offsetX,
+		offsetY:  offsetY,
 	})
 }
 
-func (receiver *Composition) Compose()  {
+func (receiver *Composition) Compose() {
 	receiver.Sprite.Buf.Reset()
 	for _, frameInfo := range receiver.frames {
 		if frameInfo.offsetX > 0 || frameInfo.offsetY > 0 {
-			fmt.Fprint(receiver.Sprite, direct.MoveTo(frameInfo.Spriteer.String(), frameInfo.offsetX, frameInfo.offsetY))  // :(
+			fmt.Fprint(receiver.Sprite, direct.MoveTo(frameInfo.Spriteer.String(), frameInfo.offsetX, frameInfo.offsetY)) // :(
 		} else {
-			fmt.Fprint(receiver.Sprite, frameInfo.Spriteer)  // :(
+			fmt.Fprint(receiver.Sprite, frameInfo.Spriteer) // :(
 		}
+		wh := frameInfo.Spriteer.GetWH()
+		receiver.Sprite.Size.W = maxInt(receiver.Sprite.Size.W, wh.W+frameInfo.offsetX)
+		receiver.Sprite.Size.H = maxInt(receiver.Sprite.Size.H, wh.H+frameInfo.offsetY)
 	}
 	fmt.Fprint(receiver.Sprite, receiver.writeProxy)
 }
 
 //write to proxy, write call is analog of top z-index, transparent element of frames
-func (receiver *Composition) Write(p []byte) (n int, err error)   {
+func (receiver *Composition) Write(p []byte) (n int, err error) {
 	return receiver.writeProxy.Write(p)
 }
 
-func (receiver *Composition) String() string   {
+func (receiver *Composition) String() string {
 	receiver.Compose()
 	return receiver.Sprite.String()
 }
@@ -56,14 +59,14 @@ func (receiver *Composition) Copy() *Composition {
 		instance.frames[i].Spriteer = CopySprite(instance.frames[i].Spriteer)
 	}
 	instance.writeProxy = CopySprite(receiver.writeProxy).(*Sprite)
-	instance.Sprite 	= CopySprite(receiver.Sprite).(*Sprite)
+	instance.Sprite = CopySprite(receiver.Sprite).(*Sprite)
 	return &instance
 }
 
-func NewComposition(frames []Spriteer) (*Composition, error)  {
+func NewComposition(frames []Spriteer) (*Composition, error) {
 	instance := new(Composition)
 	instance.writeProxy = NewSprite()
-	instance.Sprite 	= NewSprite()
+	instance.Sprite = NewSprite()
 
 	for i, frame := range frames {
 		instance.addFrame(frame, 0, 0, i)
