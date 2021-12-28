@@ -6,7 +6,6 @@ import (
 	"errors"
 	"github.com/tanema/ump"
 	"math"
-	"math/rand"
 	"time"
 )
 
@@ -217,9 +216,6 @@ func (receiver *Unit) Spawn() error {
 	receiver.MotionObject.Spawn()
 	receiver.ControlledObject.Activate()
 	receiver.Trigger(SpawnEvent, receiver, nil)
-	time.AfterFunc(time.Duration(rand.Intn(3)+3)*time.Second, func() {
-		receiver.Destroy(nil)
-	})
 	return nil
 }
 

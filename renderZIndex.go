@@ -147,7 +147,7 @@ func (receiver *RenderZIndex) drawUI(timeLeft time.Duration) {
 			buf = fmt.Sprintf("P%d: %s Retry: %d  Score: %05d HP: %03d Ammo:%s:%d",
 				i+1, player.Name, player.Retry, player.Score, player.Unit.HP, player.Unit.Gun.GetName(), player.Unit.Gun.Current.Ammo)
 			buf = direct.Highlight(buf, player.Name, direct.CYAN)
-			direct.Print(direct.Bold(direct.MoveTo(buf, xOffset+10, 0)))
+			receiver.output.Print(direct.Bold(receiver.output.MoveTo(buf, xOffset+10, 0)))
 			xOffset += len(buf)
 		}
 	}

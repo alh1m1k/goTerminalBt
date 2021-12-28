@@ -236,6 +236,15 @@ func (manager *SpawnManager) DeSpawnAll(callback func()) {
 	manager.planeDeSpawnAllCb = callback
 }
 
+func (manager *SpawnManager) Free() {
+	close(manager.UnitEventChanel)
+	manager.spawned = nil
+	manager.builders = nil
+	manager.pendingSpawn = manager.pendingSpawn[0:0]
+	manager.pendingDeSpawn = manager.pendingDeSpawn[0:0]
+	manager.respawn = nil
+}
+
 func (manager *SpawnManager) QuerySpawnedByTag(tag string) []ObjectInterface {
 	manager.deSpawnMutex.Lock()
 	manager.spawnMutex.Lock()

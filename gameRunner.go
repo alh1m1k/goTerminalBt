@@ -57,9 +57,13 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 	receiver.wait(200 * time.Millisecond)
 	receiver.clear()
 	exitEvt = receiver.resultScreen(exitEvt) //warn for async render
-	if done != nil {                         //todo remove
+
+	receiver.SpawnManager.Free()
+
+	if done != nil { //todo remove
 		done <- exitEvt
 	}
+
 	return exitEvt
 }
 
@@ -117,6 +121,9 @@ func (receiver *GameRunner) runGame() (exitEvent Event) {
 				fallthrough
 			case GAME_END_LOSE:
 				receiver.Renderer.UI(nil)
+				if DEBUG_SHUTDOWN {
+					logger.Println("receive GAME_END event")
+				}
 				return gameEvent
 			}
 		}

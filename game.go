@@ -228,7 +228,9 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 		despawnNow = false
 		object.(Stater).Enter("disappear")
 		time.AfterFunc(object.(Disappearable).GetDisappearDuration(), func() {
-			receiver.SpawnManager.DeSpawn(object)
+			if receiver.inProgress { //todo fix in game method
+				receiver.SpawnManager.DeSpawn(object)
+			}
 		})
 	}
 
@@ -298,7 +300,10 @@ func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{
 					}
 				} else {
 					location, _ := receiver.location.Coordinate2Spawn(true)
-					receiver.SpawnManager.SpawnPlayerTank(location, "player-tank", player)
+					if receiver.inProgress {
+						//todo theoretical may cause game freeze due send signal on closed dispatcher
+						receiver.SpawnManager.SpawnPlayerTank(location, "player-tank", player)
+					}
 				}
 			}
 		}
@@ -345,14 +350,33 @@ func (receiver *Game) End(code int) {
 	if !receiver.inProgress {
 		return
 	}
+	if DEBUG_SHUTDOWN {
+		logger.Println("starting of the END")
+	}
 	receiver.inProgress = false
 	receiver.EffectManager.CancelAllEffects()
+	if DEBUG_SHUTDOWN {
+		logger.Println("begining despawn ALL")
+	}
 	receiver.SpawnManager.DeSpawnAll(func() {
 		//todo after despawn callback
+		if DEBUG_SHUTDOWN {
+			logger.Println("despawn ALL complete")
+		}
+
 		close(receiver.terminator)
+
+		if DEBUG_SHUTDOWN {
+			logger.Println("dispatcher shutdown")
+		}
+
 		receiver.scenario = nil
 		receiver.terminator = nil
 		receiver.mutex.Unlock()
+
+		if DEBUG_SHUTDOWN {
+			logger.Println("END complete, trigger event")
+		}
 
 		receiver.Trigger(Event{
 			EType:   code,

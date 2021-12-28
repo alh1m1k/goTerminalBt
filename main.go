@@ -33,6 +33,7 @@ const DEBUG_AI_BEHAVIOR = true
 const DEBUG_FIRE_SOLUTION = false
 const DEBUG_MINIMAP = false
 const DEBUG_DISABLE_VISION = false
+const DEBUG_SHUTDOWN = false
 
 const RENDERER_WITH_ZINDEX = true
 
