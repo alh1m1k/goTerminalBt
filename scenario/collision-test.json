@@ -1,0 +1,141 @@
+{
+  "name":   "collision-test",
+  "items": {
+    "start": {
+      "declare": [
+        "player-tank",
+        "water",
+        "wall",
+        "forest"
+      ],
+      "spawn": [
+        {
+          "location": {
+            "X": 13,
+            "Y": 6
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 15,
+            "Y": 6
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 13,
+            "Y": 8
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 15,
+            "Y": 8
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 16,
+            "Y": 8
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 8
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 7
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 6
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 18,
+            "Y": 6
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 19,
+            "Y": 6
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 20,
+            "Y": 6
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 20,
+            "Y": 5
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 20,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 19,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 18,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        }
+      ]
+    },
+    "win": {
+
+    },
+    "lose": {
+
+    }
+  }
+}

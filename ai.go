@@ -16,15 +16,16 @@ var (
 )
 
 type FireSolutionSample struct {
-	enter  time.Duration
-	leave  time.Duration
-	offset Zone
+	enter    time.Duration
+	leave    time.Duration
+	distance float64
+	Offset   Center
 }
 
 type FireSolution struct {
 	blueprint        string
 	prototype        *Projectile
-	baseSpeed        Point
+	aSpd, tSpd       Point
 	sampleX, sampleY []*FireSolutionSample
 }
 
@@ -277,6 +278,17 @@ func (receiver *BehaviorControl) GetTargetZone() Zone {
 	}
 	tzone := receiver.target.GetZone()
 	return Zone{
+		X: tzone.X, //+ receiver.targetOffset.X,
+		Y: tzone.Y, //+ receiver.targetOffset.Y,
+	}
+}
+
+func (receiver *BehaviorControl) GetFollowZone() Zone {
+	if receiver.target == nil {
+		return NoZone
+	}
+	tzone := receiver.target.GetZone()
+	return Zone{
 		X: tzone.X + receiver.targetOffset.X,
 		Y: tzone.Y + receiver.targetOffset.Y,
 	}
@@ -323,7 +335,7 @@ func (receiver *BehaviorControl) IsStop() bool {
 	return receiver.avatar.moving
 }
 
-func (receiver *BehaviorControl) MoveToZone(zone Zone, tileLeft time.Duration) (done bool) {
+func (receiver *BehaviorControl) MoveToZone(zone Zone, timeLeft time.Duration) (done bool) {
 	//todo cache center pos in zone
 	center := receiver.avatar.GetCenter2()
 	avatarSpeed := receiver.avatar.Speed
@@ -348,7 +360,7 @@ func (receiver *BehaviorControl) MoveToZone(zone Zone, tileLeft time.Duration) (
 		} else {
 			moveCommand.Pos.Y = -1
 		}
-		frameSpeedY := avatarSpeed.Y * (float64(tileLeft) / float64(time.Second))
+		frameSpeedY := avatarSpeed.Y * (float64(timeLeft) / float64(time.Second))
 		if absDelta < frameSpeedY {
 			speedCommand.Pos.Y = absDelta / frameSpeedY
 		} else {
@@ -361,7 +373,7 @@ func (receiver *BehaviorControl) MoveToZone(zone Zone, tileLeft time.Duration) (
 		} else {
 			moveCommand.Pos.X = -1
 		}
-		frameSpeedX := avatarSpeed.X * (float64(tileLeft) / float64(time.Second))
+		frameSpeedX := avatarSpeed.X * (float64(timeLeft) / float64(time.Second))
 		if absDelta < frameSpeedX {
 			speedCommand.Pos.X = absDelta / frameSpeedX
 		} else {
@@ -463,6 +475,13 @@ func (receiver *BehaviorControl) ReceivePath(path []Zone, jobId int64) {
 	}
 }
 
+func (receiver *BehaviorControl) LookupFireSolution(solution []*FireSolutionSample, distance float64) *FireSolutionSample {
+	if distance < 0 || len(solution) <= int(distance) {
+		return nil
+	}
+	return solution[int(distance)]
+}
+
 func (receiver *BehaviorControl) cutoffPath(path []Zone, cutoff Zone) []Zone {
 	if receiver.avatar == nil || receiver.avatar.GetTracker() == nil {
 		return path[0:0]
@@ -500,10 +519,14 @@ func (receiver *BehaviorControl) attach(object *Unit) {
 }
 
 func (receiver *BehaviorControl) IsNeedRecalculateSolution() bool {
+	if receiver.target == nil {
+		return false
+	}
 	if !receiver.solutionCalculated {
 		return true
 	}
-	if !receiver.avatar.Speed.Equal(receiver.solution.baseSpeed, 1.0) ||
+	if !receiver.avatar.Speed.Equal(receiver.solution.aSpd, 1.0) ||
+		!receiver.target.Speed.Equal(receiver.solution.tSpd, 1.0) ||
 		receiver.avatar.GetProjectile() != receiver.solution.blueprint {
 		return true
 	}
@@ -521,6 +544,8 @@ func (receiver *BehaviorControl) CalculateFireSolution() error {
 	}
 
 	receiver.solution, _ = receiver.calculateFireSolution(receiver.avatar, projectile.Copy())
+	receiver.applyTargetSolution(receiver.solution, receiver.target)
+	receiver.normalizeTargetSolution(receiver.solution)
 	receiver.solutionCalculated = true
 
 	return nil
@@ -533,17 +558,15 @@ func (receiver *BehaviorControl) calculateFireSolution(unit *Unit, projectile *P
 	solution := &FireSolution{
 		blueprint: projectile.GetAttr().Blueprint,
 		prototype: projectile,
-		baseSpeed: unit.Speed,
+		aSpd:      unit.Speed,
 		sampleX:   make([]*FireSolutionSample, 0, 3),
 		sampleY:   make([]*FireSolutionSample, 0, 3),
 	}
 
 	var (
-		zone          Zone
+		point         Point
 		timeLeft, ttl time.Duration
 	)
-
-	ProjectileConfigurator(projectile, unit) //to apply speed and direction
 
 	ttl = projectile.Ttl
 	if projectile.Ttl == 0 || projectile.Ttl > time.Second*5 {
@@ -553,102 +576,126 @@ func (receiver *BehaviorControl) calculateFireSolution(unit *Unit, projectile *P
 	//projectile.collision = collider.NewFakeCollision(1, 1 , 1, 1)
 	projectile.clearTags() //todo replace with fake collision
 
+	projectile.Reset()
+	ProjectileConfigurator(projectile, unit) //to apply speed and direction
+
 	//sampleX
-	//startPoint := Point{1,1}
 	projectile.Move(0, 0)
 	projectile.Direction.X = 1
 	projectile.Direction.Y = 0
-	projectile.Reset()
+
 	solution.sampleX = append(solution.sampleX, &FireSolutionSample{
-		enter:  0,
-		leave:  0,
-		offset: NoZone,
+		enter:    0,
+		leave:    0,
+		distance: 0.0,
 	})
-	zone = NoZone
-	for timeLeft = time.Duration(0); timeLeft <= ttl; timeLeft += CYCLE {
-		projectile.Update(CYCLE)
-		newZone := receiver.Location.IndexByPos2(projectile.GetXY2())
-		if newZone != zone {
+	point = Point{} //0:0
+	for timeLeft = CYCLE / 4; timeLeft <= ttl; timeLeft += CYCLE / 4 {
+		projectile.Update(CYCLE / 4)
+		newPoint := projectile.GetXY2()
+		if math.Round(newPoint.X) != math.Round(point.X) {
 			solution.sampleX[len(solution.sampleX)-1].leave = timeLeft
 			solution.sampleX = append(solution.sampleX, &FireSolutionSample{
-				enter:  timeLeft,
-				leave:  0,
-				offset: NoZone,
+				enter:    timeLeft,
+				leave:    0,
+				distance: math.Round(newPoint.X),
 			})
-			zone = newZone
+			point = newPoint
 		}
 	}
 	solution.sampleX[len(solution.sampleX)-1].leave = timeLeft
+
+	projectile.Reset()
+	ProjectileConfigurator(projectile, unit) //to apply speed and direction
 
 	//sampleY
 	projectile.Move(0, 0)
 	projectile.Direction.X = 0
 	projectile.Direction.Y = 1
-	projectile.Reset()
 	solution.sampleY = append(solution.sampleY, &FireSolutionSample{
-		enter:  0,
-		leave:  0,
-		offset: NoZone,
+		enter:    0,
+		leave:    0,
+		distance: 0.0,
 	})
-	zone = NoZone
-	for timeLeft = time.Duration(0); timeLeft <= ttl; timeLeft += CYCLE {
-		projectile.Update(CYCLE)
-		newZone := receiver.Location.IndexByPos2(projectile.GetXY2())
-		if newZone != zone {
+	point = Point{} //0:0
+	for timeLeft = CYCLE / 4; timeLeft <= ttl; timeLeft += CYCLE / 4 {
+		projectile.Update(CYCLE / 4)
+		newPoint := projectile.GetXY2()
+		if math.Round(newPoint.Y) != math.Round(point.Y) {
 			solution.sampleY[len(solution.sampleY)-1].leave = timeLeft
 			solution.sampleY = append(solution.sampleY, &FireSolutionSample{
-				enter:  timeLeft,
-				leave:  0,
-				offset: NoZone,
+				enter:    timeLeft,
+				leave:    0,
+				distance: math.Round(newPoint.Y),
 			})
-			zone = newZone
+			point = newPoint
 		}
 	}
 	solution.sampleY[len(solution.sampleY)-1].leave = timeLeft
-
-	receiver.applyTargetSolution(solution, unit)
-
 	return solution, nil
 }
 
 func (receiver *BehaviorControl) applyTargetSolution(solution *FireSolution, target *Unit) {
-	dTimeX := (receiver.Location.setupUnitSize.X / target.MaxSpeed.X) * float64(time.Second)
-	dTimeY := (receiver.Location.setupUnitSize.Y / target.MaxSpeed.Y) * float64(time.Second)
 	projectileSolution := solution
+	projectileSolution.tSpd = target.Speed
 	for _, sample := range projectileSolution.sampleX {
-		dYMin := math.Round(float64(sample.enter) / dTimeX)
-		dYMax := math.Round(float64(sample.leave) / dTimeX)
-		if dYMin == dYMax {
-			sample.offset = Zone{
-				X: 0,
-				Y: int(dYMin),
-			}
-		} else {
-			dYMid := math.Round((float64(sample.enter+(sample.leave-sample.enter)) / 2) / dTimeX)
-			sample.offset = Zone{
-				X: 0,
-				Y: int(dYMid),
-			}
+		dt := float64(sample.enter) + (float64(sample.leave-sample.enter) / 2)
+		dYMid := target.MaxSpeed.Y * (dt / float64(time.Second))
+		sample.Offset = Center{
+			X: 0,
+			Y: dYMid,
+		}
+		if DEBUG_FIRE_SOLUTION {
+			logger.Printf("<-- fire solution sampleX[%f][%v][%v] for projectile %s unit %s zoneOffset %f -->", sample.distance, sample.enter, sample.leave, solution.blueprint, target.GetAttr().Blueprint, sample.Offset)
 		}
 	}
 	for _, sample := range projectileSolution.sampleY {
-		dYMin := math.Round(float64(sample.enter) / dTimeY)
-		dYMax := math.Round(float64(sample.leave) / dTimeY)
-		if dYMin == dYMax {
-			sample.offset = Zone{
-				X: int(dYMin),
-				Y: 0,
-			}
-		} else {
-			dYMid := math.Round((float64(sample.enter+(sample.leave-sample.enter)) / 2) / dTimeY)
-			sample.offset = Zone{
-				X: int(dYMid),
-				Y: 0,
-			}
+		dt := float64(sample.enter) + (float64(sample.leave-sample.enter) / 2)
+		dYMid := target.MaxSpeed.X * (dt / float64(time.Second))
+		sample.Offset = Center{
+			X: dYMid,
+			Y: 0,
+		}
+		if DEBUG_FIRE_SOLUTION {
+			logger.Printf("<-- fire solution sampleY[%f][%v][%v] for projectile %s unit %s zoneOffset %f -->", sample.distance, sample.enter, sample.leave, solution.blueprint, target.GetAttr().Blueprint, sample.Offset)
 		}
 	}
-	if DEBUG_FIRE_SOLUTION {
-		logger.Printf("fire solution %#v", projectileSolution)
+}
+
+func (receiver *BehaviorControl) normalizeTargetSolution(solution *FireSolution) {
+	newXLen := int(solution.sampleX[len(solution.sampleX)-1].distance) + 1
+	newYLen := int(solution.sampleY[len(solution.sampleY)-1].distance) + 1
+	if newXLen != len(solution.sampleX) {
+		logger.Println("normalize sampleX solution")
+		newSampleX := make([]*FireSolutionSample, newXLen, newXLen)
+		for _, sample := range solution.sampleX {
+			newSampleX[int(sample.distance)] = sample
+		}
+		curr := solution.sampleX[0]
+		for index, sample := range newSampleX {
+			if sample == nil {
+				newSampleX[index] = curr
+			} else {
+				curr = sample
+			}
+		}
+		solution.sampleX = newSampleX
+	}
+	if newYLen != len(solution.sampleY) {
+		logger.Println("normalize sampleY solution")
+		newSampleY := make([]*FireSolutionSample, newYLen, newYLen)
+		for _, sample := range solution.sampleY {
+			newSampleY[int(sample.distance)] = sample
+		}
+		curr := solution.sampleY[0]
+		for index, sample := range newSampleY {
+			if sample == nil {
+				newSampleY[index] = curr
+			} else {
+				curr = sample
+			}
+		}
+		solution.sampleY = newSampleY
 	}
 }
 

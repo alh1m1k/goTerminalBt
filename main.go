@@ -26,14 +26,15 @@ const DEBUG_EXEC = false
 const DEBUG_STATE = false
 const DEBUG_NO_AI = false
 const DEBUG_SHAKE = false
-const DEBUG_IMMORTAL_PLAYER = false
+const DEBUG_IMMORTAL_PLAYER = true
 const DEBUG_FREEZ_AI = false
-const DEBUG_AI_PATH = true
-const DEBUG_AI_BEHAVIOR = true
+const DEBUG_AI_PATH = false
+const DEBUG_AI_BEHAVIOR = false
 const DEBUG_FIRE_SOLUTION = false
 const DEBUG_MINIMAP = false
 const DEBUG_DISABLE_VISION = false
 const DEBUG_SHUTDOWN = false
+const DEBUG_OPPORTUNITY_FIRE = false
 
 const RENDERER_WITH_ZINDEX = true
 
@@ -155,7 +156,7 @@ func main() {
 	vision, _ := NewVisioner(detector, 100)
 	pipe.Visioner = vision
 
-	//Location
+	//Position
 	location, _ := NewLocation(Point{
 		X: gameConfig.Box.X,
 		Y: gameConfig.Box.Y,
@@ -183,7 +184,12 @@ func main() {
 	if scenarioName == "random" {
 		scenario, _ = NewRandomScenario(tankCnt, wallCnt)
 	} else {
-		scenario, _ = GetScenario(scenarioName)
+		scenario, err = GetScenario(scenarioName)
+		if err != nil {
+			logger.Print(err)
+			log.Print(err)
+			os.Exit(1)
+		}
 	}
 
 	//game
@@ -239,7 +245,7 @@ func main() {
 
 	/*tank, _ := buildManager.Get("player-tank")
 	startIndexX, startIndexY := 0, 0
-	pos, _ := location.PosByIndex(startIndexX, startIndexY)
+	pos, _ := location.CoordinateByIndex(startIndexX, startIndexY)
 	tank.GetClBody().Moving(pos.X, pos.Y)
 	x, y := tank.GetXY()
 	w, h := tank.GetWH()
@@ -253,7 +259,7 @@ func main() {
 	if newIndexY != startIndexY {
 		log.Printf("y index broken %d %d \n", newIndexY, startIndexY)
 	}
-	newPos, _, _, _ := location.NearestPos(x, y)
+	newPos, _, _, _ := location.NearestZoneByCoordinate(x, y)
 	if newPos.X != pos.X {
 		log.Printf("x pos broken %f %f \n", newPos.X, pos.X)
 	}

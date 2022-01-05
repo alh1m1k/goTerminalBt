@@ -75,7 +75,7 @@ func (receiver *Location) Remove(object Trackable) {
 			receiver.zonesLeft++
 			return
 		} else {
-			logger.Println("Location::Remove wrong index")
+			logger.Println("Position::Remove wrong index")
 		}
 	}
 	for yi, row := range receiver.zones {
@@ -232,7 +232,7 @@ func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
 	return NoPos, ZoneSetupError
 }
 
-func (receiver *Location) PosByIndex(x, y int) (Point, error) {
+func (receiver *Location) CoordinateByIndex(x, y int) (Point, error) {
 
 	if x >= receiver.zoneX || y >= receiver.zoneY {
 		return NoPos, ZoneRangeError
@@ -241,6 +241,18 @@ func (receiver *Location) PosByIndex(x, y int) (Point, error) {
 	return Point{
 		X: float64(x) * receiver.setupUnitSize.X,
 		Y: float64(y) * receiver.setupUnitSize.Y,
+	}, nil
+}
+
+func (receiver *Location) CoordinateByZone(zone Zone) (Point, error) {
+
+	if zone.X >= receiver.zoneX || zone.Y >= receiver.zoneY {
+		return NoPos, ZoneRangeError
+	}
+
+	return Point{
+		X: float64(zone.X) * receiver.setupUnitSize.X,
+		Y: float64(zone.Y) * receiver.setupUnitSize.Y,
 	}, nil
 }
 
@@ -256,9 +268,9 @@ func (receiver *Location) CenterByIndex(x, y int) (Center, error) {
 	}, nil
 }
 
-func (receiver *Location) NearestPos(x, y float64) (Point, int, int, error) {
-	xi, yi := int(math.Round(x/receiver.setupUnitSize.X)),
-		int(math.Round(y/receiver.setupUnitSize.Y))
+func (receiver *Location) NearestZoneByCoordinate(point Point) Zone {
+	xi, yi := int(math.Round(point.X/receiver.setupUnitSize.X)),
+		int(math.Round(point.Y/receiver.setupUnitSize.Y))
 
 	if xi < 0 {
 		xi = 0
@@ -273,13 +285,10 @@ func (receiver *Location) NearestPos(x, y float64) (Point, int, int, error) {
 		yi = receiver.zoneY - 1
 	}
 
-	pos, err := receiver.PosByIndex(xi, yi)
-
-	if err != nil {
-		return Point{}, -1, -1, err
+	return Zone{
+		X: xi,
+		Y: yi,
 	}
-
-	return pos, xi, yi, nil
 }
 
 func (receiver *Location) AffectedZone(x, y float64, buffer []Point) ([]Point, error) {
@@ -317,7 +326,7 @@ func (receiver *Location) IndexByPos(x, y float64) (xi, yi int) {
 	return xi, yi
 }
 
-func (receiver *Location) IndexByPos2(point Point) Zone {
+func (receiver *Location) ZoneByCoordinate(point Point) Zone {
 	xi, yi := int(point.X/receiver.setupUnitSize.X), int(point.Y/receiver.setupUnitSize.Y)
 
 	if xi < 0 {

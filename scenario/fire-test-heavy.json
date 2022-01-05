@@ -1,0 +1,82 @@
+{
+  "name":   "collision-test",
+  "items": {
+    "start": {
+      "declare": [
+        "player-tank",
+        "tank",
+        "tank-fast",
+        "tank-heavy",
+        "tank-sneaky",
+        "tank-base-explosion",
+        "tank-base-projectile",
+        "tank-base-projectile-he",
+        "tank-base-projectile-rail",
+        "tank-base-projectile-flak",
+        "tank-special-projectile-smoke",
+        "tank-special-smokescreen-1",
+        "tank-special-smokescreen-2",
+        "tank-base-projectile-fanout",
+        "projectile-sharp",
+        "tank-base-projectile-apocalypse",
+        "projectile-sharp-apoc-start",
+        "projectile-sharp-apoc-end",
+        "effect-onsight",
+        "effect-offsight",
+        "opel",
+        "gun",
+        "water",
+        "wall",
+        "forest"
+      ],
+      "spawn": [
+        {
+          "location": {
+            "X": 3,
+            "Y": 3
+          },
+          "blueprint":  "tank-heavy",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 4,
+            "Y": 4
+          },
+          "blueprint":  "tank-heavy",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 5,
+            "Y": 5
+          },
+          "blueprint":  "tank-heavy",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 6,
+            "Y": 6
+          },
+          "blueprint":  "tank-heavy",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 7,
+            "Y": 7
+          },
+          "blueprint":  "tank-heavy",
+          "team":       100
+        }
+      ]
+    },
+    "win": {
+
+    },
+    "lose": {
+
+    }
+  }
+}

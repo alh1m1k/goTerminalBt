@@ -1,6 +1,10 @@
 {
   "type":   "explosion",
-  "sprite": "unseen",
+  "sprite": {
+    "type": "sprite",
+    "name": "unseen",
+    "transparent": true
+  },
   "collision": {
     "type": "penetrate",
     "x": 0,

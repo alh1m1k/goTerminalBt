@@ -48,6 +48,20 @@ func (receiver Point) Plus(to Point) Point {
 	}
 }
 
+func (receiver Point) Minus(to Point) Point {
+	return Point{
+		X: receiver.X - to.X,
+		Y: receiver.Y - to.Y,
+	}
+}
+
+func (receiver Point) Abs() Point {
+	return Point{
+		X: math.Abs(receiver.X),
+		Y: math.Abs(receiver.Y),
+	}
+}
+
 type Size struct {
 	W, H float64
 }
@@ -66,6 +80,46 @@ func (receiver Size) Plus(to Size) Size {
 	}
 }
 
+type Center struct {
+	X float64
+	Y float64
+}
+
+func (receiver Center) Equal(to Center, precision float64) bool {
+	if math.Abs(receiver.X-to.X) <= precision && math.Abs(receiver.Y-to.Y) <= precision {
+		return true
+	}
+	return false
+}
+
+func (receiver Center) Plus(to Center) Center {
+	return Center{
+		X: receiver.X + to.X,
+		Y: receiver.Y + to.Y,
+	}
+}
+
+func (receiver Center) Minus(to Center) Center {
+	return Center{
+		X: receiver.X - to.X,
+		Y: receiver.Y - to.Y,
+	}
+}
+
+func (receiver Center) Abs() Center {
+	return Center{
+		X: math.Abs(receiver.X),
+		Y: math.Abs(receiver.Y),
+	}
+}
+
+func (receiver Center) Round() Center {
+	return Center{
+		X: math.Round(receiver.X),
+		Y: math.Round(receiver.Y),
+	}
+}
+
 type Box struct {
 	LT Point
 	Size
@@ -73,4 +127,29 @@ type Box struct {
 
 type Zone struct {
 	X, Y int
+}
+
+func (receiver Zone) Equal(to Zone) bool {
+	return receiver == to
+}
+
+func (receiver Zone) Plus(to Zone) Zone {
+	return Zone{
+		X: receiver.X + to.X,
+		Y: receiver.Y + to.Y,
+	}
+}
+
+func (receiver Zone) Minus(to Zone) Zone {
+	return Zone{
+		X: receiver.X - to.X,
+		Y: receiver.Y - to.Y,
+	}
+}
+
+func (receiver Zone) Abs() Zone {
+	return Zone{
+		X: absInt(receiver.X),
+		Y: absInt(receiver.Y),
+	}
 }

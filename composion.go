@@ -29,6 +29,7 @@ func (receiver *Composition) addFrame(frame Spriteer, offsetX, offsetY, zIndex i
 
 func (receiver *Composition) Compose() {
 	receiver.Sprite.Buf.Reset()
+	receiver.Sprite.Size.W, receiver.Sprite.Size.H = 0, 0
 	for _, frameInfo := range receiver.frames {
 		if frameInfo.offsetX > 0 || frameInfo.offsetY > 0 {
 			fmt.Fprint(receiver.Sprite, direct.MoveTo(frameInfo.Spriteer.String(), frameInfo.offsetX, frameInfo.offsetY)) // :(

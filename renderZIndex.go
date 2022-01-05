@@ -96,7 +96,7 @@ func (receiver *RenderZIndex) Execute(timeLeft time.Duration) {
 			receiver.draw(sprite, x, y, wh.W, wh.H)
 		}
 	}
-	if receiver.UIDraw {
+	if receiver.UIDraw && !DEBUG_OPPORTUNITY_FIRE {
 		receiver.drawUI(timeLeft)
 	}
 	receiver.output.MoveCursor(0, 0)

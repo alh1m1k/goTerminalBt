@@ -1,10 +1,5 @@
 package main
 
-type Center struct {
-	X float64
-	Y float64
-}
-
 type IndexTracker interface {
 	OnIndexUpdate(tracker *Tracker)
 }
@@ -39,7 +34,7 @@ func (receiver *Tracker) Update(x, y, w, h float64) bool {
 	}
 
 	dist := getDistance(x+w/2, y+h/2, receiver.cell.X, receiver.cell.Y)
-	//NearestPos check distance < half size (math.round) fix that this
+	//NearestZoneByCoordinate check distance < half size (math.round) fix that this
 	if dist > receiver.maxDistance {
 		receiver.MoveTo(x, y)
 		return true
@@ -65,11 +60,21 @@ func (receiver *Tracker) GetWH() (float64, float64) {
 }
 
 func (receiver *Tracker) MoveTo(x, y float64) error {
-	pos, xi, yi, err := receiver.Manager.NearestPos(x, y)
+	var (
+		zone Zone
+		pos  Point
+		err  error
+	)
+	zone = receiver.Manager.NearestZoneByCoordinate(Point{
+		X: x,
+		Y: y,
+	})
+	pos, err = receiver.Manager.CoordinateByZone(zone)
+
 	if err == nil {
 		receiver.cell = Center{X: pos.X + receiver.lastW/2, Y: pos.Y + receiver.lastH/2}
-		receiver.xIndex = xi
-		receiver.yIndex = yi
+		receiver.xIndex = zone.X
+		receiver.yIndex = zone.Y
 		receiver.IsNeedUpdateZone = true
 		go receiver.indexUpdate()
 	} else {

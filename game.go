@@ -37,8 +37,6 @@ type Game struct {
 	mutex, delay, aiCountMutex sync.Mutex
 	delayedAction              []*GameAction
 	nextDelayedTaskExec        time.Time
-	delayedTaskChan            <-chan time.Time
-	calcUnit                   int
 }
 
 func (receiver *Game) AddPlayer(player *Player) error {
@@ -103,7 +101,16 @@ func (receiver *Game) Run(scenario *Scenario) error {
 func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) {
 	var location Point
 	var err error
-	if payload.Location == PosAuto {
+	if payload.Location != ZoneAuto && payload.Position == PosAuto {
+		if receiver.Location != nil {
+			payload.Position, err = receiver.Location.CoordinateByIndex(payload.Location.X, payload.Location.Y)
+			if err != nil {
+				logger.Printf("unable to locate position: %s", err)
+				return
+			}
+		}
+	}
+	if payload.Position == PosAuto {
 		if receiver.Location != nil {
 			location, err = receiver.Location.Coordinate2Spawn(true)
 			if err != nil {
@@ -114,7 +121,7 @@ func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) 
 			location = Point{}
 		}
 	} else {
-		location = payload.Location
+		location = payload.Position
 	}
 	receiver.SpawnManager.Spawn(location, payload.Blueprint, DefaultConfigurator, payload)
 }
@@ -154,11 +161,11 @@ func (receiver *Game) onUnitDamage(object ObjectInterface, payload interface{}) 
 }
 
 func (receiver *Game) onUnitOnSight(object ObjectInterface, payload interface{}) {
-	/*	if object.HasTag("highlights-appear") {
-		object.(Stater).Enter("appear")
-		delayedEnterState(object.(Stater), "normal", object.(Appearable).GetAppearDuration())
-	}*/
-	receiver.SpawnExplosion(PosAuto, "effect-onsight", payload.(ObjectInterface))
+	if pObject, ok := payload.(ObjectInterface); ok {
+		if !pObject.HasTag("stealth") {
+			receiver.SpawnExplosion(PosAuto, "effect-onsight", pObject)
+		}
+	}
 	if unit, ok := payload.(*Unit); ok {
 		if unit.GetAttr().AI {
 			if bc, ok := unit.Control.(*BehaviorControl); ok {
@@ -169,12 +176,11 @@ func (receiver *Game) onUnitOnSight(object ObjectInterface, payload interface{})
 }
 
 func (receiver *Game) onUnitOffSight(object ObjectInterface, payload interface{}) {
-	/*	if object.HasTag("highlights-appear") {
-		object.(Stater).Enter("appear")
-		delayedEnterState(object.(Stater), "normal", object.(Appearable).GetAppearDuration())
-	}*/
-
-	receiver.SpawnExplosion(PosAuto, "effect-offsight", payload.(ObjectInterface))
+	if pObject, ok := payload.(ObjectInterface); ok {
+		if !pObject.HasTag("stealth") {
+			receiver.SpawnExplosion(PosAuto, "effect-offsight", pObject)
+		}
+	}
 	if unit, ok := payload.(*Unit); ok {
 		if unit.GetAttr().AI {
 			if bc, ok := unit.Control.(*BehaviorControl); ok {

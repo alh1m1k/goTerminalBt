@@ -89,7 +89,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 	switch dType {
 	case jsonparser.String:
 		//todo rename
-		stateObj, err = GetUnitState(string(stateCfg))
+		stateObj, err = GetObjectState(string(stateCfg))
 		collector.Add(err)
 	case jsonparser.Object:
 		if loader := get("state"); loader != nil {
@@ -241,7 +241,7 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		//nope
 	case jsonparser.String:
 		//todo rename
-		stateObj, err = GetUnitState(string(stateCfg))
+		stateObj, err = GetObjectState(string(stateCfg))
 		collector.Add(err)
 	case jsonparser.Object:
 		if loader := get("state"); loader != nil {
@@ -318,7 +318,7 @@ func CollectableLoader(get LoaderGetter, collector *LoadErrors, payload []byte) 
 	switch dType {
 	case jsonparser.String:
 		//todo rename
-		stateObj, err = GetUnitState(string(stateCfg))
+		stateObj, err = GetObjectState(string(stateCfg))
 		collector.Add(err)
 	case jsonparser.Object:
 		if loader := get("state"); loader != nil {
@@ -387,7 +387,7 @@ func ExplosionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 		switch dType {
 		case jsonparser.String:
 			//todo rename
-			stateObj, err = GetUnitState(string(stateCfg))
+			stateObj, err = GetObjectState(string(stateCfg))
 			collector.Add(err)
 		case jsonparser.Object:
 			if loader := get("state"); loader != nil {
@@ -466,7 +466,7 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, payload []byte) i
 	switch dType {
 	case jsonparser.String:
 		//todo rename
-		stateObj, err = GetUnitState(string(stateCfg))
+		stateObj, err = GetObjectState(string(stateCfg))
 		collector.Add(err)
 	case jsonparser.Object:
 		if loader := get("state"); loader != nil {
@@ -827,10 +827,10 @@ func SpriteLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 			isTransparent = false
 		}
 		if sId != "" {
-			var sprite *Sprite
-			sprite, err = GetSprite(sId, true, isTransparent)
+			var spriteInst *Sprite
+			spriteInst, err = GetSprite(sId, true, isTransparent)
 			if !collector.Add(err) {
-				sprite.CalculateSize()
+				spriteInst.CalculateSize()
 				customBytes, dataType, _, _ := jsonparser.Get(payload, "custom")
 				switch dataType {
 				case jsonparser.Object:
@@ -840,11 +840,11 @@ func SpriteLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 						customSprite, err := GetSprite(sId+"-"+hash, false, false)
 						if err != nil {
 							collector.Add(err)
-							sprite = customSprite
+							spriteInst = customSprite
 						} else {
-							sprite, err = CustomizeSprite(sprite, custom)
+							spriteInst, err = CustomizeSprite(spriteInst, custom)
 							if !collector.Add(err) {
-								sprite, err = AddSprite(sId+"-"+hash, sprite)
+								spriteInst, err = AddSprite(sId+"-"+hash, spriteInst)
 							}
 						}
 						collector.Add(err)
@@ -854,6 +854,7 @@ func SpriteLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 				}
 
 			}
+			sprite = spriteInst
 		} else {
 			collector.Add(fmt.Errorf("sprite must have a id: %w", ParseError))
 		}

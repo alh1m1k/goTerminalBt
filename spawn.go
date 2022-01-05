@@ -18,6 +18,11 @@ var PosAuto = Point{
 	Y: -math.MaxFloat64,
 }
 
+var ZoneAuto = Zone{
+	X: -math.MaxInt64,
+	Y: -math.MaxInt64,
+}
+
 type Pooler interface {
 	Put(x interface{})
 	Get() interface{}

@@ -158,7 +158,11 @@ func (receiver *Animation) Reset() {
 		}
 	}
 	if len(receiver.keyFrames) > 0 {
-		receiver.Spriteer = receiver.keyFrames[0]
+		if receiver.Reversed {
+			receiver.Spriteer = receiver.keyFrames[len(receiver.keyFrames)-1]
+		} else {
+			receiver.Spriteer = receiver.keyFrames[0]
+		}
 	}
 }
 

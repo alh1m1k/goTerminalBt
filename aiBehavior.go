@@ -61,11 +61,12 @@ var (
 			tdir := control.target.Direction
 			tzone := control.GetTargetZone()
 			dir2zone := control.GetDirection2Zone(tzone)
+			crossing := dir2zone.Plus(tdir)
 			if control.InFireRange(tzone) {
-				if tdir.Y != 0 && dir2zone.Y+tdir.Y == 0 {
+				if tdir.Y != 0 && crossing.Y == 0 {
 					return true
 				}
-				if tdir.X != 0 && dir2zone.X+tdir.X == 0 {
+				if tdir.X != 0 && crossing.X == 0 {
 					return true
 				}
 			}
@@ -83,42 +84,61 @@ var (
 			}
 
 			azone := control.avatar.GetZone()
+			acenter := control.avatar.GetCenter2()
+			aw, ah := control.avatar.GetWH()
 			tzone := control.GetTargetZone()
+			tcenter := control.target.GetCenter2()
+			tw, th := control.target.GetWH()
 			tdir := control.target.Direction
 			dir2zone := control.GetDirection2Zone(tzone)
+			preemption := NoZone
+
 			if control.InFireRange(tzone) {
 				weaponSolution = control.solution
 				if weaponSolution == nil {
 					return
 				}
-				if tdir.Y != 0 && dir2zone.Y+tdir.Y == 0 {
-					distance := absInt(tzone.X-azone.X) + 1 //for the width of azone
-					if len(weaponSolution.sampleX) <= distance {
-						return
-					}
-					pZone := weaponSolution.sampleX[maxInt(distance, 0)].offset
-					if pZone.Y == absInt(azone.Y-tzone.Y) {
-						preemption := azone
-						preemption.X = preemption.X + distance*int(dir2zone.X)
-						if control.AlignToZone(preemption) && control.CanHit(preemption) {
-							control.Fire()
-							return true
+				centerDistance := acenter.Minus(tcenter).Abs()
+				borderDistance := centerDistance.Minus(Center{
+					X: aw/2 + tw/2,
+					Y: ah/2 + th/2,
+				}).Round()
+				fireDistance := centerDistance.Minus(Center{
+					X: tw / 2,
+					Y: th / 2,
+				}).Round()
+				crossing := dir2zone.Plus(tdir)
+				if DEBUG_OPPORTUNITY_FIRE {
+					log.Print("distance/direction", borderDistance, dir2zone)
+				}
+				if tdir.Y != 0 && crossing.Y == 0 {
+					if sample := control.LookupFireSolution(weaponSolution.sampleX, borderDistance.X); sample != nil {
+						offset := sample.Offset
+						offset.X = fireDistance.X
+						if DEBUG_OPPORTUNITY_FIRE {
+							log.Print("offset", offset)
+						}
+						if offset.Equal(fireDistance, 1.0) {
+							preemption = azone
+							preemption.X = preemption.X + int(dir2zone.X)
 						}
 					}
-				} else if tdir.X != 0 && dir2zone.X+tdir.X == 0 {
-					distance := absInt(tzone.Y-azone.Y) + 1 //for the height of azone
-					if len(weaponSolution.sampleY) <= distance {
-						return
-					}
-					pZone := weaponSolution.sampleY[maxInt(distance, 0)].offset
-					if pZone.X == absInt(azone.X-tzone.X) {
-						preemption := azone
-						preemption.Y = preemption.Y + distance*int(dir2zone.Y)
-						if control.AlignToZone(preemption) && control.CanHit(preemption) {
-							control.Fire()
-							return true
+				} else if tdir.X != 0 && crossing.X == 0 {
+					if sample := control.LookupFireSolution(weaponSolution.sampleY, borderDistance.Y); sample != nil {
+						offset := sample.Offset
+						offset.Y = fireDistance.Y
+						if DEBUG_OPPORTUNITY_FIRE {
+							log.Print("offset", offset)
+						}
+						if offset.Equal(fireDistance, 1.0) {
+							preemption = azone
+							preemption.Y = preemption.Y + int(dir2zone.Y)
 						}
 					}
+				}
+				if preemption != NoZone && control.AlignToZone(preemption) && control.CanHit(preemption) {
+					control.Fire()
+					return true
 				}
 			}
 			return false
@@ -137,7 +157,7 @@ var (
 		},
 		Update: func(control *BehaviorControl, duration time.Duration) (done bool) {
 			azone := control.avatar.GetZone()
-			tzone := control.GetTargetZone()
+			tzone := control.GetFollowZone()
 			adir, tdir := control.avatar.Direction, control.target.Direction
 
 			paralelX, paralelY := adir.X == tdir.X && tdir.X == 0, tdir.Y == adir.Y && tdir.Y == 0

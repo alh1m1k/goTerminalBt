@@ -335,3 +335,38 @@ func NewObject(s Spriteer, c *collider.ClBody) (*Object, error) {
 		Prototype:    nil,
 	}, nil
 }
+
+func GetObjectState(id string) (*State, error) {
+	return GetState(id, func(m map[string]interface{}) (interface{}, error) {
+		var sprite Spriteer = nil
+		var err error
+
+		if animation, ok := m["animation"]; ok {
+			//todo refactor this shit
+			animationInfo := animation.(map[string]interface{})
+			sprite, _ = GetAnimation(animationInfo["name"].(string), int(animationInfo["length"].(float64)), true, false)
+			if sprite != nil {
+				spriteAsAnimation := sprite.(*Animation)
+				spriteAsAnimation.Cycled = animationInfo["cycled"].(bool)
+				spriteAsAnimation.Duration = time.Duration(animationInfo["duration"].(float64))
+				if blink, ok := animationInfo["blink"]; ok {
+					spriteAsAnimation.BlinkRate = time.Duration(blink.(float64))
+				}
+			}
+		}
+		if sprite == nil {
+			sprite, err = GetSprite(m["sprite"].(string), true, false)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return &UnitStateInfo{
+			sprite:     sprite,
+			collisionX: 0,
+			collisionY: 0,
+			collisionW: 0,
+			collisionH: 0,
+		}, nil
+	})
+}
