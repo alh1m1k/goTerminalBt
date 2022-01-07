@@ -26,6 +26,11 @@ var SetupSizeEvent Event = Event{
 	Payload: nil,
 }
 
+var FullScreenSize = Point{
+	X: math.MaxInt64 - 1,
+	Y: math.MaxInt64 - 1,
+}
+
 type Screener interface {
 	Renderable
 }
@@ -36,7 +41,11 @@ type Screen struct {
 }
 
 func (receiver *Screen) GetXY() (x float64, y float64) {
-	return float64(direct.Width())/2 - receiver.size.X/2, float64(direct.Height())/2 - receiver.size.Y/2
+	if receiver.size == FullScreenSize {
+		return 0, 0
+	} else {
+		return float64(direct.Width())/2 - receiver.size.X/2, float64(direct.Height())/2 - receiver.size.Y/2
+	}
 }
 
 func (receiver *Screen) GetSprite() Spriteer {
@@ -136,12 +145,9 @@ func NewSetupSizeDialog(config *GameConfig, keyboard <-chan keyboard.KeyEvent, c
 	if err != nil {
 		return nil, err
 	}
-	screen, _ := NewScreen(composition)
-	screen.size = Point{
-		X: float64(direct.Width()),
-		Y: float64(direct.Height()),
-	}
 
+	screen, _ := NewScreen(composition)
+	screen.size = FullScreenSize
 	state, _ := NewState(nil)
 
 	rootInfo := &DialogInfo{
