@@ -199,14 +199,9 @@ func (receiver *BlueprintManager) postProcess(object ObjectInterface, collector 
 	if object == nil {
 		return nil
 	}
-	if object.GetAttr().Collided {
-		w, h := object.GetClBody().GetWH()
-		object.GetClBody().Resize(w*receiver.GameConfig.ColWidth, h*receiver.GameConfig.RowHeight)
-	}
 	if object.GetAttr().Motioner { //todo simplify //todo move to render
 		proxy := object.(Motioner)
-		scale := 2.0 //receiver.GameConfig.ColWidth / receiver.GameConfig.RowHeight
-		//pixel at Y aprox twice bigger than X
+		scale := 2.0
 		proxy.GetSpeed().Y = proxy.GetSpeed().X / scale
 		acl := object.(Accelerator)
 		acl.GetMaxSpeed().Y = acl.GetMaxSpeed().X / scale

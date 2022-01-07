@@ -31,6 +31,7 @@ type ConsoleOutput interface {
 	Print(str string) (n int, err error)
 	MoveTo(str string, x int, y int) (out string)
 	MoveCursor(x int, y int)
+	CursorVisibility(visibility bool)
 	Color(str string, color int) string
 	Clear()
 	Flush()

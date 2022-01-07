@@ -27,7 +27,7 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 	receiver.Game, receiver.Scenario = game, scenario
 
 	receiver.BlueprintManager.AddLoaderPackage(NewJsonPackage())
-	receiver.BlueprintManager.GameConfig = gameConfig
+	receiver.BlueprintManager.GameConfig = receiver.GameConfig
 	receiver.BlueprintManager.EventChanel = receiver.SpawnManager.UnitEventChanel //remove from builder
 	receiver.BlueprintManager.AddLoader("ai", func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{} {
 		ai, _ := receiver.BehaviorControlBuilder.Build()
@@ -50,8 +50,11 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 	})
 
 	receiver.clear()
-	receiver.setupPlayers()
 	receiver.wait(200 * time.Millisecond)
+	receiver.setupSize()
+	receiver.clear()
+	receiver.wait(200 * time.Millisecond)
+	receiver.setupPlayers()
 	receiver.clear()
 	exitEvt := receiver.runGame()
 	receiver.wait(200 * time.Millisecond)
@@ -65,6 +68,27 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 	}
 
 	return exitEvt
+}
+
+func (receiver *GameRunner) setupSize() {
+	var configurationChanel EventChanel = make(EventChanel) //todo remove
+	screen, _ := NewSetupSizeDialog(receiver.GameConfig, receiver.Keyboard, configurationChanel)
+	receiver.Renderer.Add(screen)
+	screen.Activate()
+
+	for {
+		select {
+		case configuration := <-configurationChanel:
+			switch configuration.EType {
+			case DIALOG_EVENT_SETUP_SIZE:
+				screen.Deactivate()
+				receiver.Renderer.Remove(screen)
+				direct.Clear()
+				direct.Flush() //todo may cause bug must be in render
+				return
+			}
+		}
+	}
 }
 
 func (receiver *GameRunner) setupPlayers() {
@@ -92,7 +116,7 @@ func (receiver *GameRunner) setupPlayers() {
 				}
 
 				screen.Deactivate()
-				render.Remove(screen)
+				receiver.Renderer.Remove(screen)
 				return
 			}
 		}

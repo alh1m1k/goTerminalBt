@@ -15,6 +15,7 @@ type Composition struct {
 	*Sprite
 	writeProxy *Sprite
 	frames     []*frameInfo
+	Clip2Size  bool
 }
 
 //warn offset is absolute i.e screen offset (relative not supported :9)
@@ -25,12 +26,19 @@ func (receiver *Composition) addFrame(frame Spriteer, offsetX, offsetY, zIndex i
 		offsetX:  offsetX,
 		offsetY:  offsetY,
 	})
+	//calc approx size
+	wh := frame.GetWH()
+	receiver.Sprite.Size.W = maxInt(receiver.Sprite.Size.W, offsetX+wh.W)
+	receiver.Sprite.Size.H = maxInt(receiver.Sprite.Size.H, offsetY+wh.H)
 }
 
 func (receiver *Composition) Compose() {
 	receiver.Sprite.Buf.Reset()
 	receiver.Sprite.Size.W, receiver.Sprite.Size.H = 0, 0
 	for _, frameInfo := range receiver.frames {
+		if frameInfo == nil {
+			continue
+		}
 		if frameInfo.offsetX > 0 || frameInfo.offsetY > 0 {
 			fmt.Fprint(receiver.Sprite, direct.MoveTo(frameInfo.Spriteer.String(), frameInfo.offsetX, frameInfo.offsetY)) // :(
 		} else {
@@ -40,12 +48,19 @@ func (receiver *Composition) Compose() {
 		receiver.Sprite.Size.W = maxInt(receiver.Sprite.Size.W, wh.W+frameInfo.offsetX)
 		receiver.Sprite.Size.H = maxInt(receiver.Sprite.Size.H, wh.H+frameInfo.offsetY)
 	}
-	fmt.Fprint(receiver.Sprite, receiver.writeProxy)
+	if receiver.writeProxy.Buf.Len() > 0 {
+		fmt.Fprint(receiver.Sprite, receiver.writeProxy)
+		wh := receiver.writeProxy.GetWH()
+		receiver.Sprite.Size.W = maxInt(receiver.Sprite.Size.W, wh.W)
+		receiver.Sprite.Size.H = maxInt(receiver.Sprite.Size.H, wh.H)
+	}
 }
 
 //write to proxy, write call is analog of top z-index, transparent element of frames
 func (receiver *Composition) Write(p []byte) (n int, err error) {
-	return receiver.writeProxy.Write(p)
+	n, err = receiver.writeProxy.Write(p)
+	receiver.writeProxy.CalculateSize()
+	return n, err
 }
 
 func (receiver *Composition) String() string {
@@ -68,7 +83,7 @@ func NewComposition(frames []Spriteer) (*Composition, error) {
 	instance := new(Composition)
 	instance.writeProxy = NewSprite()
 	instance.Sprite = NewSprite()
-
+	instance.Clip2Size = false
 	for i, frame := range frames {
 		instance.addFrame(frame, 0, 0, i)
 	}

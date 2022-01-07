@@ -201,6 +201,7 @@ func main() {
 	runner, _ := NewGameRunner()
 	runner.Keyboard = keysEvents
 	runner.Game = game
+	runner.GameConfig = gameConfig
 	runner.Scenario = scenario
 	runner.BlueprintManager = buildManager
 	runner.BehaviorControlBuilder = aibuilder
@@ -243,46 +244,6 @@ func main() {
 		time.AfterFunc(time.Second*5, debugMinimap)
 	}
 
-	/*tank, _ := buildManager.Get("player-tank")
-	startIndexX, startIndexY := 0, 0
-	pos, _ := location.CoordinateByIndex(startIndexX, startIndexY)
-	tank.GetClBody().Moving(pos.X, pos.Y)
-	x, y := tank.GetXY()
-	w, h := tank.GetWH()
-	tank.GetTracker().Manager = location
-	tank.GetTracker().Update(x, y, w, h)
-	newIndexX, newIndexY := tank.GetTracker().GetIndexes()
-	log.Printf("unit size x, y  %f %f \n", location.setupUnitSize.X, location.setupUnitSize.Y)
-	if newIndexX != startIndexX {
-		log.Printf("x index broken %d %d \n", newIndexX, startIndexX)
-	}
-	if newIndexY != startIndexY {
-		log.Printf("y index broken %d %d \n", newIndexY, startIndexY)
-	}
-	newPos, _, _, _ := location.NearestZoneByCoordinate(x, y)
-	if newPos.X != pos.X {
-		log.Printf("x pos broken %f %f \n", newPos.X, pos.X)
-	}
-	if newPos.Y != pos.Y {
-		log.Printf("y pos broken %f %f \n", newPos.Y, pos.Y)
-	}
-	tank.GetClBody().Moving(pos.X + 2, pos.Y + 2)
-	x, y = tank.GetXY()
-	tank.GetTracker().Manager = location
-	tank.GetTracker().Update(x, y, w, h)
-	newIndexX, newIndexY = tank.GetTracker().GetIndexes()
-	log.Printf("x index  %d %d \n", newIndexX, startIndexX)
-	log.Printf("y index  %d %d \n", newIndexY, startIndexY)
-	tank.GetClBody().Moving(pos.X + 3, pos.Y + 3) //смещение по меньшей оси
-	x, y = tank.GetXY()
-	tank.GetTracker().Manager = location
-	tank.GetTracker().Update(x, y, w, h)
-	newIndexX, newIndexY = tank.GetTracker().GetIndexes()
-	log.Printf("x index  %d %d \n", newIndexX, startIndexX)
-	log.Printf("y index  %d %d \n", newIndexY, startIndexY)
-
-	os.Exit(0)*/
-
 	for {
 		select {
 		case fin := <-finChanel:
@@ -301,15 +262,19 @@ func main() {
 			case GAME_END_WIN:
 				fallthrough
 			case GAME_END_LOSE:
-				direct.Clear()
-				direct.Printf("game seed is: %d \n", seed)
-				direct.Flush()
+				if !DEBUG {
+					direct.Clear()
+					direct.Printf("game seed is: %d \n", seed)
+					direct.Flush()
+				}
 				return
 			}
 		case <-osSignal:
-			direct.Clear()
-			direct.Printf("game seed is: %d \n", seed)
-			direct.Flush()
+			if !DEBUG {
+				direct.Clear()
+				direct.Printf("game seed is: %d \n", seed)
+				direct.Flush()
+			}
 			return
 		case timeEvent := <-timeEvents:
 			timeLeft = timeEvent.Sub(timeCurrent)

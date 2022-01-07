@@ -272,15 +272,48 @@ func (receiver *BehaviorControl) AlignToZone(zone Zone) (done bool) {
 	return false
 }
 
-func (receiver *BehaviorControl) GetTargetZone() Zone {
-	if receiver.target == nil {
-		return NoZone
+func (receiver *BehaviorControl) IsAlignToDirection(direction Point) bool {
+	return receiver.avatar.Direction == direction
+}
+
+func (receiver *BehaviorControl) AlignToDirection(direction Point) (done bool) {
+
+	if receiver.avatar.Direction == direction {
+		return true
 	}
-	tzone := receiver.target.GetZone()
-	return Zone{
-		X: tzone.X, //+ receiver.targetOffset.X,
-		Y: tzone.Y, //+ receiver.targetOffset.Y,
+
+	moveCommand := controller.Command{
+		CType:  controller.CTYPE_DIRECTION,
+		Pos:    controller.Point(direction),
+		Action: true,
 	}
+
+	receiver.commandChanel <- moveCommand
+
+	return false
+}
+
+func (receiver *BehaviorControl) IsAlignToPoint(direction Point) bool {
+	return receiver.avatar.Direction == direction
+}
+
+func (receiver *BehaviorControl) AlignToPoint(point Point) (done bool) {
+
+	direction := receiver.GetDirection2Point(point)
+
+	if receiver.avatar.Direction == direction {
+		return true
+	}
+
+	moveCommand := controller.Command{
+		CType:  controller.CTYPE_DIRECTION,
+		Pos:    controller.Point(direction),
+		Action: true,
+	}
+
+	receiver.commandChanel <- moveCommand
+
+	return false
 }
 
 func (receiver *BehaviorControl) GetFollowZone() Zone {
@@ -309,6 +342,36 @@ func (receiver *BehaviorControl) GetDirection2Zone(zone Zone) Point {
 		}
 	}
 	if delta = centerOfZone.X - center.X; math.Abs(delta) > 0.1 {
+		if delta > 0 {
+			direction.X = 1
+		} else {
+			direction.X = -1
+		}
+	}
+
+	return direction
+}
+
+func (receiver *BehaviorControl) GetDirection2Target(target *Unit) Point {
+	centerOfZone := target.GetCenter2()
+	return receiver.GetDirection2Point(Point(centerOfZone))
+}
+
+func (receiver *BehaviorControl) GetDirection2Point(point Point) Point {
+	//todo cache center pos in zone
+	center := receiver.avatar.GetCenter2()
+	centerOfZone := Center(point)
+
+	var delta float64
+	var direction Point
+	if delta = centerOfZone.Y - center.Y; math.Abs(delta) > 0.5 {
+		if delta > 0 {
+			direction.Y = 1
+		} else {
+			direction.Y = -1
+		}
+	}
+	if delta = centerOfZone.X - center.X; math.Abs(delta) > 0.5 {
 		if delta > 0 {
 			direction.X = 1
 		} else {
@@ -394,7 +457,7 @@ func (receiver *BehaviorControl) MoveToZone(zone Zone, timeLeft time.Duration) (
 	return false
 }
 
-func (receiver *BehaviorControl) InFireRange(zone Zone) bool {
+func (receiver *BehaviorControl) InFireRange(point Point) bool {
 	/*	azone := receiver.avatar.GetZone()
 		if weapSolution, ok := receiver.solutions[receiver.avatar.Gun.GetProjectile()]; !ok {
 			logger.Println("no solution for weapon ", receiver.avatar.Gun.GetProjectile())
@@ -405,19 +468,27 @@ func (receiver *BehaviorControl) InFireRange(zone Zone) bool {
 	return true
 }
 
-func (receiver *BehaviorControl) CanHit(zone Zone) bool {
+func (receiver *BehaviorControl) CanFire(point Point) bool {
+	return receiver.InFireRange(point) && !receiver.avatar.Gun.IsReload()
+}
+
+func (receiver *BehaviorControl) CanHit(point Point) bool {
 	return true
 }
 
-func (receiver *BehaviorControl) Fire() {
+func (receiver *BehaviorControl) Fire() bool {
 	if controller.DEBUG_DISARM_AI {
-		return
+		return true
+	}
+	if receiver.avatar.IsReload() {
+		return true
 	}
 	receiver.commandChanel <- controller.Command{
 		CType:  controller.CTYPE_FIRE,
 		Pos:    controller.PosIrrelevant,
 		Action: true,
 	}
+	return false
 }
 
 func (receiver *BehaviorControl) OnIndexUpdate(tracker *Tracker) {

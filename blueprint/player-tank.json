@@ -183,8 +183,8 @@
     "h": 46
   },
   "speed": {
-    "min": 15,
-    "max": 15
+    "min": 10,
+    "max": 8
   },
   "accelTime": 4000000000,
   "control": null,

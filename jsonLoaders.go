@@ -849,6 +849,10 @@ func SpriteLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 						}
 						collector.Add(err)
 					}
+				case jsonparser.Null:
+					fallthrough
+				case jsonparser.NotExist:
+					//none
 				default:
 					collector.Add(fmt.Errorf("custom: %w", ParseError))
 				}

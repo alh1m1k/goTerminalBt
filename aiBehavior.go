@@ -2,14 +2,19 @@ package main
 
 import (
 	"log"
+	"math"
 	"math/rand"
 	"os"
 	"time"
 )
 
 var (
-	aiBuf, _ = os.OpenFile("ai.txt", os.O_CREATE|os.O_TRUNC, 644)
-	aiLogger = log.New(aiBuf, "logger: ", log.Lshortfile)
+	aiBuf, _        = os.OpenFile("ai.txt", os.O_CREATE|os.O_TRUNC, 644)
+	aiLogger        = log.New(aiBuf, "logger: ", log.Lshortfile)
+	NoSolutionPoint = Point{
+		X: -math.MaxFloat64,
+		Y: -math.MaxFloat64,
+	}
 )
 
 var (
@@ -58,17 +63,24 @@ var (
 	OpportunityFireBehavior = &Behavior{
 		name: "opportunityFire",
 		Check: func(control *BehaviorControl) bool {
-			tdir := control.target.Direction
-			tzone := control.GetTargetZone()
-			dir2zone := control.GetDirection2Zone(tzone)
-			crossing := dir2zone.Plus(tdir)
-			if control.InFireRange(tzone) {
-				if tdir.Y != 0 && crossing.Y == 0 {
-					return true
-				}
-				if tdir.X != 0 && crossing.X == 0 {
-					return true
-				}
+			if control.IsNeedRecalculateSolution() {
+				go control.CalculateFireSolution()
+				return false
+			}
+			target := control.target
+			avatar := control.avatar
+
+			tdir := target.Direction
+			tPos := target.GetCenter2()
+			aPos := avatar.GetCenter2()
+			dir2Target := control.GetDirection2Target(target)
+
+			crossing := dir2Target.Plus(tdir)
+			if tdir.Y != 0 && crossing.Y == 0 && control.CanFire(Point{X: tPos.X, Y: aPos.Y}) {
+				return true
+			}
+			if tdir.X != 0 && crossing.X == 0 && control.CanFire(Point{X: tPos.X, Y: aPos.Y}) {
+				return true
 			}
 			return false
 		},
@@ -76,6 +88,8 @@ var (
 
 		},
 		Update: func(control *BehaviorControl, duration time.Duration) (done bool) {
+			const OFFSET_PRESSISION = 1.8
+
 			var weaponSolution *FireSolution
 
 			if control.IsNeedRecalculateSolution() {
@@ -83,63 +97,64 @@ var (
 				return false
 			}
 
-			azone := control.avatar.GetZone()
-			acenter := control.avatar.GetCenter2()
-			aw, ah := control.avatar.GetWH()
-			tzone := control.GetTargetZone()
-			tcenter := control.target.GetCenter2()
-			tw, th := control.target.GetWH()
-			tdir := control.target.Direction
-			dir2zone := control.GetDirection2Zone(tzone)
-			preemption := NoZone
+			target := control.target
+			avatar := control.avatar
 
-			if control.InFireRange(tzone) {
-				weaponSolution = control.solution
-				if weaponSolution == nil {
-					return
-				}
-				centerDistance := acenter.Minus(tcenter).Abs()
-				borderDistance := centerDistance.Minus(Center{
-					X: aw/2 + tw/2,
-					Y: ah/2 + th/2,
-				}).Round()
-				fireDistance := centerDistance.Minus(Center{
-					X: tw / 2,
-					Y: th / 2,
-				}).Round()
-				crossing := dir2zone.Plus(tdir)
-				if DEBUG_OPPORTUNITY_FIRE {
-					log.Print("distance/direction", borderDistance, dir2zone)
-				}
-				if tdir.Y != 0 && crossing.Y == 0 {
-					if sample := control.LookupFireSolution(weaponSolution.sampleX, borderDistance.X); sample != nil {
-						offset := sample.Offset
-						offset.X = fireDistance.X
-						if DEBUG_OPPORTUNITY_FIRE {
-							log.Print("offset", offset)
-						}
-						if offset.Equal(fireDistance, 1.0) {
-							preemption = azone
-							preemption.X = preemption.X + int(dir2zone.X)
-						}
+			acenter := avatar.GetCenter2()
+			aw, ah := avatar.GetWH()
+			tcenter := target.GetCenter2()
+			tw, th := target.GetWH()
+			tdir := target.Direction
+			dir2Target := control.GetDirection2Target(target)
+			preemption := NoSolutionPoint
+
+			weaponSolution = control.solution
+			if weaponSolution == nil {
+				return
+			}
+			centerDistance := acenter.Minus(tcenter).Abs()
+			borderDistance := centerDistance.Minus(Center{
+				X: aw/2 + tw/2,
+				Y: ah/2 + th/2,
+			}).Round()
+			fireDistance := centerDistance.Minus(Center{
+				X: tw / 2,
+				Y: th / 2,
+			}).Round()
+			crossing := dir2Target.Plus(tdir)
+			if DEBUG_OPPORTUNITY_FIRE {
+				log.Print("distance/direction", borderDistance, dir2Target)
+			}
+			if tdir.Y != 0 && crossing.Y == 0 && control.CanFire(Point{X: tcenter.X, Y: acenter.Y}) {
+				if sample := control.LookupFireSolution(weaponSolution.sampleX, borderDistance.X); sample != nil {
+					offset := sample.Offset
+					offset.X = fireDistance.X
+					if DEBUG_OPPORTUNITY_FIRE {
+						log.Print("offset", offset)
 					}
-				} else if tdir.X != 0 && crossing.X == 0 {
-					if sample := control.LookupFireSolution(weaponSolution.sampleY, borderDistance.Y); sample != nil {
-						offset := sample.Offset
-						offset.Y = fireDistance.Y
-						if DEBUG_OPPORTUNITY_FIRE {
-							log.Print("offset", offset)
-						}
-						if offset.Equal(fireDistance, 1.0) {
-							preemption = azone
-							preemption.Y = preemption.Y + int(dir2zone.Y)
-						}
+					if offset.Equal(fireDistance, OFFSET_PRESSISION) {
+						preemption = Point(acenter)
+						preemption.X = preemption.X + dir2Target.X
 					}
 				}
-				if preemption != NoZone && control.AlignToZone(preemption) && control.CanHit(preemption) {
+			} else if tdir.X != 0 && crossing.X == 0 && control.CanFire(Point{X: acenter.X, Y: tcenter.Y}) {
+				if sample := control.LookupFireSolution(weaponSolution.sampleY, borderDistance.Y); sample != nil {
+					offset := sample.Offset
+					offset.Y = fireDistance.Y
+					if DEBUG_OPPORTUNITY_FIRE {
+						log.Print("offset", offset)
+					}
+					if offset.Equal(fireDistance, OFFSET_PRESSISION) {
+						preemption = Point(acenter)
+						preemption.Y = preemption.Y + dir2Target.Y
+					}
+				}
+			}
+			if preemption != NoSolutionPoint {
+				if control.AlignToPoint(preemption) && control.CanHit(preemption) {
 					control.Fire()
-					return true
 				}
+				return true
 			}
 			return false
 		},
@@ -156,29 +171,51 @@ var (
 			PursuitBehavior.Enter(control)
 		},
 		Update: func(control *BehaviorControl, duration time.Duration) (done bool) {
-			azone := control.avatar.GetZone()
-			tzone := control.GetFollowZone()
+			if OpportunityFireBehavior.Check(control) {
+				if OpportunityFireBehavior.Update(control, duration) {
+					return true
+				}
+			}
+
+			apoint := control.avatar.GetCenter2()
+			tpoint := control.target.GetCenter2()
+			tzone := control.target.GetZone()
 			adir, tdir := control.avatar.Direction, control.target.Direction
+			halfCellSizeX, halfCellSizeY := control.setupUnitSize.X/2, control.setupUnitSize.Y/2
 
 			paralelX, paralelY := adir.X == tdir.X && tdir.X == 0, tdir.Y == adir.Y && tdir.Y == 0
-			oneLineX, oneLineY := azone.X == tzone.X, azone.Y == tzone.Y
+			oneLineX, oneLineY := math.Abs(apoint.X-tpoint.X) < halfCellSizeX, math.Abs(apoint.Y-tpoint.Y) < halfCellSizeY
 
-			if (paralelX && oneLineX) || (paralelY && oneLineY) && control.InFireRange(tzone) {
-				if control.AlignToZone(tzone) {
-					if control.CanHit(tzone) {
-						control.Fire()
+			if (paralelX && oneLineX) || (paralelY && oneLineY) && control.CanFire(Point(tpoint)) {
+				if control.AlignToZone(tzone) { //todo fixme
+					if control.CanHit(Point(tpoint)) {
+						if control.Fire() {
+							return true
+						}
 					}
 				}
 			} else {
-				if OpportunityFireBehavior.Check(control) {
-					OpportunityFireBehavior.Update(control, duration)
-				} else {
-					if PursuitBehavior.Update(control, duration) {
-						///
-					}
+				if PursuitBehavior.Update(control, duration) {
+					return true
 				}
 			}
+
 			return false
+		},
+		Leave: func(control *BehaviorControl) {
+			PursuitBehavior.Leave(control)
+		},
+	}
+	WidrawBehavior = &Behavior{
+		name: "widraw",
+		Check: func(control *BehaviorControl) bool {
+			return true
+		},
+		Enter: func(control *BehaviorControl) {
+			PursuitBehavior.Enter(control)
+		},
+		Update: func(control *BehaviorControl, duration time.Duration) (done bool) {
+			return PursuitBehavior.Update(control, duration)
 		},
 		Leave: func(control *BehaviorControl) {
 			PursuitBehavior.Leave(control)

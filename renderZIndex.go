@@ -123,7 +123,14 @@ func (receiver *RenderZIndex) translateXY(x, y float64) (int, int) {
 }
 
 func (receiver *RenderZIndex) draw(sprite Spriteer, x, y, w, h int) {
-	receiver.output.PrintSprite(sprite, x, y, w, h, 0)
+	if compose, ok := sprite.(*Composition); ok { //bypass composition position and size bugs (absolute render)
+		for _, frame := range compose.frames {
+			frameWh := frame.GetWH()
+			receiver.output.PrintSprite(frame.Spriteer, x+frame.offsetX, y+frame.offsetY, frameWh.W, frameWh.H, 0)
+		}
+	} else {
+		receiver.output.PrintSprite(sprite, x, y, w, h, 0)
+	}
 }
 
 func (receiver *RenderZIndex) drawUI(timeLeft time.Duration) {
@@ -155,6 +162,7 @@ func (receiver *RenderZIndex) drawUI(timeLeft time.Duration) {
 
 func NewRenderZIndex(queueSize int) (*RenderZIndex, error) {
 	output, _ := output.NewConsoleOutputLine()
+	output.CursorVisibility(false)
 	return &RenderZIndex{
 		zIndex:           make([]int, 0, 5),
 		zQueue:           make(map[int][]Renderable),

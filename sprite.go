@@ -59,11 +59,7 @@ func (s *Sprite) String() (out string) {
 }
 
 func (s *Sprite) CalculateSize() {
-	strings := strings.Split(s.Buf.String(), "\n")
-	s.Size.W, s.Size.H = 0, len(strings)
-	for i := 0; i < s.Size.H; i++ {
-		s.Size.W = maxInt(s.Size.W, len(strings[i]))
-	}
+	s.Size = GeoSizeOf(s.Buf.String())
 }
 
 func NewSprite() *Sprite {
@@ -71,7 +67,7 @@ func NewSprite() *Sprite {
 	box := new(Sprite)
 	box.Parent = nil
 	box.Buf = new(bytes.Buffer)
-	box.isTransparent = true
+	box.isTransparent = false
 
 	return box
 }
@@ -81,7 +77,7 @@ func NewContentSprite(buffer []byte) *Sprite {
 	box := new(Sprite)
 	box.Parent = nil
 	box.Buf = bytes.NewBuffer(buffer)
-	box.isTransparent = true
+	box.isTransparent = false
 	box.CalculateSize()
 
 	return box
@@ -99,14 +95,16 @@ func GetSprite(id string, load bool, processTransparent bool) (*Sprite, error) {
 		return nil, err
 	}
 	sprite := NewSprite()
+
 	if processTransparent {
 		TruncateSpaces(bytes.NewReader(buffer), sprite)
 		sprite.isTransparent = true
+		sprite.Size = GeoSizeOf(string(buffer))
 	} else {
 		sprite.Write(buffer)
+		sprite.CalculateSize()
 		sprite.isTransparent = false
 	}
-	sprite.CalculateSize()
 	sprites[id] = sprite
 
 	return sprite, nil
@@ -129,11 +127,12 @@ func LoadSprite2(path string, processTransparent bool) (*Sprite, error) {
 	if processTransparent {
 		TruncateSpaces(bytes.NewReader(buffer), sprite)
 		sprite.isTransparent = true
+		sprite.Size = GeoSizeOf(string(buffer))
 	} else {
 		sprite.Write(buffer)
 		sprite.isTransparent = false
+		sprite.CalculateSize()
 	}
-	sprite.CalculateSize()
 	return sprite, nil
 }
 
@@ -243,6 +242,16 @@ func TruncateSpaces(reader io.Reader, writer io.Writer) {
 			writer.Write(buf)
 		}
 	}
+}
+
+func GeoSizeOf(str string) GeoSize {
+	strings := strings.Split(str, "\n")
+	size := GeoSize{}
+	size.W, size.H = 0, len(strings)
+	for i := 0; i < size.H; i++ {
+		size.W = maxInt(size.W, len(strings[i]))
+	}
+	return size
 }
 
 func customizedSpriteName(familyId string, customizeMap CustomizeMap) string {
