@@ -40,10 +40,10 @@ type Spriteer interface {
 type CustomizeMap map[string]int
 
 type Sprite struct {
-	Parent        *Sprite
-	Buf           *bytes.Buffer
-	Size          GeoSize
-	isTransparent bool
+	Parent                  *Sprite
+	Buf                     *bytes.Buffer
+	Size                    GeoSize
+	isTransparent, isNoClip bool
 }
 
 func (s *Sprite) GetWH() GeoSize {

@@ -173,6 +173,8 @@ func NewPlayerControl(event <-chan keyboard.KeyEvent, keyMapping KeyBind) (*Cont
 					command.CType = CTYPE_FIRE
 					command.Pos 	= PosIrrelevant
 					command.Action 	= true
+				default:
+					continue
 				}
 			}
 			logger.Printf("send: %T, %+v \n", command, command)

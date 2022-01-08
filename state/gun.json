@@ -1,8 +1,8 @@
 {
   "default": "normal",
-  "sprite": "gun-0",
+  "sprite": "gun/gun-0",
   "animation": {
-    "name": "gun",
+    "name": "gun/gun",
     "duration": 2000000000,
     "cycled": true,
     "blink": 200000000,
@@ -10,9 +10,9 @@
   },
   "items": {
     "appear": {
-      "sprite": "gun-0",
+      "sprite": "gun/gun-0",
       "animation": {
-        "name": "gun",
+        "name": "gun/gun",
         "duration": 2000000000,
         "cycled": true,
         "blink": 200000000,
@@ -20,9 +20,9 @@
       }
     },
     "normal": {
-      "sprite": "gun-0",
+      "sprite": "gun/gun-0",
       "animation": {
-        "name": "gun",
+        "name": "gun/gun",
         "duration": 2000000000,
         "cycled": true,
         "length": 6

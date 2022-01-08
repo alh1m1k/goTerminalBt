@@ -296,6 +296,9 @@ func (receiver *Game) onUnitCollect(object *Collectable, payload interface{}) {
 }
 
 func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{}) {
+	if object.HasTag("base") {
+		receiver.End(GAME_END_LOSE)
+	}
 	if object.HasTag("player") {
 		for _, player := range receiver.players {
 			if player.Unit == object {

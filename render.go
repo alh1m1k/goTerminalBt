@@ -118,7 +118,7 @@ func (receiver *Render) translateXY(x, y float64) (int, int) {
 
 func (receiver *Render) draw(sprite Spriteer, x, y int) {
 
-	receiver.output.PrintSprite(sprite, x, y, 0, 0, 0)
+	receiver.output.PrintSprite(sprite, x, y, 0, 0)
 }
 
 func (receiver *Render) drawUI(timeLeft time.Duration) {

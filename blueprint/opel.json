@@ -1,6 +1,6 @@
 {
   "type":   "collectable",
-  "sprite": "opel_0",
+  "sprite": "opel/opel_0",
   "state":  "collectable",
   "collision": {
     "type": "penetrate",

@@ -16,6 +16,6 @@
   "accelTimeFunc": "quad",
   "accelTime": 5000000000,
   "ttl":    5000000000,
-  "damage": 20,
+  "damage": 40,
   "tags": ["projectile", "danger"]
 }

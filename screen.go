@@ -108,7 +108,7 @@ func NewScreen(sprite Spriteer) (*Screen, error) {
 func NewWinScreen() (*Screen, error) {
 	sprite, err := GetSprite("win", true, false)
 	screen, _ := NewScreen(sprite)
-	screen.size = Point{200, 64}
+	screen.size = Point{X: float64(sprite.Size.W), Y: float64(sprite.Size.H)}
 	return screen, err
 }
 
@@ -118,7 +118,7 @@ func NewLoseScreen() (*Screen, error) {
 		return nil, err
 	}
 	screen, _ := NewScreen(sprite)
-	screen.size = Point{200, 64}
+	screen.size = Point{X: float64(sprite.Size.W), Y: float64(sprite.Size.H)}
 	return screen, err
 }
 
@@ -128,7 +128,8 @@ func NewLogoScreen() (*Screen, error) {
 		return nil, err
 	}
 	screen, _ := NewScreen(sprite)
-	screen.size = Point{200, 56}
+	wh := sprite.GetWH()
+	screen.size = Point{X: float64(wh.W), Y: float64(wh.H)}
 	return screen, err
 }
 

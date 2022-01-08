@@ -103,9 +103,11 @@ func (receiver *GameRunner) setupPlayers() {
 		case configuration := <-configurationChanel:
 			switch configuration.EType {
 			case DIALOG_EVENT_PLAYER_SELECT:
+				screen.Deactivate()
 				payload := configuration.Payload.(*DialogInfo)
+				keyboardRepeater, _ := NewKeyboardRepeater(receiver.Keyboard)
 				for i := 0; i < payload.Value; i++ {
-					playerControl, _ := controller.NewPlayerControl(receiver.Keyboard, controller.KeyboardBindingPool[i])
+					playerControl, _ := controller.NewPlayerControl(keyboardRepeater.Subscribe(), controller.KeyboardBindingPool[i])
 					player, _ := NewPlayer("Player"+strconv.Itoa(i+1), playerControl)
 					player.CustomizeMap = &CustomizeMap{
 						"gun":   direct.RED,
@@ -114,8 +116,6 @@ func (receiver *GameRunner) setupPlayers() {
 					}
 					game.AddPlayer(player)
 				}
-
-				screen.Deactivate()
 				receiver.Renderer.Remove(screen)
 				return
 			}

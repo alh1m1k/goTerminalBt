@@ -1,0 +1,33 @@
+{
+  "type":   "unit",
+  "sprite": {
+    "type": "sprite",
+    "name": "base/base",
+    "duration": 400000000,
+    "cycled": true,
+    "length": 2
+  },
+  "collision": {
+    "x": 0,
+    "y": 0,
+    "w": 7,
+    "h": 4
+  },
+  "vision": {
+    "x": 0,
+    "y": 0,
+    "w": 70,
+    "h": 46
+  },
+  "hp": 150,
+  "score": 1000,
+  "tags": {
+    "tank": true,
+    "base": true,
+    "obstacle": true,
+    "explosive": true,
+    "scored": true,
+    "vulnerable": true,
+    "tracked": true
+  }
+}

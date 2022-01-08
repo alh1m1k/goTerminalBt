@@ -254,6 +254,16 @@ func (receiver *BlueprintManager) copy(object ObjectInterface) (ObjectInterface,
 		collectable.Prototype = object
 		collectable.GetAttr().ID = genId()
 		return collectable, nil
+	case *Object:
+		object2 := object.(*Object).Copy()
+		object2.Prototype = object
+		object2.GetAttr().ID = genId()
+		return object2, nil
+	case *MotionObject:
+		mo := object.(*MotionObject).Copy()
+		mo.Prototype = object
+		mo.GetAttr().ID = genId()
+		return mo, nil
 	}
 	return nil, PrototypeError
 }

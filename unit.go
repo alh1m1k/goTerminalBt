@@ -68,26 +68,32 @@ func (receiver *Unit) Execute(command controller.Command) error {
 		}
 	}
 
-	if receiver.Moving.Direction.X > 0 {
-		receiver.Enter("right")
-	}
-	if receiver.Moving.Direction.X < 0 {
-		receiver.Enter("left")
-	}
-	if receiver.Moving.Direction.Y < 0 {
-		receiver.Enter("top")
-	}
-	if receiver.Moving.Direction.Y > 0 {
-		receiver.Enter("bottom")
+	if receiver.State != nil {
+		if receiver.Moving.Direction.X > 0 {
+			receiver.Enter("right")
+		}
+		if receiver.Moving.Direction.X < 0 {
+			receiver.Enter("left")
+		}
+		if receiver.Moving.Direction.Y < 0 {
+			receiver.Enter("top")
+		}
+		if receiver.Moving.Direction.Y > 0 {
+			receiver.Enter("bottom")
+		}
 	}
 
 	if command.CType == controller.CTYPE_FIRE && command.Action {
-		err := receiver.Gun.Fire()
-		if errors.Is(err, OutAmmoError) {
-			receiver.Gun.Downgrade()
-		}
-		if errors.Is(err, GunConfigError) {
-			logger.Println(err)
+		if receiver.Gun != nil {
+			err := receiver.Gun.Fire()
+			if errors.Is(err, OutAmmoError) {
+				receiver.Gun.Downgrade()
+			}
+			if errors.Is(err, GunConfigError) {
+				logger.Println(err)
+			}
+		} else {
+			logger.Println("fire command receive but no gun to fire")
 		}
 	}
 
@@ -196,7 +202,9 @@ func (receiver *Unit) Reset() error {
 	if receiver.State != nil {
 		receiver.State.Reset()
 	}
-	receiver.Gun.Reset()
+	if receiver.Gun != nil {
+		receiver.Gun.Reset()
+	}
 	receiver.HP = receiver.FullHP
 	receiver.moving = false
 	receiver.Trigger(ResetEvent, receiver, nil)
@@ -244,7 +252,6 @@ func (receiver *Unit) Copy() *Unit {
 		instance.ControlledObject = instance.ControlledObject.Copy()
 		instance.ControlledObject.Owner = &instance
 	}
-
 	if instance.State != nil {
 		instance.State = receiver.State.Copy()
 		instance.State.Owner = &instance
@@ -252,8 +259,10 @@ func (receiver *Unit) Copy() *Unit {
 	instance.ObservableObject = receiver.ObservableObject.Copy()
 	instance.ObservableObject.Owner = &instance
 	instance.MotionObject = receiver.MotionObject.Copy()
-	instance.Gun = receiver.Gun.Copy()
-	instance.Gun.Owner = &instance
+	if receiver.Gun != nil {
+		instance.Gun = receiver.Gun.Copy()
+		instance.Gun.Owner = &instance
+	}
 	instance.Interactions.Subscribe(&instance)
 
 	if receiver.vision != nil {

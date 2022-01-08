@@ -1,0 +1,614 @@
+{
+  "name":   "stage-1",
+  "items": {
+    "start": {
+      "declare": [
+        "player-tank",
+        "tank",
+        "tank-fast",
+        "tank-heavy",
+        "tank-sneaky",
+        "tank-base-explosion",
+        "tank-base-projectile",
+        "tank-base-projectile-he",
+        "tank-base-projectile-rail",
+        "tank-base-projectile-flak",
+        "tank-special-projectile-smoke",
+        "tank-special-smokescreen-1",
+        "tank-special-smokescreen-2",
+        "tank-base-projectile-fanout",
+        "projectile-sharp",
+        "tank-base-projectile-apocalypse",
+        "projectile-sharp-apoc-start",
+        "projectile-sharp-apoc-end",
+        "effect-onsight",
+        "effect-offsight",
+        "opel",
+        "gun",
+        "water",
+        "wall",
+        "forest",
+        "player-base"
+      ],
+      "spawn": [
+        {
+          "location": {
+            "X": 16,
+            "Y": 14
+          },
+          "blueprint":  "player-base",
+          "team":       -1
+        },
+
+        {
+          "location": {
+            "X": 15,
+            "Y": 14
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 15,
+            "Y": 13
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 16,
+            "Y": 13
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 13
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 14
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 16,
+            "Y": 9
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 15,
+            "Y": 8
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 8
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 10
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 15,
+            "Y": 10
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 11
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 15,
+            "Y": 11
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 13,
+            "Y": 10
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 13,
+            "Y": 11
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 13,
+            "Y": 12
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 13,
+            "Y": 13
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 10
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 11
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 12
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 13
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 19,
+            "Y": 10
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 19,
+            "Y": 11
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 19,
+            "Y": 12
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 19,
+            "Y": 13
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 21,
+            "Y": 10
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 21,
+            "Y": 11
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 21,
+            "Y": 12
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 21,
+            "Y": 13
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+
+        {
+          "location": {
+            "X": 15,
+            "Y": 6
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 6
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 19,
+            "Y": 7
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 20,
+            "Y": 7
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 22,
+            "Y": 7
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+
+        {
+          "location": {
+            "X": 13,
+            "Y": 7
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 12,
+            "Y": 7
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 10,
+            "Y": 7
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 15,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 15,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 15,
+            "Y": 2
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 15,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 13,
+            "Y": 5
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 13,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 13,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 13,
+            "Y": 2
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 13,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 11,
+            "Y": 5
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 2
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+
+        {
+          "location": {
+            "X": 17,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 2
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 17,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 19,
+            "Y": 5
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 19,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 19,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 19,
+            "Y": 2
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 19,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 21,
+            "Y": 5
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 21,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 21,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 21,
+            "Y": 2
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 21,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 16,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+
+        {
+          "location": {
+            "X": 5,
+            "Y": 5
+          },
+          "blueprint":  "tank-fast",
+          "team":       50
+        },
+        {
+          "location": {
+            "X": 2,
+            "Y": 2
+          },
+          "blueprint":  "tank-heavy",
+          "team":       50
+        },
+        {
+          "location": {
+            "X": 3,
+            "Y": 10
+          },
+          "blueprint":  "tank-sneaky",
+          "team":       50
+        }
+      ]
+    },
+    "win": {
+
+    },
+    "lose": {
+
+    }
+  }
+}

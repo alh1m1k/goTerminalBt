@@ -35,10 +35,9 @@ type Explosion struct {
 	*Object
 	*ObservableObject
 	*throttle
-	Owner     ObjectInterface
-	Damage    int
-	DotDamage int
-	Ttl       time.Duration
+	Owner             ObjectInterface
+	Damage, DotDamage int
+	Ttl               time.Duration
 }
 
 func (receiver *Explosion) ApplyState(current *StateItem) error {
@@ -60,10 +59,12 @@ func (receiver *Explosion) Update(timeLeft time.Duration) error {
 }
 
 func (receiver *Explosion) OnTickCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
-
 	if receiver.DotDamage > 0 {
 		//todo refactor this
-		if object.HasTag("vulnerable") {
+		if receiver.HasTag("danger") && object.HasTag("vulnerable") {
+			if object.HasTag("player") && DEBUG_IMMORTAL_PLAYER {
+				return
+			}
 			DotDamage.Tag = receiver.tag
 			DotDamage.Damage = receiver.DotDamage
 			DotDamage.From = receiver

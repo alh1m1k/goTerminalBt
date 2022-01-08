@@ -37,10 +37,10 @@ func (receiver *Wall) OnStopCollide(object collider.Collideable, duration time.D
 
 func (receiver *Wall) ReciveDamage(incoming Danger) {
 	damage, nemesis := incoming.GetDamage(receiver)
-	receiver.HP -= damage
 	if damage <= 0 {
 		return
 	}
+	receiver.HP -= damage
 	if receiver.HP <= 0 {
 		receiver.Destroy(nemesis)
 	} else {

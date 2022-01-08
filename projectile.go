@@ -12,10 +12,10 @@ type Projectile struct {
 	*State
 	*ObservableObject
 	*throttle
-	collisionsCnt int64
-	Owner         ObjectInterface
-	Damage        int
-	Ttl           time.Duration
+	collisionsCnt     int64
+	Owner             ObjectInterface
+	Damage, DotDamage int
+	Ttl               time.Duration
 }
 
 func (receiver *Projectile) ApplyState(current *StateItem) error {
@@ -49,7 +49,18 @@ func (receiver *Projectile) ApplySpeed(Speed Point) error {
 }
 
 func (receiver *Projectile) OnTickCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
-
+	if receiver.DotDamage > 0 {
+		//todo refactor this
+		if receiver.HasTag("danger") && object.HasTag("vulnerable") {
+			if object.HasTag("player") && DEBUG_IMMORTAL_PLAYER {
+				return
+			}
+			DotDamage.Tag = receiver.tag
+			DotDamage.Damage = receiver.DotDamage
+			DotDamage.From = receiver
+			object.(Vulnerable).ReciveDamage(&DotDamage)
+		}
+	}
 }
 
 func (receiver *Projectile) OnStartCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {

@@ -126,10 +126,10 @@ func (receiver *RenderZIndex) draw(sprite Spriteer, x, y, w, h int) {
 	if compose, ok := sprite.(*Composition); ok { //bypass composition position and size bugs (absolute render)
 		for _, frame := range compose.frames {
 			frameWh := frame.GetWH()
-			receiver.output.PrintSprite(frame.Spriteer, x+frame.offsetX, y+frame.offsetY, frameWh.W, frameWh.H, 0)
+			receiver.output.PrintSprite(frame.Spriteer, x+frame.offsetX, y+frame.offsetY, frameWh.W, frameWh.H)
 		}
 	} else {
-		receiver.output.PrintSprite(sprite, x, y, w, h, 0)
+		receiver.output.PrintSprite(sprite, x, y, w, h)
 	}
 }
 
@@ -161,14 +161,16 @@ func (receiver *RenderZIndex) drawUI(timeLeft time.Duration) {
 }
 
 func NewRenderZIndex(queueSize int) (*RenderZIndex, error) {
-	output, _ := output.NewConsoleOutputLine()
-	output.CursorVisibility(false)
+	output.DEBUG = DEBUG
+	backend, _ := output.NewConsoleOutputLine()
+	backend.CursorVisibility(false)
+	backend.ClipMode(output.CLIP_MODE_RB)
 	return &RenderZIndex{
 		zIndex:           make([]int, 0, 5),
 		zQueue:           make(map[int][]Renderable),
 		needReorder:      false,
 		defaultQueueSize: queueSize,
-		output:           output,
+		output:           backend,
 		UIData:           nil,
 		uiThrottle:       newThrottle(500*time.Millisecond, true),
 		UIDraw:           false,

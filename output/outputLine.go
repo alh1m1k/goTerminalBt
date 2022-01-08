@@ -28,12 +28,15 @@ type ConsoleOutputLine struct {
 	rowsRepaint     map[int]bool
 	rowsRepaintCnt  int
 	needFullRepaint bool
+	clipMode  int
 	width, height, wTolerance, hTolerance int
 }
 
-func (co *ConsoleOutputLine) PrintSprite(stringer fmt.Stringer, x,y,w,h, color int) (n int, err error) {
-	if x + w > co.width + co.wTolerance || y + h > co.height + co.hTolerance {
-		log.Print("clip: ", x,y,w,h, output.Width(), output.Height())
+func (co *ConsoleOutputLine) PrintSprite(stringer fmt.Stringer, x, y, w, h int) (n int, err error) {
+	if co.clipTest(x,y,w,h) {
+		if DEBUG {
+			log.Print("\n clip: ", x,y,w,h, output.Width(), output.Height())
+		}
 		return 0, OutOfRenderRangeError
 	}
 	str := stringer.String()
@@ -42,15 +45,14 @@ func (co *ConsoleOutputLine) PrintSprite(stringer fmt.Stringer, x,y,w,h, color i
 		co.rowsRepaintCnt++
 	}
 	str = co.MoveTo(str, x, y)
-	if color > 0 {
-		str = co.Color(str, color)
-	}
 	return output.Print(str)
 }
 
-func (co *ConsoleOutputLine) PrintDynamicSprite(stringer fmt.Stringer, x,y,w,h, x2,y2,w2,h2, color int) (n int, err error) {
-	if x + w > co.width + co.wTolerance || y + h > co.height + co.hTolerance {
-		log.Print("clip: ", x,y,w,h, output.Width(), output.Height())
+func (co *ConsoleOutputLine) PrintDynamicSprite(stringer fmt.Stringer, x, y, w, h, xOld, yOld, wOld, hOld int) (n int, err error) {
+	if co.clipTest(x,y,w,h) {
+		if DEBUG {
+			log.Print("\n clip: ", x,y,w,h, output.Width(), output.Height())
+		}
 		return 0, OutOfRenderRangeError
 	}
 	str := stringer.String()
@@ -59,16 +61,15 @@ func (co *ConsoleOutputLine) PrintDynamicSprite(stringer fmt.Stringer, x,y,w,h, 
 		co.rowsRepaintCnt++
 	}
 	str = co.MoveTo(str, x, y)
-	if color > 0 {
-		str = co.Color(str, color)
-	}
 	return output.Print(str)
 }
 
 func (co *ConsoleOutputLine) Print(str string) (n int, err error) {
 	strH := len(strings.Split(str, "\n"))
-	if co.currY + strH > co.height + co.hTolerance{
-		log.Print("clip: ", co.currY + strH, output.Height())
+	if co.clipTest(0, co.currY,0, strH) {
+		if DEBUG {
+			log.Print("\n clip: ", co.currY + strH, output.Height())
+		}
 		return 0, OutOfRenderRangeError
 	}
 	for i := co.currY; i < co.currY+ strH; i++ {
@@ -76,6 +77,26 @@ func (co *ConsoleOutputLine) Print(str string) (n int, err error) {
 		co.rowsRepaintCnt++
 	}
 	return output.Print(str)
+}
+
+func (co *ConsoleOutputLine) clipTest(x, y, w, h int) bool {
+	if co.clipMode == CLIP_MODE_NONE {
+		return false
+	}
+	var b1, b2 int
+	if co.clipMode == CLIP_MODE_LT {
+		b1, b2 = x, y
+	} else {
+		b1, b2 = x + w, y + h
+	}
+	if b1 < 0 || b2 < 0 || b1 > co.width + co.wTolerance || b2 > co.height + co.hTolerance {
+		return true
+	}
+	return false
+}
+
+func (co *ConsoleOutputLine) ClipMode(mode int) {
+	co.clipMode = mode
 }
 
 func (co *ConsoleOutputLine) MoveTo(str string, x int, y int) (out string) {

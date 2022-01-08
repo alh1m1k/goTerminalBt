@@ -1,6 +1,6 @@
 {
   "type":   "collectable",
-  "sprite": "gun_0",
+  "sprite": "gun/gun_0",
   "state":  "gun",
   "collision": {
     "type": "penetrate",

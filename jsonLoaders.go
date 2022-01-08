@@ -208,7 +208,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		}
 
 		score, err := jsonparser.GetInt(payload, "score")
-		if !collector.Add(err) {
+		if err == nil {
 			unit.Score = int(score)
 		}
 	}
@@ -281,13 +281,13 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		wall.Attributes.Evented = true
 
 		hp, err := jsonparser.GetInt(payload, "hp")
-		if err != nil {
+		if !collector.Add(err) {
 			wall.FullHP = int(hp)
 			wall.HP = int(hp)
 		}
 
 		score, err := jsonparser.GetInt(payload, "score")
-		if err != nil {
+		if err == nil {
 			wall.Score = int(score)
 		}
 	}
@@ -518,6 +518,11 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, payload []byte) i
 		if !collector.Add(err) {
 			projectile.Damage = int(damage)
 		}
+
+		damage, err = jsonparser.GetInt(payload, "dotDamage")
+		if err == nil {
+			projectile.DotDamage = int(damage)
+		}
 	}
 
 	return projectile
@@ -721,7 +726,10 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 			jsonparser.ObjectEach(tagsCfg, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 				switch dataType {
 				case jsonparser.Boolean:
-					object.addTag(string(key))
+					bVal, err := jsonparser.GetBoolean(value)
+					if !collector.Add(err) && bVal {
+						object.addTag(string(key))
+					}
 				case jsonparser.Object:
 					tagValue, _ := object.GetTag(string(key), true)
 					object.addTag(string(key))

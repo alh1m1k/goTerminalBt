@@ -1,7 +1,13 @@
 package main
 
 import (
+	direct "github.com/buger/goterm"
+	"math"
 	"strconv"
+)
+
+var (
+	maxX, maxY = direct.Width(), direct.Height() //todo do some better
 )
 
 func DefaultConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
@@ -52,7 +58,10 @@ func ExplosionConfigurator(object ObjectInterface, config interface{}) ObjectInt
 	expW, expH := explosion.GetWH()
 
 	explosion.Owner = owner
-	explosion.Move(gX-expW/2, gY-expH/2)
+	x, y = gX-expW/2, gY-expH/2
+	x = math.Min(math.Max(x, 0), float64(maxX)-expW-0.5) //align to border, sux but truly need
+	y = math.Min(math.Max(y, 0), float64(maxY)-expH-0.5)
+	explosion.Move(x, y)
 
 	explosion.GetAttr().ID = -100
 	explosion.GetAttr().Team = -1

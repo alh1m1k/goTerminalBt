@@ -2,7 +2,7 @@
   "type":   "explosion",
   "sprite": {
     "type": "animation",
-    "name": "explosion",
+    "name": "explosion/explosion",
     "length": 5,
     "duration": 500000000
   },
