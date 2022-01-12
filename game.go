@@ -15,15 +15,6 @@ const GAME_END_LOSE = 202
 
 var GameInProgress = errors.New("game in progress")
 
-type gameActionCallback func(game Game, object ObjectInterface, payload interface{}) error
-
-type GameAction struct {
-	callback  gameActionCallback
-	object    ObjectInterface
-	payload   interface{}
-	waitUnitl time.Time
-}
-
 type Game struct {
 	players []*Player
 	*SpawnManager
@@ -35,8 +26,9 @@ type Game struct {
 	spawnedPlayer, spawnedAi   int64
 	inProgress                 bool
 	mutex, delay, aiCountMutex sync.Mutex
-	delayedAction              []*GameAction
 	nextDelayedTaskExec        time.Time
+	delayedSpawnRequest        []*SpawnRequest
+	delayedSpawnRequestCnt     int64
 }
 
 func (receiver *Game) AddPlayer(player *Player) error {
@@ -80,9 +72,16 @@ func (receiver *Game) Run(scenario *Scenario) error {
 		return err
 	}
 
-	for _, player := range receiver.players {
+	for pIndex, player := range receiver.players {
 		location, _ := receiver.location.Coordinate2Spawn(true)
-		err := receiver.SpawnManager.SpawnPlayerTank(location, "player-tank", player)
+		if pIndex%2 == 0 && scenario.player2Blueprint != "" {
+			player.Blueprint = scenario.player2Blueprint
+		} else if scenario.player1Blueprint != "" {
+			player.Blueprint = scenario.player1Blueprint
+		} else {
+			player.Blueprint = "player-tank"
+		}
+		_, err := receiver.SpawnManager.SpawnPlayerTank(location, player.Blueprint, player)
 		if err != nil {
 			logger.Println("at spawning player error: ", err)
 		}
@@ -99,6 +98,35 @@ func (receiver *Game) Run(scenario *Scenario) error {
 }
 
 func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) {
+	if payload.Count <= 0 {
+		payload.Count = 1
+	}
+	for i := 0; i < payload.Count; i++ {
+		if scenario.limits.AiUnits > 0 && scenario.limits.AiUnits <= receiver.spawnedAi {
+			receiver.delayedSpawnRequest = append(receiver.delayedSpawnRequest, payload)
+			atomic.AddInt64(&receiver.delayedSpawnRequestCnt, 1)
+		} else {
+			receiver.doSpawn(scenario, payload)
+		}
+	}
+}
+
+func (receiver *Game) execDelayedSpawn() {
+	for idx, req := range receiver.delayedSpawnRequest {
+		if req == nil {
+			continue
+		}
+		if scenario.limits.AiUnits > 0 && scenario.limits.AiUnits > receiver.spawnedAi {
+			receiver.doSpawn(receiver.scenario, req)
+			atomic.AddInt64(&receiver.delayedSpawnRequestCnt, -1)
+			receiver.delayedSpawnRequest[idx] = nil
+		} else {
+			break
+		}
+	}
+}
+
+func (receiver *Game) doSpawn(scenario *Scenario, payload *SpawnRequest) {
 	var location Point
 	var err error
 	if payload.Location != ZoneAuto && payload.Position == PosAuto {
@@ -123,12 +151,18 @@ func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) 
 	} else {
 		location = payload.Position
 	}
-	receiver.SpawnManager.Spawn(location, payload.Blueprint, DefaultConfigurator, payload)
+	receiver.location.CapturePoint(location)
+	object, err := receiver.SpawnManager.Spawn(location, payload.Blueprint, DefaultConfigurator, payload)
+	if err != nil {
+		logger.Print(err)
+	} else if object.HasTag("tank") && object.HasTag("ai") {
+		atomic.AddInt64(&receiver.spawnedAi, 1)
+	}
 }
 
 func (receiver *Game) onUnitFire(object *Unit, payload interface{}) {
 	if object.Gun != nil && object.Gun.GetProjectile() != "" {
-		err := receiver.SpawnManager.SpawnProjectile(PosAuto, object.Gun.GetProjectile(), object)
+		_, err := receiver.SpawnManager.SpawnProjectile(PosAuto, object.Gun.GetProjectile(), object)
 		if err != nil {
 			logger.Printf("unable to fire %s due: %s \n", object.Gun.GetProjectile(), err)
 		}
@@ -219,7 +253,7 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 
 	if object.HasTag("explosive") {
 		bl, _ := object.GetTagValue("explosive", "blueprint", "tank-base-explosion")
-		err := receiver.SpawnManager.SpawnExplosion(PosAuto, bl, object)
+		_, err := receiver.SpawnManager.SpawnExplosion(PosAuto, bl, object)
 		if err != nil {
 			logger.Printf("unable to spawn explosion: %s \n", err)
 		}
@@ -311,7 +345,7 @@ func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{
 					location, _ := receiver.location.Coordinate2Spawn(true)
 					if receiver.inProgress {
 						//todo theoretical may cause game freeze due send signal on closed dispatcher
-						receiver.SpawnManager.SpawnPlayerTank(location, "player-tank", player)
+						receiver.SpawnManager.SpawnPlayerTank(location, player.Blueprint, player)
 					}
 				}
 			}
@@ -330,24 +364,18 @@ func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{
 			receiver.SpawnManager.SpawnCollectable(PosAuto, bl, object.(*Unit))
 		}
 
-		if v := receiver.DecrSpawnedAi(); v == 0 {
+		if v := receiver.DecrSpawnedAi(); v == 0 && receiver.delayedSpawnRequestCnt <= 0 {
 			receiver.End(GAME_END_WIN)
+		}
+
+		if receiver.delayedSpawnRequestCnt > 0 {
+			receiver.execDelayedSpawn()
 		}
 	}
 }
 
 func (receiver *Game) DecrSpawnedAi() int64 {
-	if newValue := atomic.AddInt64(&receiver.spawnedAi, -1); newValue <= 0 {
-		receiver.aiCountMutex.Lock() //todo fix possible deadLock with spawn
-		defer receiver.aiCountMutex.Unlock()
-		if receiver.spawnedAi > 0 {
-			return receiver.spawnedAi
-		} //todo possible rc
-		receiver.spawnedAi = receiver.SpawnManager.QuerySpawnedByTagCount("ai")
-		return receiver.spawnedAi
-	} else {
-		return newValue
-	}
+	return atomic.AddInt64(&receiver.spawnedAi, -1)
 }
 
 //async
@@ -488,7 +516,8 @@ func scenarioDispatcher(instance *Game, scenarioEvent EventChanel, terminator <-
 			}
 			switch event.EType {
 			case SPAWN_REQUEST:
-				go instance.onSpawnRequest(event.Object.(*Scenario), event.Payload.(*SpawnRequest))
+				//sync due t
+				instance.onSpawnRequest(event.Object.(*Scenario), event.Payload.(*SpawnRequest))
 			}
 		}
 	}

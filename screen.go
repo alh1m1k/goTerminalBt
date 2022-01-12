@@ -133,16 +133,16 @@ func NewLogoScreen() (*Screen, error) {
 	return screen, err
 }
 
-func NewSetupSizeDialog(config *GameConfig, keyboard <-chan keyboard.KeyEvent, chanel EventChanel) (*Dialog, error) {
+func NewSetupSizeDialog(config Box, keyboard <-chan keyboard.KeyEvent, chanel EventChanel) (*Dialog, error) {
 	logoS, err := GetSprite("setup_size_s", true, false)
 	logoM, err := GetSprite("setup_size_m", true, false)
-	right := NewContentSprite([]byte(strings.Repeat("###\n", int(math.Round(config.Box.H))-3)))
-	bottom := NewContentSprite([]byte(strings.Repeat(strings.Repeat("#", int(math.Round(config.Box.W)))+"\n", 2)))
+	right := NewContentSprite([]byte(strings.Repeat("###\n", int(math.Round(config.H))-3)))
+	bottom := NewContentSprite([]byte(strings.Repeat(strings.Repeat("#", int(math.Round(config.W)))+"\n", 2)))
 	composition, _ := NewComposition(nil)
 	composition.addFrame(logoS, 0, 0, 0)
 	composition.addFrame(logoM, 0, logoS.Size.H+2, 0)
-	composition.addFrame(right, int(math.Round(config.Box.W))-3, 0, 0)
-	composition.addFrame(bottom, 0, int(math.Round(config.Box.H))-3, 0) //fixme must be - 2
+	composition.addFrame(right, int(math.Round(config.W))-3, 0, 0)
+	composition.addFrame(bottom, 0, int(math.Round(config.H))-3, 0) //fixme must be - 2
 	if err != nil {
 		return nil, err
 	}

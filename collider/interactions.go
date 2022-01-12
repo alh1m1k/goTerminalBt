@@ -22,7 +22,11 @@ func (receiver *Interactions) Subscribe(collideable CollisionReceiver) {
 }
 
 func (receiver *Interactions) Unsubscribe(collideable CollisionReceiver) {
-	receiver.subscribers = receiver.subscribers[0:0]
+	for idx, subscribe := range receiver.subscribers {
+		if subscribe == collideable {
+			receiver.subscribers[idx] = nil
+		}
+	}
 }
 
 func (receiver *Interactions) Interact(source Collideable, timeLeft time.Duration) {
@@ -50,22 +54,42 @@ func (receiver *Interactions) Clear() {
 	for key, _ := range receiver.iteractions {
 		delete(receiver.iteractions, key)
 	}
+	i, j := 0, 0
+	for i < len(receiver.subscribers) {
+		if receiver.subscribers[i] == nil {
+			//
+		} else {
+			receiver.subscribers[j] = receiver.subscribers[i]
+			j++
+		}
+		i++
+	}
+	receiver.subscribers = receiver.subscribers[0:j]
 }
 
 func (receiver *Interactions) OnTickCollide(object Collideable, collision *ump.Collision, owner *Interactions) {
 	for _, subscribe := range receiver.subscribers {
+		if subscribe == nil {
+			continue
+		}
 		subscribe.OnTickCollide(object, collision, owner)
 	}
 }
 
 func (receiver *Interactions) OnStartCollide(object Collideable, collision *ump.Collision, owner *Interactions) {
 	for _, subscribe := range receiver.subscribers {
+		if subscribe == nil {
+			continue
+		}
 		subscribe.OnStartCollide(object, collision, owner)
 	}
 }
 
 func (receiver *Interactions) OnStopCollide(object Collideable, duration time.Duration, owner *Interactions) {
 	for _, subscribe := range receiver.subscribers {
+		if subscribe == nil {
+			continue
+		}
 		subscribe.OnStopCollide(object, duration, owner)
 	}
 }

@@ -16,6 +16,10 @@ var (
 		Object:  nil,
 		Payload: nil,
 	}
+	EmptyLocation = Box{
+		LT:   Point{},
+		Size: Size{},
+	}
 )
 
 type SpawnRequest struct {
@@ -23,12 +27,20 @@ type SpawnRequest struct {
 	Location  Zone  //maybe auto
 	Team      int8
 	Blueprint string
+	Count     int
+}
+
+type ScenarioLimits struct {
+	AiUnits int64
 }
 
 type ScenarioStateInfo struct {
-	Declare []string
-	Spawn   []*SpawnRequest
-	Screen  *Screen
+	Declare                            []string
+	Spawn                              []*SpawnRequest
+	Screen                             *Screen
+	Location                           Box
+	player1Blueprint, player2Blueprint string
+	limits                             ScenarioLimits
 }
 
 type Scenario struct {
@@ -38,6 +50,8 @@ type Scenario struct {
 	dropBlueprint                      func(blueprint string)
 	declarationCleanup                 []string
 	player1Blueprint, player2Blueprint string
+	limits                             ScenarioLimits
+	Location                           Box
 }
 
 func (receiver *Scenario) ApplyState(current *StateItem) error { /*
@@ -49,6 +63,12 @@ func (receiver *Scenario) ApplyState(current *StateItem) error { /*
 
 	//move on
 	scenarioStateInfo := current.StateInfo.(*ScenarioStateInfo)
+
+	receiver.Location = scenarioStateInfo.Location
+	receiver.player1Blueprint = scenarioStateInfo.player2Blueprint
+	receiver.player2Blueprint = scenarioStateInfo.player2Blueprint
+	receiver.limits = scenarioStateInfo.limits
+
 	for _, blueprint := range scenarioStateInfo.Declare {
 		receiver.declareBlueprint(blueprint)
 		receiver.declarationCleanup = append(receiver.declarationCleanup, blueprint)
@@ -81,8 +101,8 @@ func NewScenario() (*Scenario, error) {
 	return instance, nil
 }
 
-func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error) {
-	scenario, err := NewScenario()
+func NewRandomScenario(tankCnt int, wallCnt int) (scenario *Scenario, err error) {
+	scenario, err = NewScenario()
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +152,7 @@ func NewRandomScenario(tankCnt int, wallCnt int) (*Scenario, error) {
 			"water",
 			"wall",
 			"forest",
+			"player-base",
 		},
 		Spawn:  spawn,
 		Screen: nil,
@@ -152,6 +173,16 @@ func NewFileScenario(filepath string) (*Scenario, error) {
 	instance.State.Owner = instance
 	instance.ObservableObject, _ = NewObservableObject(make(EventChanel), instance)
 
+	if instance.State != nil {
+		stateItem, _, err := instance.State.find("/start") //todo remove it
+		if err == nil {
+			info := stateItem.StateInfo.(*ScenarioStateInfo)
+			instance.Location = info.Location
+			instance.player1Blueprint = info.player2Blueprint
+			instance.player2Blueprint = info.player2Blueprint
+		}
+	}
+
 	return instance, nil
 }
 
@@ -171,6 +202,26 @@ func GetScenarioState(id string) (*State, error) { //todo refactor
 			Screen:  nil,
 		}
 
+		if player1Blueprint, ok := m["player1Blueprint"]; ok {
+			//todo refactor this shit
+			ssi.player1Blueprint = player1Blueprint.(string)
+		}
+		if player2Blueprint, ok := m["player2Blueprint"]; ok {
+			//todo refactor this shit
+			ssi.player2Blueprint = player2Blueprint.(string)
+		}
+		if location, ok := m["location"]; ok {
+			//todo refactor this shit
+			locationMap := location.(map[string]interface{})
+			ssi.Location.LT.X = locationMap["x"].(float64)
+			ssi.Location.LT.Y = locationMap["y"].(float64)
+			ssi.Location.W = locationMap["w"].(float64)
+			ssi.Location.H = locationMap["h"].(float64)
+		}
+		if limits, ok := m["limits"]; ok {
+			limitsMap := limits.(map[string]interface{})
+			ssi.limits.AiUnits = int64(limitsMap["aiUnit"].(float64))
+		}
 		if declare, ok := m["declare"]; ok {
 			//todo refactor this shit
 			for _, decl := range declare.([]interface{}) {
@@ -192,6 +243,8 @@ func GetScenarioState(id string) (*State, error) { //todo refactor
 						spr.Team = int8(value.(float64))
 					case "blueprint":
 						spr.Blueprint = value.(string)
+					case "count":
+						spr.Count = int(value.(float64))
 					case "position":
 						loc := value.(map[string]interface{})
 						spr.Position = Point{}

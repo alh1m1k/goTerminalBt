@@ -106,9 +106,10 @@ func (receiver *Unit) Execute(command controller.Command) error {
 
 func (receiver *Unit) Update(timeLeft time.Duration) error {
 	if DEBUG_FREEZ_AI && receiver.HasTag("ai") {
-		return nil
+		receiver.Object.Update(timeLeft)
+	} else {
+		receiver.MotionObject.Update(timeLeft)
 	}
-	receiver.MotionObject.Update(timeLeft)
 	if receiver.vision != nil && receiver.VisionInteractions != nil {
 		ccx, ccy := receiver.collision.GetCenter()
 		cvx, cvy := receiver.vision.GetCenter()

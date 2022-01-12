@@ -99,6 +99,10 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		} else {
 			collector.Add(fmt.Errorf("%s: %w", "state", LoaderNotFoundError))
 		}
+	case jsonparser.Null:
+		fallthrough
+	case jsonparser.NotExist:
+		//nope
 	default:
 		collector.Add(fmt.Errorf("state: %w", ParseError))
 	}
@@ -118,6 +122,10 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		} else {
 			collector.Add(fmt.Errorf("%s: %w", "gun", LoaderNotFoundError))
 		}
+	case jsonparser.Null:
+		fallthrough
+	case jsonparser.NotExist:
+		//none
 	default:
 		collector.Add(fmt.Errorf("gun: %w", ParseError))
 	}

@@ -190,7 +190,7 @@
   "control": null,
   "hp":     100,
   "gun": {
-      "projectile": "tank-special-projectile-smoke",
+      "projectile": "tank-base-projectile-rail",
       "reloadTime": 800000000
   },
   "score": 1000,

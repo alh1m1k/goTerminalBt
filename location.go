@@ -36,7 +36,7 @@ type Trackable interface {
 
 type Location struct {
 	left, right, top, bottom *collider.ClBody
-	setupSize                *Point
+	setupSize                *Size
 	setupUnitSize            *Point
 	zones                    [][]Trackable
 	zoneX, zoneY             int
@@ -232,6 +232,31 @@ func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
 	return NoPos, ZoneSetupError
 }
 
+func (receiver *Location) CaptureZone(zone Zone) error {
+	if receiver.zones == nil {
+		return ZoneSetupError
+	}
+
+	receiver.zoneLock.Lock()
+	defer receiver.zoneLock.Unlock()
+
+	if receiver.zonesLeft < 1 {
+		return ZoneEmptyError
+	}
+
+	if receiver.zones[zone.Y][zone.X] == nil {
+		receiver.zones[zone.Y][zone.X] = ZoneSpawnPlaceholder
+		receiver.zonesLeft--
+	}
+
+	return ZoneEmptyError
+}
+
+func (receiver *Location) CapturePoint(point Point) error {
+	zone := receiver.ZoneByCoordinate(point)
+	return receiver.CaptureZone(zone)
+}
+
 func (receiver *Location) CoordinateByIndex(x, y int) (Point, error) {
 
 	if x >= receiver.zoneX || y >= receiver.zoneY {
@@ -348,14 +373,14 @@ func (receiver *Location) ZoneByCoordinate(point Point) Zone {
 	}
 }
 
-func (receiver *Location) Setup(pos, size Point) error {
+func (receiver *Location) Setup(pos Point, size Size) error {
 	return receiver.setup(&pos, &size)
 }
 
 func (receiver *Location) SetupZones(size Point) error {
 	receiver.setupUnitSize = &size
-	receiver.zoneX = int(receiver.setupSize.X / size.X)
-	receiver.zoneY = int(receiver.setupSize.Y / size.Y)
+	receiver.zoneX = int(receiver.setupSize.W / size.X)
+	receiver.zoneY = int(receiver.setupSize.H / size.Y)
 	receiver.zones = make([][]Trackable, receiver.zoneY)
 	for ri, _ := range receiver.zones {
 		receiver.zones[ri] = make([]Trackable, receiver.zoneX)
@@ -364,24 +389,24 @@ func (receiver *Location) SetupZones(size Point) error {
 	return nil
 }
 
-func (receiver *Location) setup(pos *Point, size *Point) error {
+func (receiver *Location) setup(pos *Point, size *Size) error {
 	receiver.setupSize = size
 	if receiver.left == nil {
 		receiver.left = collider.NewStaticCollision(
 			pos.X-BORDER_SIZE,
 			pos.Y,
 			BORDER_SIZE,
-			size.Y,
+			size.H,
 		)
 	} else {
 		panic("location resize not implemented")
 	}
 	if receiver.right == nil {
 		receiver.right = collider.NewStaticCollision(
-			pos.X+size.X,
+			pos.X+size.W,
 			pos.Y,
 			BORDER_SIZE,
-			size.Y,
+			size.H,
 		)
 	} else {
 		panic("location resize not implemented")
@@ -390,7 +415,7 @@ func (receiver *Location) setup(pos *Point, size *Point) error {
 		receiver.top = collider.NewStaticCollision(
 			pos.X-BORDER_SIZE,
 			pos.Y-BORDER_SIZE,
-			BORDER_SIZE+size.X,
+			BORDER_SIZE+size.W,
 			BORDER_SIZE,
 		)
 	} else {
@@ -399,8 +424,8 @@ func (receiver *Location) setup(pos *Point, size *Point) error {
 	if receiver.bottom == nil {
 		receiver.bottom = collider.NewStaticCollision(
 			pos.X-BORDER_SIZE,
-			pos.Y+size.Y,
-			BORDER_SIZE+size.X,
+			pos.Y+size.H,
+			BORDER_SIZE+size.W,
 			BORDER_SIZE,
 		)
 	} else {
@@ -426,7 +451,7 @@ func (receiver *Location) HasTag(tag string) bool {
 	return false
 }
 
-func NewLocation(pos Point, size Point) (*Location, error) {
+func NewLocation(pos Point, size Size) (*Location, error) {
 	location := &Location{
 		left:   nil,
 		right:  nil,

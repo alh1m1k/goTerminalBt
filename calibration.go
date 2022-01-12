@@ -7,17 +7,17 @@ import (
 )
 
 type Calibration struct {
-	updater 	*Updater
-	render 		Renderer
-	collider 	*collider.Collider
-	location 	*Location
+	updater  *Updater
+	render   Renderer
+	collider *collider.Collider
+	location *Location
 	*ObservableObject
 	*GameConfig
 	internalChanel EventChanel
-	closeChanel bool
+	closeChanel    bool
 }
 
-func (receiver *Calibration) Run(control *controller.Control) error  {
+func (receiver *Calibration) Run(control *controller.Control) error {
 	receiver.internalChanel = make(EventChanel)
 
 	active, passive, _ := NewCalibrationBinary(control, receiver.internalChanel, 40, 20, 40, 40)
@@ -47,43 +47,43 @@ func (receiver *Calibration) Run(control *controller.Control) error  {
 	return err
 }
 
-func (receiver *Calibration) spawn(object *CalibrationObject)  {
+func (receiver *Calibration) spawn(object *CalibrationObject) {
 	receiver.updater.Add(object)
 	receiver.collider.Add(object)
 	receiver.render.Add(object)
 	object.Spawn()
 }
 
-func (receiver *Calibration) deSpawn(object *CalibrationObject)  {
+func (receiver *Calibration) deSpawn(object *CalibrationObject) {
 	receiver.updater.Remove(object)
 	receiver.collider.Remove(object)
 	receiver.render.Remove(object)
 	object.DeSpawn()
 }
 
-func (receiver *Calibration) process(active, passive *CalibrationObject) error  {
+func (receiver *Calibration) process(active, passive *CalibrationObject) error {
 
-	colW := math.Abs(active.Probe[1].X + active.Probe[3].X) / 2
-	rowH := math.Abs(active.Probe[0].Y + active.Probe[2].Y) / 2
-	avgW := math.Abs(active.Probe[4].X - active.Probe[6].X) + colW
-	avgH := math.Abs(active.Probe[4].Y - active.Probe[6].Y) + rowH
+	colW := math.Abs(active.Probe[1].X+active.Probe[3].X) / 2
+	rowH := math.Abs(active.Probe[0].Y+active.Probe[2].Y) / 2
+	avgW := math.Abs(active.Probe[4].X-active.Probe[6].X) + colW
+	avgH := math.Abs(active.Probe[4].Y-active.Probe[6].Y) + rowH
 
 	if receiver.GameConfig == nil {
 		receiver.GameConfig, _ = NewDefaultGameConfig()
 	}
 
-	receiver.GameConfig.ColWidth 	= colW
-	receiver.GameConfig.RowHeight 	= rowH
+	receiver.GameConfig.ColWidth = colW
+	receiver.GameConfig.RowHeight = rowH
 
-	receiver.GameConfig.Box.X		= 0
-	receiver.GameConfig.Box.Y		= 0
-	receiver.GameConfig.Box.W		= avgW
-	receiver.GameConfig.Box.H		= avgH
+	receiver.GameConfig.Box.LT.X = 0
+	receiver.GameConfig.Box.LT.Y = 0
+	receiver.GameConfig.Box.W = avgW
+	receiver.GameConfig.Box.H = avgH
 
 	return nil
 }
 
-func (receiver *Calibration) End() error  {
+func (receiver *Calibration) End() error {
 	if receiver.closeChanel {
 		close(receiver.GetEventChanel())
 	}
@@ -94,8 +94,8 @@ func (receiver *Calibration) End() error  {
 	return err
 }
 
-func NewCalibration(updater *Updater, render Renderer, collider *collider.Collider, location *Location, chanel EventChanel) (*Calibration, error)  {
-	instance :=  &Calibration{
+func NewCalibration(updater *Updater, render Renderer, collider *collider.Collider, location *Location, chanel EventChanel) (*Calibration, error) {
+	instance := &Calibration{
 		updater:          updater,
 		render:           render,
 		collider:         collider,

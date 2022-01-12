@@ -83,13 +83,15 @@ func (manager *SpawnManager) Execute(timeLeft time.Duration) {
 		}
 
 		manager.pendingDeSpawn[i] = nil
-		manager.spawned[object] = false
+		delete(manager.spawned, object)
 		object.DeSpawn()
 		bl := object.GetAttr().Blueprint
 		if bl != "" && !deSpawnAll && manager.Flags.lockFree {
 			if poll, ok := manager.respawn[bl]; ok {
 				poll.Put(object)
 			}
+		} else {
+			logger.Println("no blueprint")
 		}
 		if DEBUG_SPAWN {
 			logger.Printf("DeSpawn Object %CollisionInfo %+v \n", object, object)
@@ -162,15 +164,15 @@ func (manager *SpawnManager) Collect() {
 	}
 }
 
-func (manager *SpawnManager) Spawn(coordinate Point, blueprint string, configurator Configurator, config interface{}) error {
+func (manager *SpawnManager) Spawn(coordinate Point, blueprint string, configurator Configurator, config interface{}) (ObjectInterface, error) {
 
 	if _, ok := manager.builders[blueprint]; !ok {
-		return fmt.Errorf("%s: %w", blueprint, BuilderNotFoundError)
+		return nil, fmt.Errorf("%s: %w", blueprint, BuilderNotFoundError)
 	}
 
 	candidate := manager.respawn[blueprint].Get()
 	if candidate == nil {
-		return errors.New("unable to create object")
+		return nil, errors.New("unable to create object")
 	}
 	object := candidate.(ObjectInterface)
 
@@ -198,17 +200,17 @@ func (manager *SpawnManager) Spawn(coordinate Point, blueprint string, configura
 		atomic.AddInt64(&manager.cycleSpawned, 1)
 	}
 
-	return nil
+	return object, nil
 }
 
-func (manager *SpawnManager) SpawnPlayerTank(coordinate Point, blueprint string, player *Player) error {
+func (manager *SpawnManager) SpawnPlayerTank(coordinate Point, blueprint string, player *Player) (ObjectInterface, error) {
 	if DEBUG_SPAWN {
 		logger.Printf("spawn<user-item> attempt %s \n", blueprint)
 	}
 	return manager.Spawn(coordinate, blueprint, PlayerConfigurator, player)
 }
 
-func (manager *SpawnManager) SpawnProjectile(coordinate Point, blueprint string, owner *Unit) error {
+func (manager *SpawnManager) SpawnProjectile(coordinate Point, blueprint string, owner *Unit) (ObjectInterface, error) {
 	//coordinate no sense
 	if DEBUG_SPAWN {
 		logger.Printf("spawn<user-item> attempt %s \n", blueprint)
@@ -216,14 +218,14 @@ func (manager *SpawnManager) SpawnProjectile(coordinate Point, blueprint string,
 	return manager.Spawn(coordinate, blueprint, ProjectileConfigurator, owner)
 }
 
-func (manager *SpawnManager) SpawnExplosion(coordinate Point, blueprint string, from ObjectInterface) error {
+func (manager *SpawnManager) SpawnExplosion(coordinate Point, blueprint string, from ObjectInterface) (ObjectInterface, error) {
 	if DEBUG_SPAWN {
 		logger.Printf("spawn<user-item> attempt %s \n", blueprint)
 	}
 	return manager.Spawn(coordinate, blueprint, ExplosionConfigurator, from)
 }
 
-func (manager *SpawnManager) SpawnCollectable(coordinate Point, blueprint string, from *Unit) error {
+func (manager *SpawnManager) SpawnCollectable(coordinate Point, blueprint string, from *Unit) (ObjectInterface, error) {
 	if DEBUG_SPAWN {
 		logger.Printf("spawn<user-item> attempt %s \n", blueprint)
 	}
@@ -281,9 +283,9 @@ func (manager *SpawnManager) QuerySpawnedByTagCount(tag string) int64 {
 func (manager *SpawnManager) AddBuilder(blueprint string, builder Builder) {
 	manager.spawnMutex.Lock()
 	defer manager.spawnMutex.Unlock()
-	manager.builders[blueprint] = builder
-	if _, ok := manager.respawn[blueprint]; !ok {
-		manager.setupPool(blueprint, 250, manager.builders[blueprint])
+	if _, ok := manager.builders[blueprint]; !ok {
+		manager.builders[blueprint] = builder
+		manager.setupPool(blueprint, 100, manager.builders[blueprint])
 	}
 }
 

@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-const DEBUG_DISARM_AI = false
-
 const (
 	CTYPE_DIRECTION = iota
 	CTYPE_MOVE
@@ -23,6 +21,7 @@ var (
 	buf, _ = os.OpenFile("control.log", os.O_CREATE|os.O_TRUNC, 644)
 	logger = log.New(buf, "logger: ", log.Lshortfile)
 	PosIrrelevant = Point{-100, -100}
+	DEBUG_DISARM_AI = false
 )
 
 var Player1DefaultKeyBinding KeyBind = KeyBind{

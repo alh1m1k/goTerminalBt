@@ -3,6 +3,7 @@ package main
 import (
 	"GoConsoleBT/collider"
 	"GoConsoleBT/controller"
+	"GoConsoleBT/output"
 	"flag"
 	direct "github.com/buger/goterm"
 	"github.com/eiannone/keyboard"
@@ -26,15 +27,16 @@ const DEBUG_EXEC = false
 const DEBUG_STATE = false
 const DEBUG_NO_AI = false
 const DEBUG_SHAKE = false
-const DEBUG_IMMORTAL_PLAYER = true
+const DEBUG_IMMORTAL_PLAYER = false
 const DEBUG_FREEZ_AI = false
-const DEBUG_AI_PATH = false
-const DEBUG_AI_BEHAVIOR = false
+const DEBUG_AI_PATH = true
+const DEBUG_AI_BEHAVIOR = true
 const DEBUG_FIRE_SOLUTION = false
 const DEBUG_MINIMAP = false
 const DEBUG_DISABLE_VISION = false
 const DEBUG_SHUTDOWN = false
 const DEBUG_OPPORTUNITY_FIRE = false
+const DEBUG_DISARM_AI = false
 
 const RENDERER_WITH_ZINDEX = true
 
@@ -45,18 +47,14 @@ var (
 		Stop()
 	}
 	CycleID int64 = 0
-)
 
-var (
 	gameConfig  *GameConfig
 	game        *Game
 	render      Renderer
 	calibration *Calibration
 	scenario    *Scenario
-)
 
-//flags
-var (
+	//flags
 	seed             int64
 	wallCnt, tankCnt int
 	calibrate        bool
@@ -82,8 +80,11 @@ func init() {
 
 	osSignal = make(chan os.Signal, 1)
 
-	//cause problem on debug?
+	//cause problem on debug
 	signal.Notify(osSignal, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL, syscall.SIGINT)
+
+	output.DEBUG = DEBUG
+	controller.DEBUG_DISARM_AI = DEBUG_DISARM_AI
 }
 
 func main() {
@@ -156,14 +157,26 @@ func main() {
 	vision, _ := NewVisioner(detector, 100)
 	pipe.Visioner = vision
 
+	//scenario
+	if scenarioName == "random" {
+		scenario, _ = NewRandomScenario(tankCnt, wallCnt)
+	} else {
+		scenario, err = GetScenario(scenarioName)
+		if err != nil {
+			logger.Print(err)
+			log.Print(err)
+			os.Exit(1)
+		}
+	}
+
 	//Position
-	location, _ := NewLocation(Point{
-		X: gameConfig.Box.X,
-		Y: gameConfig.Box.Y,
-	}, Point{
-		X: gameConfig.Box.W / gameConfig.ColWidth,
-		Y: gameConfig.Box.H / gameConfig.RowHeight,
-	})
+	var size Box
+	if scenario.Location == EmptyLocation {
+		size = gameConfig.Box
+	} else {
+		size = scenario.Location
+	}
+	location, _ := NewLocation(size.LT, size.Size)
 	detector.Add(location)
 	pipe.Location = location
 
@@ -179,18 +192,6 @@ func main() {
 
 	//ai
 	aibuilder, _ := NewAIControlBuilder(detector, location, navigation)
-
-	//scenario
-	if scenarioName == "random" {
-		scenario, _ = NewRandomScenario(tankCnt, wallCnt)
-	} else {
-		scenario, err = GetScenario(scenarioName)
-		if err != nil {
-			logger.Print(err)
-			log.Print(err)
-			os.Exit(1)
-		}
-	}
 
 	//game
 	game, _ = NewGame(nil, spawner)
@@ -242,6 +243,10 @@ func main() {
 			navigation.NavData = navigation.NavData[0:0]
 		}
 		time.AfterFunc(time.Second*5, debugMinimap)
+	}
+
+	if profileMod != "" {
+		profileStart(profileMod, profileDelay)
 	}
 
 	for {
@@ -296,19 +301,37 @@ func profileStart(mode string, delay time.Duration) {
 	//use the flags package to selectively enable profiling.
 
 	do := func() {
+		logger.Print("start profile")
 		switch mode {
 		case "cpu":
-			profile.Start(profile.CPUProfile, profile.ProfilePath("./prof"))
+			profilerHandler = profile.Start(func(p *profile.Profile) {
+				profile.CPUProfile(p)
+				profile.NoShutdownHook(p)
+			}, profile.ProfilePath("./prof"))
 		case "mem":
-			profile.Start(profile.MemProfile, profile.ProfilePath("./prof"))
+			profilerHandler = profile.Start(func(p *profile.Profile) {
+				profile.CPUProfile(p)
+				profile.NoShutdownHook(p)
+			}, profile.ProfilePath("./prof"))
 		case "mutex":
-			profile.Start(profile.MutexProfile, profile.ProfilePath("./prof"))
+			profilerHandler = profile.Start(func(p *profile.Profile) {
+				profile.MutexProfile(p)
+				profile.NoShutdownHook(p)
+			}, profile.ProfilePath("./prof"))
 		case "block":
-			profile.Start(profile.BlockProfile, profile.ProfilePath("./prof"))
+			profilerHandler = profile.Start(func(p *profile.Profile) {
+				profile.BlockProfile(p)
+				profile.NoShutdownHook(p)
+			}, profile.ProfilePath("./prof"))
 		case "all":
-			profile.Start(profile.ProfilePath("./prof"))
+			profilerHandler = profile.Start(func(p *profile.Profile) {
+				profile.CPUProfile(p)
+				profile.MutexProfile(p)
+				profile.BlockProfile(p)
+				profile.NoShutdownHook(p)
+			}, profile.ProfilePath("./prof"))
 		default:
-
+			logger.Print("wrong profile type")
 		}
 	}
 
@@ -321,6 +344,7 @@ func profileStart(mode string, delay time.Duration) {
 
 func profileStop() {
 	if profilerHandler != nil {
+		logger.Print("stop profile")
 		profilerHandler.Stop()
 	}
 }

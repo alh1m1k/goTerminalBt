@@ -7,11 +7,12 @@ import (
 
 type Player struct {
 	*controller.Control
-	Unit 		*Unit
+	Unit *Unit
 	*CustomizeMap
-	Name 		string
-	Score		int64
-	Retry		int32
+	Name      string
+	Blueprint string
+	Score     int64
+	Retry     int32
 }
 
 func (receiver *Player) IncScore(byValue int64) int64 {
@@ -19,10 +20,10 @@ func (receiver *Player) IncScore(byValue int64) int64 {
 }
 
 func (receiver *Player) DecrRetry(byValue int32) int32 {
-	return atomic.AddInt32(&receiver.Retry, byValue * -1)
+	return atomic.AddInt32(&receiver.Retry, byValue*-1)
 }
 
-func NewPlayer(name string, control *controller.Control) (*Player, error)  {
+func NewPlayer(name string, control *controller.Control) (*Player, error) {
 	return &Player{
 		Control:      control,
 		Unit:         nil,

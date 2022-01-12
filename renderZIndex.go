@@ -118,7 +118,6 @@ func (receiver *RenderZIndex) SetOffset(x, y int) {
 }
 
 func (receiver *RenderZIndex) translateXY(x, y float64) (int, int) {
-	//todo round try to replace
 	return int(math.Round(x)) + receiver.offsetX, int(math.Round(y)) + 3 + receiver.offsetY
 }
 
@@ -134,19 +133,26 @@ func (receiver *RenderZIndex) draw(sprite Spriteer, x, y, w, h int) {
 }
 
 func (receiver *RenderZIndex) drawUI(timeLeft time.Duration) {
-	frameTime := timeLeft - CYCLE
-	fps := 1 * time.Second / frameTime
-	minFps = math.Min(float64(fps), minFps)
-	maxFps = math.Max(float64(fps), maxFps)
+
+	xOffset := 0
 	receiver.output.MoveCursor(0, 0)
 	receiver.output.Print(receiver.output.Color("Press CTRL+C to quit", direct.YELLOW))
-	receiver.output.Print(receiver.output.MoveTo("frame time: "+(frameTime).String(), 25, 0))
-	receiver.output.Print(receiver.output.MoveTo(fmt.Sprintf("fps c|mi|mx: %d | %3.2f | %3.2f", fps, minFps, maxFps), 25, 0))
-	receiver.output.Print(receiver.output.MoveTo("", 0, 1))
-	receiver.output.Print(receiver.output.MoveTo("", 0, 2))
+	xOffset += 15
+
+	if DEBUG {
+		frameTime := timeLeft - CYCLE
+		fps := 1 * time.Second / frameTime
+		minFps = math.Min(float64(fps), minFps)
+		maxFps = math.Max(float64(fps), maxFps)
+		receiver.output.Print(receiver.output.MoveTo("frame time: "+(frameTime).String(), 25, 0))
+		receiver.output.Print(receiver.output.MoveTo(fmt.Sprintf("fps c|mi|mx: %d | %3.2f | %3.2f", fps, minFps, maxFps), 25, 0))
+		receiver.output.Print(receiver.output.MoveTo("", 0, 1))
+		receiver.output.Print(receiver.output.MoveTo("", 0, 2))
+		xOffset = 55
+	}
+
 	if receiver.UIData != nil {
 		var buf string
-		var xOffset = 55
 		for i, player := range receiver.UIData.players {
 			if player == nil || player.Unit == nil {
 				continue
@@ -161,7 +167,6 @@ func (receiver *RenderZIndex) drawUI(timeLeft time.Duration) {
 }
 
 func NewRenderZIndex(queueSize int) (*RenderZIndex, error) {
-	output.DEBUG = DEBUG
 	backend, _ := output.NewConsoleOutputLine()
 	backend.CursorVisibility(false)
 	backend.ClipMode(output.CLIP_MODE_RB)

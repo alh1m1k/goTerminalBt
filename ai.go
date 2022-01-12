@@ -109,11 +109,38 @@ func (receiver *BehaviorControl) GetCommandChanel() controller.CommandChanel {
 }
 
 func (receiver *BehaviorControl) See(object *Unit) {
+	if receiver.target != nil && receiver.target.destroyed {
+		if DEBUG_AI_BEHAVIOR {
+			logger.Printf("object id %d reset target due it destruction")
+		}
+		receiver.target = nil
+	}
+
+	if receiver.target != nil {
+		//todo target selection
+		if receiver.target == object {
+			if DEBUG_AI_BEHAVIOR {
+				logger.Printf("object id %d skip new target because target is same", receiver.avatar.ID, object.ID)
+			}
+		} else {
+			if DEBUG_AI_BEHAVIOR {
+				logger.Printf("object id %d skip new target id %d", receiver.avatar.ID, object.ID)
+			}
+		}
+
+	}
+
 	receiver.target = object
+	if DEBUG_AI_BEHAVIOR {
+		logger.Printf("object id %d see object id %d", receiver.avatar.ID, object.ID)
+	}
 	receiver.Next(ChosePatternBehavior)
 }
 
 func (receiver *BehaviorControl) UnSee(object *Unit) {
+	if DEBUG_AI_BEHAVIOR {
+		logger.Printf("object id %d unsee object id %d", receiver.avatar.ID, object.ID)
+	}
 	receiver.Next(IdleBehavior)
 }
 
@@ -144,6 +171,9 @@ func (receiver *BehaviorControl) Disable() error {
 }
 
 func (receiver *BehaviorControl) Update(timeLeft time.Duration) error {
+	if receiver.target != nil && receiver.target.destroyed {
+		receiver.UnSee(receiver.target)
+	}
 	if path := receiver.newPath; path != nil {
 		if len(receiver.lastPath) > 0 {
 			receiver.lastPath = receiver.cutoffPath(path, receiver.lastPath[0])
@@ -166,8 +196,13 @@ func (receiver *BehaviorControl) Update(timeLeft time.Duration) error {
 func (receiver *BehaviorControl) Next(behavior *Behavior) {
 	if receiver.Behavior != nil && &receiver.Behavior.Update == &NoUpdate {
 		panic("atatat")
+	} else {
+		if DEBUG_AI_BEHAVIOR {
+			logger.Printf("Shedule next behavior %s ...\n", behavior.Name())
+		}
+		receiver.nextBehavior = behavior
 	}
-	receiver.nextBehavior = behavior
+
 }
 
 func (receiver *BehaviorControl) Copy() controller.Controller {

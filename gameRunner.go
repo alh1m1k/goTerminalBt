@@ -72,7 +72,8 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 
 func (receiver *GameRunner) setupSize() {
 	var configurationChanel EventChanel = make(EventChanel) //todo remove
-	screen, _ := NewSetupSizeDialog(receiver.GameConfig, receiver.Keyboard, configurationChanel)
+
+	screen, _ := NewSetupSizeDialog(receiver.GameConfig.Box, receiver.Keyboard, configurationChanel)
 	receiver.Renderer.Add(screen)
 	screen.Activate()
 
@@ -140,7 +141,6 @@ func (receiver *GameRunner) runGame() (exitEvent Event) {
 			switch gameEvent.EType {
 			case GAME_START:
 				receiver.Renderer.UI(&UIData{players: game.GetPlayers()})
-				profileStart(profileMod, profileDelay)
 			case GAME_END_WIN:
 				fallthrough
 			case GAME_END_LOSE:

@@ -2,6 +2,17 @@
   "name":   "stage-1",
   "items": {
     "start": {
+      "player1Blueprint": "player-tank",
+      "player2Blueprint": "player-tank",
+      "location": {
+        "x": 0,
+        "y": 0,
+        "w": 104,
+        "h": 60
+      },
+      "limits": {
+        "aiUnit": 10
+      },
       "declare": [
         "player-tank",
         "tank",
@@ -33,7 +44,7 @@
       "spawn": [
         {
           "location": {
-            "X": 16,
+            "X": 6,
             "Y": 14
           },
           "blueprint":  "player-base",
@@ -42,7 +53,7 @@
 
         {
           "location": {
-            "X": 15,
+            "X": 5,
             "Y": 14
           },
           "blueprint":  "wall",
@@ -50,7 +61,7 @@
         },
         {
           "location": {
-            "X": 15,
+            "X": 5,
             "Y": 13
           },
           "blueprint":  "wall",
@@ -58,7 +69,7 @@
         },
         {
           "location": {
-            "X": 16,
+            "X": 6,
             "Y": 13
           },
           "blueprint":  "wall",
@@ -66,7 +77,7 @@
         },
         {
           "location": {
-            "X": 17,
+            "X": 7,
             "Y": 13
           },
           "blueprint":  "wall",
@@ -74,7 +85,7 @@
         },
         {
           "location": {
-            "X": 17,
+            "X": 7,
             "Y": 14
           },
           "blueprint":  "wall",
@@ -83,7 +94,7 @@
 
         {
           "location": {
-            "X": 16,
+            "X": 6,
             "Y": 9
           },
           "blueprint":  "wall",
@@ -91,7 +102,7 @@
         },
         {
           "location": {
-            "X": 15,
+            "X": 5,
             "Y": 8
           },
           "blueprint":  "wall",
@@ -99,7 +110,7 @@
         },
         {
           "location": {
-            "X": 17,
+            "X": 7,
             "Y": 8
           },
           "blueprint":  "wall",
@@ -107,7 +118,7 @@
         },
         {
           "location": {
-            "X": 17,
+            "X": 7,
             "Y": 10
           },
           "blueprint":  "wall",
@@ -115,7 +126,7 @@
         },
         {
           "location": {
-            "X": 15,
+            "X": 5,
             "Y": 10
           },
           "blueprint":  "wall",
@@ -123,7 +134,7 @@
         },
         {
           "location": {
-            "X": 17,
+            "X": 7,
             "Y": 11
           },
           "blueprint":  "wall",
@@ -131,7 +142,7 @@
         },
         {
           "location": {
-            "X": 15,
+            "X": 5,
             "Y": 11
           },
           "blueprint":  "wall",
@@ -140,7 +151,7 @@
 
         {
           "location": {
-            "X": 13,
+            "X": 3,
             "Y": 10
           },
           "blueprint":  "wall",
@@ -148,7 +159,7 @@
         },
         {
           "location": {
-            "X": 13,
+            "X": 3,
             "Y": 11
           },
           "blueprint":  "wall",
@@ -156,7 +167,7 @@
         },
         {
           "location": {
-            "X": 13,
+            "X": 3,
             "Y": 12
           },
           "blueprint":  "wall",
@@ -164,7 +175,72 @@
         },
         {
           "location": {
-            "X": 13,
+            "X": 3,
+            "Y": 13
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 1,
+            "Y": 10
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 1,
+            "Y": 11
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 1,
+            "Y": 12
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 1,
+            "Y": 13
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 9,
+            "Y": 10
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 9,
+            "Y": 11
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 9,
+            "Y": 12
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 9,
             "Y": 13
           },
           "blueprint":  "wall",
@@ -203,75 +279,10 @@
           "team":       100
         },
 
-        {
-          "location": {
-            "X": 19,
-            "Y": 10
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 19,
-            "Y": 11
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 19,
-            "Y": 12
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 19,
-            "Y": 13
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 21,
-            "Y": 10
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 21,
-            "Y": 11
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 21,
-            "Y": 12
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 21,
-            "Y": 13
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-
 
         {
           "location": {
-            "X": 15,
+            "X": 5,
             "Y": 6
           },
           "blueprint":  "wall",
@@ -279,7 +290,7 @@
         },
         {
           "location": {
-            "X": 17,
+            "X": 7,
             "Y": 6
           },
           "blueprint":  "wall",
@@ -288,41 +299,7 @@
 
         {
           "location": {
-            "X": 19,
-            "Y": 7
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 20,
-            "Y": 7
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 22,
-            "Y": 7
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-
-
-        {
-          "location": {
-            "X": 13,
-            "Y": 7
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 12,
+            "X": 9,
             "Y": 7
           },
           "blueprint":  "wall",
@@ -336,117 +313,10 @@
           "blueprint":  "wall",
           "team":       100
         },
-
         {
           "location": {
-            "X": 15,
-            "Y": 4
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 15,
-            "Y": 3
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 15,
-            "Y": 2
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 15,
-            "Y": 1
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-
-        {
-          "location": {
-            "X": 13,
-            "Y": 5
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 13,
-            "Y": 4
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 13,
-            "Y": 3
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 13,
-            "Y": 2
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 13,
-            "Y": 1
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-
-        {
-          "location": {
-            "X": 11,
-            "Y": 5
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 11,
-            "Y": 4
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 11,
-            "Y": 3
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 11,
-            "Y": 2
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 11,
-            "Y": 1
+            "X": 12,
+            "Y": 7
           },
           "blueprint":  "wall",
           "team":       100
@@ -455,152 +325,277 @@
 
         {
           "location": {
-            "X": 17,
-            "Y": 4
+            "X": 3,
+            "Y": 7
           },
           "blueprint":  "wall",
           "team":       100
-        },
-        {
-          "location": {
-            "X": 17,
-            "Y": 3
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 17,
-            "Y": 2
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 17,
-            "Y": 1
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-
-        {
-          "location": {
-            "X": 19,
-            "Y": 5
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 19,
-            "Y": 4
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 19,
-            "Y": 3
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 19,
-            "Y": 2
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 19,
-            "Y": 1
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-
-        {
-          "location": {
-            "X": 21,
-            "Y": 5
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 21,
-            "Y": 4
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 21,
-            "Y": 3
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 21,
-            "Y": 2
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-        {
-          "location": {
-            "X": 21,
-            "Y": 1
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-
-        {
-          "location": {
-            "X": 16,
-            "Y": 3
-          },
-          "blueprint":  "wall",
-          "team":       100
-        },
-
-
-        {
-          "location": {
-            "X": 5,
-            "Y": 5
-          },
-          "blueprint":  "tank-fast",
-          "team":       50
         },
         {
           "location": {
             "X": 2,
+            "Y": 7
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 0,
+            "Y": 7
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 5,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 5,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 5,
             "Y": 2
           },
-          "blueprint":  "tank-heavy",
-          "team":       50
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 5,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 3,
+            "Y": 5
+          },
+          "blueprint":  "wall",
+          "team":       100
         },
         {
           "location": {
             "X": 3,
-            "Y": 10
+            "Y": 4
           },
-          "blueprint":  "tank-sneaky",
-          "team":       50
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 3,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 3,
+            "Y": 2
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 3,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 1,
+            "Y": 5
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 1,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 1,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 1,
+            "Y": 2
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 1,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+
+        {
+          "location": {
+            "X": 7,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 7,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 7,
+            "Y": 2
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 7,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 9,
+            "Y": 5
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 9,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 9,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 9,
+            "Y": 2
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 9,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 11,
+            "Y": 5
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 4
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 2
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "location": {
+            "X": 11,
+            "Y": 1
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+
+        {
+          "location": {
+            "X": 6,
+            "Y": 3
+          },
+          "blueprint":  "wall",
+          "team":       100
+        },
+        {
+          "blueprint":  "tank",
+          "team":       50,
+          "count":      18
+        },
+        {
+          "blueprint":  "tank-fast",
+          "team":       50,
+          "count":      2
         }
       ]
     },

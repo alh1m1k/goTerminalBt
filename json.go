@@ -10,63 +10,57 @@ type MinMax struct {
 }
 
 type GameConfig struct {
-	ColWidth	 float64 `json:"colWidth"`
-	RowHeight 	 float64 `json:"rowHeight"`
-	LockfreePool bool 	 `json:"lockfreePool"`
-	KeyBindings []controller.KeyBind `json:"keyBindings"`
-	Box      struct {
-		X float64 `json:"x"`
-		Y float64 `json:"y"`
-		W float64 `json:"w"`
-		H float64 `json:"h"`
-	} `json:"box"`
+	ColWidth     float64              `json:"colWidth"`
+	RowHeight    float64              `json:"rowHeight"`
+	LockfreePool bool                 `json:"lockfreePool"`
+	KeyBindings  []controller.KeyBind `json:"keyBindings"`
+	Box          Box                  `json:"box"`
 }
 
-func NewDefaultGameConfig() (*GameConfig, error)  {
+func NewDefaultGameConfig() (*GameConfig, error) {
 	return &GameConfig{
 		ColWidth:     1,
 		RowHeight:    1,
 		LockfreePool: true,
-		KeyBindings:  []controller.KeyBind{
+		KeyBindings: []controller.KeyBind{
 			controller.Player1DefaultKeyBinding,
 			controller.Player2DefaultKeyBinding,
 		},
-		Box: struct {
-			X float64 `json:"x"`
-			Y float64 `json:"y"`
-			W float64 `json:"w"`
-			H float64 `json:"h"`
-		}{
-			X: 0,
-			Y: 0,
-			W: 100,
-			H: 100,
+		Box: Box{
+			LT: Point{
+				X: 0,
+				Y: 0,
+			},
+			Size: Size{
+				W: 100,
+				H: 100,
+			},
 		},
 	}, nil
 }
 
 type AnimationConfig struct {
-	Name     string 					`json:"name"`
-	Path     string 					`json:"path"`
-	Duration 		time.Duration    	`json:"duration"`
-	RepeatDuration 	time.Duration 		`json:"repeatDuration"`
-	Cycled   bool   					`json:"cycled"`
-	Blink    time.Duration    			`json:"blink"`
-	Length   int    					`json:"length"`
-	Custom	 CustomizeMap				`json:"custom"`
-	Reversed	  bool					`json:"reversed"`
-	IsTransparent bool					`json:"transparent"`
+	Name           string        `json:"name"`
+	Path           string        `json:"path"`
+	Duration       time.Duration `json:"duration"`
+	RepeatDuration time.Duration `json:"repeatDuration"`
+	Cycled         bool          `json:"cycled"`
+	Blink          time.Duration `json:"blink"`
+	Length         int           `json:"length"`
+	Custom         CustomizeMap  `json:"custom"`
+	Reversed       bool          `json:"reversed"`
+	IsTransparent  bool          `json:"transparent"`
 }
 
 type CompositionLayerConfig struct {
-	ZIndex       int 	`json:"zIndex"`
-	OffsetX 	 int 	`json:"offsetX"`
-	OffsetY 	 int	`json:"offsetY"`
+	ZIndex  int `json:"zIndex"`
+	OffsetX int `json:"offsetX"`
+	OffsetY int `json:"offsetY"`
 }
 
 type MotionObjectConfig2 struct {
-	Direction 	Point
-	Speed	  	MinMax
-	AccelTime   time.Duration `json:"accelTime"`
-	AccelTimeFunc string `json:"accelTimeFunc"`
+	Direction     Point
+	Speed         MinMax
+	AccelTime     time.Duration `json:"accelTime"`
+	AccelTimeFunc string        `json:"accelTimeFunc"`
 }

@@ -107,7 +107,7 @@ func (receiver *Navigation) buildPath(job *NavJob) error {
 	}
 	job.output = zones
 	job.state = NJ_STATE_DONE
-	if DEBUG_MINIMAP {
+	if DEBUG_AI_PATH {
 		logger.Printf("cycleID %d ScheduledPath id %d: is complete \n", CycleID, job.jobId)
 	}
 	return nil
@@ -126,7 +126,7 @@ func (receiver *Navigation) SchedulePath(from Zone, to Zone, owner PathReceiver)
 		state:  NJ_STATE_NEW,
 		owner:  owner,
 	})
-	if DEBUG_MINIMAP {
+	if DEBUG_AI_PATH {
 		logger.Printf("cycleID %d SchedulePath id %d: %d, %d -> %d, %d \n", CycleID, id, from.X, from.Y, to.X, to.Y)
 	}
 	return nil
