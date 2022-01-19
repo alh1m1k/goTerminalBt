@@ -166,7 +166,7 @@ func (c *Collider) Execute(timeLeft time.Duration) {
 // If tags are passed into the query then it will only return the bodies with those
 // tags.
 func (c *Collider) QueryRect(x, y, w, h float64, tags ...string) []Collideable {
-	return c.bodyList2Collideable(c.world.QueryRect(float32(x), float32(y), float32(w), float32(h), tags...))
+	return c.filterBody(c.world.QueryRect(float32(x), float32(y), float32(w), float32(h), tags...), float32(x), float32(y), float32(w), float32(h))
 }
 
 // QueryPoint will return any bodies that are underneathe the point.
@@ -185,6 +185,20 @@ func (c *Collider) QueryPoint(x, y float64, tags ...string) []Collideable {
 func (c *Collider) QuerySegment(x1, y1, x2, y2 float64, tags ...string) []Collideable {
 	bodyList := c.world.QuerySegment(float32(x1), float32(y1), float32(x2), float32(y2), tags...)
 	return c.bodyList2Collideable(bodyList)
+}
+
+//additional filtering due lib do not apply it to result :(
+func (c *Collider) filterBody(bodyList []*ump.Body, x, y, w, h float32) []Collideable {
+	result := make([]Collideable, 0, len(bodyList))
+	for _, body := range bodyList {
+		bx, by, _, _, br, bb := body.Extents()
+		if br >= x && bb >= y && bx <= x+w && by <= y+h {
+			if object, ok := c.bodyMap[body]; ok {
+				result = append(result, object)
+			}
+		}
+	}
+	return result
 }
 
 func (c *Collider) bodyList2Collideable(bodyList []*ump.Body) []Collideable {

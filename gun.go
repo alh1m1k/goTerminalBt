@@ -7,36 +7,36 @@ import (
 	"time"
 )
 
-var ReloadError 		= errors.New("gun on reload")
-var GunConfigError 		= errors.New("gun not configurated")
-var OutAmmoError 		= errors.New("out of ammo")
+var ReloadError = errors.New("gun on reload")
+var GunConfigError = errors.New("gun not configurated")
+var OutAmmoError = errors.New("out of ammo")
 
 type GunState struct {
-	Projectile 	string
-	Name 		string
-	Ammo 		int64
-	ShotQueue   int
-	PerShotQueueTime  	time.Duration
-	ReloadTime  		time.Duration
-	lastShotTime 		time.Time
+	Projectile       string
+	Name             string
+	Ammo             int64
+	ShotQueue        int
+	PerShotQueueTime time.Duration
+	ReloadTime       time.Duration
+	lastShotTime     time.Time
 }
 
 type Gun struct {
-	Owner 		*Unit
-	Current		*GunState
-	State		[]*GunState
-	mutex 	    sync.Mutex
+	Owner   *Unit
+	Current *GunState
+	State   []*GunState
+	mutex   sync.Mutex
 }
 
-func (receiver *Gun) Fire() error  {
+func (receiver *Gun) Fire() error {
 	receiver.mutex.Lock()
-	var current 		= receiver.Current
+	var current = receiver.Current
 	if current == nil {
 		receiver.mutex.Unlock()
 		return GunConfigError
 	}
 	var delayAccumulator time.Duration
-	if receiver.IsReload() {
+	if receiver.IsReloading() {
 		receiver.mutex.Unlock()
 		return ReloadError
 	}
@@ -47,7 +47,6 @@ func (receiver *Gun) Fire() error  {
 			return OutAmmoError
 		}
 		if current.PerShotQueueTime > 0 && i > 1 {
-
 			delayAccumulator += current.PerShotQueueTime
 			time.AfterFunc(delayAccumulator, func() {
 				receiver.Owner.Trigger(FireEvent, receiver.Owner, nil)
@@ -58,19 +57,17 @@ func (receiver *Gun) Fire() error  {
 			})
 
 		} else {
-
 			receiver.Owner.Trigger(FireEvent, receiver.Owner, nil)
 			current.lastShotTime = time.Now()
 			if current.Ammo > 0 {
 				current.Ammo--
 			}
-
 		}
 	}
 	return nil
 }
 
-func (receiver *Gun) IsReload() bool {
+func (receiver *Gun) IsReloading() bool {
 	if receiver.Current.lastShotTime.IsZero() {
 		return false
 	}
@@ -80,14 +77,14 @@ func (receiver *Gun) IsReload() bool {
 	return true
 }
 
-func (receiver *Gun) GetProjectile() string  {
+func (receiver *Gun) GetProjectile() string {
 	if receiver.Current == nil {
 		return ""
 	}
 	return receiver.Current.Projectile
 }
 
-func (receiver *Gun) GetName() string  {
+func (receiver *Gun) GetName() string {
 	if receiver.Current.Name != "" {
 		return receiver.Current.Name
 	}
@@ -98,7 +95,7 @@ func (receiver *Gun) IncAmmoIfAcceptable(byValue int64) int64 {
 	for {
 		//what if receiver.Current change???
 		if ref := atomic.LoadInt64(&receiver.Current.Ammo); ref > -1 {
-			if !atomic.CompareAndSwapInt64(&receiver.Current.Ammo, ref, ref + byValue) {
+			if !atomic.CompareAndSwapInt64(&receiver.Current.Ammo, ref, ref+byValue) {
 				continue
 			} else {
 				return atomic.LoadInt64(&receiver.Current.Ammo)
@@ -109,33 +106,33 @@ func (receiver *Gun) IncAmmoIfAcceptable(byValue int64) int64 {
 	}
 }
 
-func (receiver *Gun) Reset()  {
+func (receiver *Gun) Reset() {
 	receiver.mutex.Lock()
 	defer receiver.mutex.Unlock()
 	receiver.Current = receiver.State[0]
 }
 
-func (receiver *Gun) Downgrade()  {
+func (receiver *Gun) Downgrade() {
 	receiver.mutex.Lock()
 	defer receiver.mutex.Unlock()
 	receiver.Current = receiver.State[0]
 }
 
-func (receiver *Gun) Upgrade(state *GunState)  {
+func (receiver *Gun) Upgrade(state *GunState) {
 	receiver.mutex.Lock()
 	defer receiver.mutex.Unlock()
-	receiver.State[1] 	= state
-	receiver.Current 	= state
+	receiver.State[1] = state
+	receiver.Current = state
 }
 
-func (receiver *Gun) Basic(state *GunState)  {
+func (receiver *Gun) Basic(state *GunState) {
 	receiver.mutex.Lock()
 	defer receiver.mutex.Unlock()
-	receiver.State[0] 	= state
-	receiver.Current 	= state
+	receiver.State[0] = state
+	receiver.Current = state
 }
 
-func (receiver *Gun) Copy() *Gun  {
+func (receiver *Gun) Copy() *Gun {
 	instance := *receiver
 	instance.State = make([]*GunState, len(receiver.State), cap(receiver.State))
 	for i, state := range receiver.State {

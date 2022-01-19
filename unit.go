@@ -14,25 +14,24 @@ const UNIT_EVENT_DAMAGE = 101
 const UNIT_EVENT_ONSIGTH = 102
 const UNIT_EVENT_OFFSIGTH = 103
 
-var FireEvent Event = Event{
-	EType:   UNIT_EVENT_FIRE,
-	Payload: nil,
-}
-
-var DamadgeEvent Event = Event{
-	EType:   UNIT_EVENT_DAMAGE,
-	Payload: nil,
-}
-
-var OnSightEvent Event = Event{
-	EType:   UNIT_EVENT_ONSIGTH,
-	Payload: nil,
-}
-
-var OffSightEvent Event = Event{
-	EType:   UNIT_EVENT_OFFSIGTH,
-	Payload: nil,
-}
+var (
+	FireEvent Event = Event{
+		EType:   UNIT_EVENT_FIRE,
+		Payload: nil,
+	}
+	DamageEvent Event = Event{
+		EType:   UNIT_EVENT_DAMAGE,
+		Payload: nil,
+	}
+	OnSightEvent Event = Event{
+		EType:   UNIT_EVENT_ONSIGTH,
+		Payload: nil,
+	}
+	OffSightEvent Event = Event{
+		EType:   UNIT_EVENT_OFFSIGTH,
+		Payload: nil,
+	}
+)
 
 type UnitStateInfo struct {
 	sprite                                         Spriteer
@@ -53,12 +52,12 @@ type Unit struct {
 
 func (receiver *Unit) Execute(command controller.Command) error {
 
-	if command.CType == controller.CTYPE_DIRECTION || command.CType == controller.CTYPE_MOVE {
+	if command.CType == controller.CTYPE_MOVE {
 		receiver.moving = command.Action
 	}
 
-	if command.CType == controller.CTYPE_DIRECTION {
-		if command.Pos.X != command.Pos.Y {
+	if command.CType == controller.CTYPE_DIRECTION || command.CType == controller.CTYPE_MOVE {
+		if command.Pos != controller.PosIrrelevant && command.Pos.X != command.Pos.Y {
 			receiver.Moving.Direction.X = command.Pos.X
 			receiver.Moving.Direction.Y = command.Pos.Y
 			receiver.Moving.Direction.X = math.Max(math.Min(receiver.Moving.Direction.X, 1), -1)
@@ -131,7 +130,7 @@ func (receiver *Unit) OnStartCollide(object collider.Collideable, collision *ump
 		}
 	} else {
 		if object.HasTag("danger") && receiver.HasTag("vulnerable") {
-			if DEBUG_IMMORTAL_PLAYER && receiver.HasTag("player") {
+			if DEBUG_IMMORTAL_PLAYER && (receiver.HasTag("player") || receiver.HasTag("base")) {
 				return
 			}
 			receiver.ReciveDamage(object.(Danger))
@@ -180,7 +179,7 @@ func (receiver *Unit) ReciveDamage(incoming Danger) {
 	if receiver.HP <= 0 {
 		receiver.Destroy(nemesis)
 	} else {
-		receiver.Trigger(DamadgeEvent, receiver, damage)
+		receiver.Trigger(DamageEvent, receiver, damage)
 	}
 }
 

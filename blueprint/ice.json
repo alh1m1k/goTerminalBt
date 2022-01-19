@@ -1,25 +1,23 @@
 {
   "type":   "wall",
+  "depends": ["water"],
   "sprite": {
     "type": "animation",
-    "name":  "water/water",
+    "name":  "ice/ice",
     "length": 2,
     "duration": 700000000,
-    "cycled": true,
-    "custom": {
-      "~": 4,
-      "o": 0
-    }
+    "cycled": true
   },
   "state":  "wall",
   "collision": {
-    "type": "static",
+    "type": "penetrate",
     "x": 0,
     "y": 0,
     "w": 8,
     "h": 4
   },
-  "hp": 0,
+  "hp": 200,
   "zIndex": -10,
-  "tags": ["water", "obstacle", "low", "tracked"]
+  "score": 50,
+  "tags": ["ice", "low", "scored", "vulnerable"]
 }

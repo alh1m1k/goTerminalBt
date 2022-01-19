@@ -44,7 +44,7 @@ func (receiver *Wall) ReciveDamage(incoming Danger) {
 	if receiver.HP <= 0 {
 		receiver.Destroy(nemesis)
 	} else {
-		receiver.Trigger(DamadgeEvent, receiver, damage)
+		receiver.Trigger(DamageEvent, receiver, damage)
 	}
 }
 

@@ -149,22 +149,22 @@ func NewPlayerControl(event <-chan keyboard.KeyEvent, keyMapping KeyBind) (*Cont
 				}
 				switch keyEvent.Key {
 				case keyMapping.Up:
-					command.CType = CTYPE_DIRECTION
+					command.CType = CTYPE_MOVE
 					command.Pos.Y = -1
 					command.Pos.X =  0
 					command.Action = true
 				case keyMapping.Down:
-					command.CType = CTYPE_DIRECTION
+					command.CType = CTYPE_MOVE
 					command.Pos.Y =  1
 					command.Pos.X =  0
 					command.Action = true
 				case keyMapping.Left:
-					command.CType = CTYPE_DIRECTION
+					command.CType = CTYPE_MOVE
 					command.Pos.X = -1
 					command.Pos.Y =  0
 					command.Action = true
 				case keyMapping.Right:
-					command.CType = CTYPE_DIRECTION
+					command.CType = CTYPE_MOVE
 					command.Pos.X =  1
 					command.Pos.Y =  0
 					command.Action = true
@@ -226,22 +226,22 @@ func NewAIControl()(*Control, error)  {
 				}
 				switch rand.Intn(8) {
 				case 0:
-					command.CType = CTYPE_DIRECTION
+					command.CType = CTYPE_MOVE
 					command.Pos.Y = -1
 					command.Pos.X =  0
 					command.Action = true
 				case 1:
-					command.CType = CTYPE_DIRECTION
+					command.CType = CTYPE_MOVE
 					command.Pos.Y =  1
 					command.Pos.X =  0
 					command.Action = true
 				case 2:
-					command.CType = CTYPE_DIRECTION
+					command.CType = CTYPE_MOVE
 					command.Pos.X = -1
 					command.Pos.Y =  0
 					command.Action = true
 				case 3:
-					command.CType = CTYPE_DIRECTION
+					command.CType = CTYPE_MOVE
 					command.Pos.X =  1
 					command.Pos.Y =  0
 					command.Action = true

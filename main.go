@@ -27,16 +27,19 @@ const DEBUG_EXEC = false
 const DEBUG_STATE = false
 const DEBUG_NO_AI = false
 const DEBUG_SHAKE = false
-const DEBUG_IMMORTAL_PLAYER = false
+const DEBUG_IMMORTAL_PLAYER = true
 const DEBUG_FREEZ_AI = false
-const DEBUG_AI_PATH = true
-const DEBUG_AI_BEHAVIOR = true
+const DEBUG_AI_PATH = false
+const DEBUG_AI_BEHAVIOR = false
 const DEBUG_FIRE_SOLUTION = false
 const DEBUG_MINIMAP = false
 const DEBUG_DISABLE_VISION = false
 const DEBUG_SHUTDOWN = false
 const DEBUG_OPPORTUNITY_FIRE = false
+const DEBUG_DISABLE_UI = false
 const DEBUG_DISARM_AI = false
+const DEBUG_SHOW_ID = false
+const DEBUG_SHOW_AI_BEHAVIOR = false
 
 const RENDERER_WITH_ZINDEX = true
 
@@ -53,15 +56,19 @@ var (
 	render      Renderer
 	calibration *Calibration
 	scenario    *Scenario
+	aibuilder   *BehaviorControlBuilder
+	sound       *SoundManager
 
 	//flags
-	seed             int64
-	wallCnt, tankCnt int
-	calibrate        bool
-	profileMod       string
-	scenarioName     string
-	profileDelay     time.Duration
-	osSignal         chan os.Signal
+	seed                 int64
+	wallCnt, tankCnt     int
+	calibrate            bool
+	profileMod           string
+	scenarioName         string
+	profileDelay         time.Duration
+	withColor, withSound bool
+	simplifyAi           bool
+	osSignal             chan os.Signal
 )
 
 func init() {
@@ -77,6 +84,9 @@ func init() {
 	flag.BoolVar(&calibrate, "calibrate", false, "terminal calibration mode")
 	flag.StringVar(&profileMod, "profile.mode", "", "enable profiling mode, one of [cpu, mem, mutex, block, all]")
 	flag.DurationVar(&profileDelay, "profile.delay", -1, "delay of starting profile, after game start. -1 means no delay")
+	flag.BoolVar(&withColor, "withColor", false, "enable color mode (3bit mode (8 color))")
+	flag.BoolVar(&withSound, "withSound", false, "enable sound mode (the sounds will be played on the machine where the game is running)")
+	flag.BoolVar(&simplifyAi, "simplifyAi", false, "disable ai behaviors")
 
 	osSignal = make(chan os.Signal, 1)
 
@@ -88,7 +98,7 @@ func init() {
 }
 
 func main() {
-
+	var err error
 	//EffectAnimDisappear("stealth/tank/left/tank", 16, 42)
 	//EffectAnimInterference("stealth/tank/bottom/tank", 10, 0.3)
 
@@ -105,7 +115,6 @@ func main() {
 
 	rand.Seed(seed)
 
-	var err error
 	gameConfig, err = loadConfig()
 	if err != nil {
 		if !calibrate {
@@ -114,8 +123,7 @@ func main() {
 			gameConfig, _ = NewDefaultGameConfig()
 		}
 	}
-
-	flag.Parsed()
+	gameConfig.disableCustomization = !withColor
 
 	//input
 	keysEvents, err := keyboard.GetKeys(1)
@@ -191,12 +199,34 @@ func main() {
 	buildManager, _ := NewBlueprintManager()
 
 	//ai
-	aibuilder, _ := NewAIControlBuilder(detector, location, navigation)
+	if !simplifyAi {
+		aibuilder, _ = NewAIControlBuilder(detector, location, navigation)
+	}
+
+	if withSound {
+		sound, _ = NewSoundManager()
+		//temporal
+		err = sound.Register("main", "./sounds/main.mp3", false)
+		if err != nil {
+			logger.Println(err)
+		}
+		for key, path := range map[string]string{
+			"fire":      "./sounds/fire.mp3",
+			"explosion": "./sounds/explosion.mp3",
+			"damage":    "./sounds/damage.mp3",
+		} {
+			err = sound.Register(key, path, true)
+			if err != nil {
+				logger.Println(err)
+			}
+		}
+	}
 
 	//game
 	game, _ = NewGame(nil, spawner)
 	game.Location = location
 	game.EffectManager = pipe.EffectManager
+	game.SoundManager = sound
 
 	//runner
 	runner, _ := NewGameRunner()
@@ -213,7 +243,7 @@ func main() {
 	cycleTime := CYCLE
 	var timeCurrent time.Time = time.Now()
 	var timeLeft time.Duration
-	timeEvents := time.After(cycleTime)
+	cycleTimer := time.NewTimer(cycleTime)
 
 	direct.Clear()
 	direct.MoveCursor(0, 0)
@@ -281,13 +311,15 @@ func main() {
 				direct.Flush()
 			}
 			return
-		case timeEvent := <-timeEvents:
+		case timeEvent := <-cycleTimer.C:
 			timeLeft = timeEvent.Sub(timeCurrent)
 			timeCurrent = timeEvent
 			pipe.Execute(timeLeft)
-
-			//todo dynamic cycleTime
-			timeEvents = time.After(cycleTime)
+			cycleTime = CYCLE - time.Now().Sub(timeCurrent)
+			if cycleTime <= time.Millisecond {
+				cycleTime = time.Millisecond
+			}
+			cycleTimer.Reset(cycleTime)
 			if CycleID == math.MaxInt64 {
 				CycleID = 0
 			} else {

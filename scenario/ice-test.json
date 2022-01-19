@@ -1,0 +1,69 @@
+{
+  "name":   "stage-1",
+  "items": {
+    "start": {
+      "player1Blueprint": "player-tank-he",
+      "player2Blueprint": "player-tank-apok",
+      "location": {
+        "x": 0,
+        "y": 0,
+        "w": 104,
+        "h": 60
+      },
+      "limits": {
+        "aiUnit": 10
+      },
+      "declare": [
+        "player-tank-he",
+        "player-tank-apok",
+        "tank",
+        "tank-fast",
+        "tank-heavy",
+        "tank-sneaky",
+        "tank-base-explosion",
+        "tank-base-projectile",
+        "tank-base-projectile-he",
+        "tank-base-projectile-rail",
+        "tank-base-projectile-flak",
+        "tank-special-projectile-smoke",
+        "tank-special-smokescreen-1",
+        "tank-special-smokescreen-2",
+        "tank-base-projectile-fanout",
+        "projectile-sharp",
+        "tank-base-projectile-apocalypse",
+        "projectile-sharp-apoc-start",
+        "projectile-sharp-apoc-end",
+        "effect-onsight",
+        "effect-offsight",
+        "opel",
+        "gun",
+        "water",
+        "wall",
+        "ice",
+        "forest",
+        "player-base"
+      ],
+      "spawn": [
+        {
+          "blueprint":  "ice",
+          "team":       100,
+          "count":      196
+        },
+        {
+          "location": {
+            "X": 5,
+            "Y": 13
+          },
+          "blueprint":  "tank",
+          "team":       50
+        }
+      ]
+    },
+    "win": {
+
+    },
+    "lose": {
+
+    }
+  }
+}

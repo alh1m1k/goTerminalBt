@@ -48,7 +48,7 @@ func (receiver *Visioner) Compact() {
 		}
 		i++
 	}
-	receiver.queue = receiver.queue[0 : j+1]
+	receiver.queue = receiver.queue[0:j]
 	receiver.total = int64(len(receiver.queue))
 	receiver.empty = 0
 }
@@ -67,9 +67,6 @@ func (receiver *Visioner) Execute(timeLeft time.Duration) {
 		vision := object.GetVision()
 		vision.CollisionInfo().Clear()
 		for _, qObject := range receiver.collider.QueryRect(vision.GetRect()) {
-			/*			if &object == qObject {
-						continue
-					}*/
 			vision.CollisionInfo().Add(qObject, nil)
 		}
 	}

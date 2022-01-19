@@ -1,7 +1,43 @@
 {
   "type":   "wall",
   "sprite": "wall",
-  "state":  "wall",
+  "state":  {
+    "default": "/normal",
+    "sprite": "wall",
+    "items": {
+      "normal": {
+        "sprite": {
+          "type": "sprite",
+          "name": "wall",
+          "custom": {
+            "X": 1
+          }
+        }
+      },
+      "damage": {
+        "sprite": {
+          "type": "sprite",
+          "name": "wall_damage",
+          "custom": {
+            "X": 1
+          }
+        }
+      },
+      "disappear": {
+        "sprite": {
+          "type": "animation",
+          "name": "wall_ruin",
+          "duration": 2000000000,
+          "cycled": true,
+          "blink": 200000000,
+          "length": 1,
+          "custom": {
+            "X": 1
+          }
+        }
+      }
+    }
+  },
   "collision": {
     "type": "static",
     "x": 0,

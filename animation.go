@@ -15,6 +15,7 @@ var UndefinedFrameCountError = errors.New("frame count must be predefined and mo
 var MismatchFrameCountError = errors.New("frame count param mismatch actual frame count")
 var AnimationExistError = errors.New("animation exist in storage")
 var Animation404Error = errors.New("animation does not exist in storage")
+var AnimationCustomizationError = errors.New("animation customization error")
 
 var ErrorAnimation, _ = NewErrorAnimation()
 
@@ -302,4 +303,32 @@ func AddAnimation(id string, anim *Animation) error {
 	}
 	animations[id] = anim
 	return nil
+}
+
+func CustomizeAnimation(animation *Animation, name string, custom CustomizeMap) (*Animation, error) {
+	newAnimation := animation.Copy() //?
+	newAnimation.keyFrames = animation.keyFrames[0:0]
+	newAnimation.Spriteer = nil
+	for i, frame := range animation.keyFrames {
+		if s, ok := frame.(*Sprite); ok {
+			if frameCustom, err := GetSprite2(customizedSpriteName(name+strconv.Itoa(i), custom)); err != nil {
+				frameCustom, err = CustomizeSprite(s, custom)
+				if err == nil {
+					if err = AddSprite(customizedSpriteName(name+strconv.Itoa(i), custom), frameCustom); err == nil {
+						newAnimation.AddFrame(CopySprite(frameCustom))
+					} else {
+						return ErrorAnimation, AnimationExistError
+					}
+				} else {
+					return ErrorAnimation, AnimationCustomizationError
+				}
+			} else {
+				newAnimation.AddFrame(frameCustom)
+			}
+		} else {
+			newAnimation.AddFrame(ErrorSprite)
+		}
+	}
+
+	return newAnimation, nil
 }

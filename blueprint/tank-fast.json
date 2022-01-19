@@ -5,7 +5,16 @@
     "name": "fast/tank/top/tank",
     "duration": 300000000,
     "cycled": true,
-    "length": 2
+    "length": 2,
+    "custom": {
+      "ox": 3,
+      "xo": 3,
+      "xx": 3,
+      "<x": 3,
+      "x<": 3,
+      ">x": 3,
+      "x>": 3
+    }
   },
   "state":  {
     "default": "normal",
@@ -14,7 +23,16 @@
       "name": "fast/tank/top/tank",
       "duration": 300000000,
       "cycled": true,
-      "length": 2
+      "length": 2,
+      "custom": {
+        "ox": 3,
+        "xo": 3,
+        "xx": 3,
+        "<x": 3,
+        "x<": 3,
+        ">x": 3,
+        "x>": 3
+      }
     },
     "items": {
       "appear": {
@@ -24,7 +42,16 @@
           "duration": 300000000,
           "cycled": true,
           "blink": 200000000,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "ox": 3,
+            "xo": 3,
+            "xx": 3,
+            "<x": 3,
+            "x<": 3,
+            ">x": 3,
+            "x>": 3
+          }
         },
         "items": {
           "top": {
@@ -34,7 +61,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           },
           "bottom": {
@@ -44,7 +80,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           },
           "left": {
@@ -54,7 +99,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           },
           "right": {
@@ -64,7 +118,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           }
         }
@@ -76,7 +139,16 @@
           "duration": 300000000,
           "cycled": true,
           "blink": 100000000,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "ox": 3,
+            "xo": 3,
+            "xx": 3,
+            "<x": 3,
+            "x<": 3,
+            ">x": 3,
+            "x>": 3
+          }
         },
         "items": {
           "top": {
@@ -86,7 +158,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 100000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           },
           "bottom": {
@@ -96,7 +177,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 100000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           },
           "left": {
@@ -106,7 +196,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 100000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           },
           "right": {
@@ -116,7 +215,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 100000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           }
         }
@@ -127,7 +235,16 @@
           "name": "fast/tank/top/tank",
           "duration": 300000000,
           "cycled": true,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "ox": 3,
+            "xo": 3,
+            "xx": 3,
+            "<x": 3,
+            "x<": 3,
+            ">x": 3,
+            "x>": 3
+          }
         },
         "items": {
           "top": {
@@ -136,7 +253,16 @@
               "name": "fast/tank/top/tank",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           },
           "bottom": {
@@ -145,7 +271,16 @@
               "name": "fast/tank/bottom/tank",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           },
           "left": {
@@ -154,7 +289,16 @@
               "name": "fast/tank/left/tank",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           },
           "right": {
@@ -163,7 +307,16 @@
               "name": "fast/tank/right/tank",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "ox": 3,
+                "xo": 3,
+                "xx": 3,
+                "<x": 3,
+                "x<": 3,
+                ">x": 3,
+                "x>": 3
+              }
             }
           }
         }

@@ -5,7 +5,16 @@
     "name": "tank_top",
     "duration": 300000000,
     "cycled": true,
-    "length": 2
+    "length": 2,
+    "custom": {
+      "0": 6,
+      "o": 6,
+      "x": 6,
+      "<": 6,
+      ">": 6,
+      "__": 6,
+      "|": 6
+    }
   },
   "state":  {
     "default": "stealth",
@@ -14,7 +23,16 @@
       "name": "tank_top",
       "duration": 300000000,
       "cycled": true,
-      "length": 2
+      "length": 2,
+      "custom": {
+        "0": 6,
+        "o": 6,
+        "x": 6,
+        "<": 6,
+        ">": 6,
+        "__": 6,
+        "|": 6
+      }
     },
     "items": {
       "appear": {
@@ -24,7 +42,16 @@
           "duration": 300000000,
           "cycled": true,
           "blink": 200000000,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "0": 6,
+            "o": 6,
+            "x": 6,
+            "<": 6,
+            ">": 6,
+            "__": 6,
+            "|": 6
+          }
         },
         "items": {
           "top": {
@@ -34,7 +61,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "bottom": {
@@ -44,7 +80,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "left": {
@@ -54,7 +99,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "right": {
@@ -64,7 +118,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           }
         }
@@ -76,7 +139,16 @@
           "duration": 300000000,
           "cycled": true,
           "blink": 100000000,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "0": 6,
+            "o": 6,
+            "x": 6,
+            "<": 6,
+            ">": 6,
+            "__": 6,
+            "|": 6
+          }
         },
         "items": {
           "top": {
@@ -92,7 +164,16 @@
                   "path": "stealth/tank/top/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": true
+                  "reversed": true,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 },
                 {
                   "type": "animation",
@@ -100,7 +181,16 @@
                   "path": "stealth/tank/top/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": false
+                  "reversed": false,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 }
               ]
             }
@@ -118,7 +208,16 @@
                     "path": "stealth/tank/bottom/tank",
                     "duration": 500000000,
                     "length": 17,
-                    "reversed": true
+                    "reversed": true,
+                    "custom": {
+                      "0": 6,
+                      "o": 6,
+                      "x": 6,
+                      "<": 6,
+                      ">": 6,
+                      "__": 6,
+                      "|": 6
+                    }
                   },
                   {
                     "type": "animation",
@@ -126,7 +225,16 @@
                     "path": "stealth/tank/bottom/tank",
                     "duration": 500000000,
                     "length": 17,
-                    "reversed": false
+                    "reversed": false,
+                    "custom": {
+                      "0": 6,
+                      "o": 6,
+                      "x": 6,
+                      "<": 6,
+                      ">": 6,
+                      "__": 6,
+                      "|": 6
+                    }
                   }
               ]
             }
@@ -144,7 +252,16 @@
                   "path": "stealth/tank/left/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": true
+                  "reversed": true,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 },
                 {
                   "type": "animation",
@@ -152,7 +269,16 @@
                   "path": "stealth/tank/left/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": false
+                  "reversed": false,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 }
               ]
             }
@@ -170,7 +296,16 @@
                   "path": "stealth/tank/right/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": true
+                  "reversed": true,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 },
                 {
                   "type": "animation",
@@ -178,7 +313,16 @@
                   "path": "stealth/tank/right/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": false
+                  "reversed": false,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 }
               ]
             }
@@ -191,7 +335,16 @@
           "name": "tank_top",
           "duration": 300000000,
           "cycled": true,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "0": 6,
+            "o": 6,
+            "x": 6,
+            "<": 6,
+            ">": 6,
+            "__": 6,
+            "|": 6
+          }
         },
         "items": {
           "top": {
@@ -206,7 +359,16 @@
                   "path": "stealth/tank/top/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": true
+                  "reversed": true,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 },
                 {
                   "type": "animation",
@@ -214,7 +376,16 @@
                   "path": "stealth/tank/top/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": false
+                  "reversed": false,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 }
               ]
             }
@@ -231,7 +402,16 @@
                   "path": "stealth/tank/bottom/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": true
+                  "reversed": true,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 },
                 {
                   "type": "animation",
@@ -239,7 +419,16 @@
                   "path": "stealth/tank/bottom/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": false
+                  "reversed": false,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 }
               ]
             }
@@ -256,7 +445,16 @@
                   "path": "stealth/tank/left/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": true
+                  "reversed": true,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 },
                 {
                   "type": "animation",
@@ -264,7 +462,16 @@
                   "path": "stealth/tank/left/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": false
+                  "reversed": false,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 }
               ]
             }
@@ -281,7 +488,16 @@
                   "path": "stealth/tank/right/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": true
+                  "reversed": true,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 },
                 {
                   "type": "animation",
@@ -289,7 +505,16 @@
                   "path": "stealth/tank/right/tank",
                   "duration": 500000000,
                   "length": 17,
-                  "reversed": false
+                  "reversed": false,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
                 }
               ]
             }
@@ -303,7 +528,16 @@
           "duration": 300000000,
           "cycled": true,
           "blink": 10000000000,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "0": 6,
+            "o": 6,
+            "x": 6,
+            "<": 6,
+            ">": 6,
+            "__": 6,
+            "|": 6
+          }
         },
         "items": {
           "top": {
@@ -312,7 +546,16 @@
               "name": "stealth/tank/top/tank",
               "duration": 1000000000,
               "cycled": true,
-              "length": 17
+              "length": 17,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "bottom": {
@@ -321,7 +564,16 @@
               "name": "stealth/tank/bottom/tank",
               "duration": 1000000000,
               "cycled": true,
-              "length": 17
+              "length": 17,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "left": {
@@ -330,7 +582,16 @@
               "name": "stealth/tank/left/tank",
               "duration": 1000000000,
               "cycled": true,
-              "length": 17
+              "length": 17,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "right": {
@@ -339,7 +600,16 @@
               "name": "stealth/tank/right/tank",
               "duration": 1000000000,
               "cycled": true,
-              "length": 17
+              "length": 17,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           }
         }
@@ -351,7 +621,16 @@
           "duration": 300000000,
           "cycled": true,
           "blink": 10000000000,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "0": 6,
+            "o": 6,
+            "x": 6,
+            "<": 6,
+            ">": 6,
+            "__": 6,
+            "|": 6
+          }
         },
         "items": {
           "top": {
@@ -360,7 +639,16 @@
               "name": "stealth/tank/top/tank",
               "duration": 1000000000,
               "cycled": true,
-              "length": 17
+              "length": 17,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "bottom": {
@@ -369,7 +657,16 @@
               "name": "stealth/tank/bottom/tank",
               "duration": 1000000000,
               "cycled": true,
-              "length": 17
+              "length": 17,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "left": {
@@ -378,7 +675,16 @@
               "name": "stealth/tank/left/tank",
               "duration": 1000000000,
               "cycled": true,
-              "length": 17
+              "length": 17,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "right": {
@@ -387,7 +693,16 @@
               "name": "stealth/tank/right/tank",
               "duration": 1000000000,
               "cycled": true,
-              "length": 17
+              "length": 17,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           }
         }
@@ -398,7 +713,16 @@
           "name": "tank_top",
           "duration": 300000000,
           "cycled": true,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "0": 6,
+            "o": 6,
+            "x": 6,
+            "<": 6,
+            ">": 6,
+            "__": 6,
+            "|": 6
+          }
         },
         "items": {
           "top": {
@@ -407,7 +731,16 @@
               "name": "tank_top",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "bottom": {
@@ -416,7 +749,16 @@
               "name": "tank_bottom",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "left": {
@@ -425,7 +767,16 @@
               "name": "tank_left",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           },
           "right": {
@@ -434,7 +785,16 @@
               "name": "tank_right",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "0": 6,
+                "o": 6,
+                "x": 6,
+                "<": 6,
+                ">": 6,
+                "__": 6,
+                "|": 6
+              }
             }
           }
         }

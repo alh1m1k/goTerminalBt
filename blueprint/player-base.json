@@ -5,7 +5,14 @@
     "name": "base/base",
     "duration": 400000000,
     "cycled": true,
-    "length": 2
+    "length": 2,
+    "custom": {
+      "X": 3,
+      "x": 3,
+      "/": 3,
+      "\\": 3,
+      "'": 3
+    }
   },
   "collision": {
     "x": 0,

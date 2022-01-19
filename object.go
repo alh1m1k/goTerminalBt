@@ -160,6 +160,14 @@ func (receiver *Object) GetWH() (x, y float64) {
 	return receiver.collision.GetWH()
 }
 
+func (receiver *Object) GetWH2() Size {
+	w, h := receiver.collision.GetWH()
+	return Size{
+		W: w,
+		H: h,
+	}
+}
+
 func (receiver *Object) GetRect() (x, y, w, h float64) {
 	return receiver.collision.GetRect()
 }

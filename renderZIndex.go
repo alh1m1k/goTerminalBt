@@ -6,6 +6,7 @@ import (
 	direct "github.com/buger/goterm"
 	"math"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -94,9 +95,22 @@ func (receiver *RenderZIndex) Execute(timeLeft time.Duration) {
 			x, y := receiver.translateXY(object.GetXY())
 			wh := sprite.GetWH()
 			receiver.draw(sprite, x, y, wh.W, wh.H)
+			if DEBUG_SHOW_ID {
+				if oi, ok := object.(ObjectInterface); ok {
+					receiver.output.Print(receiver.output.MoveTo(" "+receiver.output.Color(strconv.Itoa(int(oi.GetAttr().ID)), direct.CYAN)+" ", x, y))
+				}
+			}
+			if DEBUG_SHOW_AI_BEHAVIOR {
+				if oi, ok := object.(*Unit); ok && oi.GetAttr().AI {
+					receiver.output.Print(receiver.output.MoveTo(" "+receiver.output.Color(oi.Control.(*BehaviorControl).Behavior.Name(), direct.CYAN)+" ", x, y+1))
+				}
+				/*				if oi, ok := object.(*Unit); ok && oi.GetAttr().AI {
+								receiver.output.Print(receiver.output.MoveTo(" " + receiver.output.Color(fmt.Sprint(oi.Control.(*BehaviorControl).blockedDirection), direct.CYAN) + " ", x, y + 2))
+							}*/
+			}
 		}
 	}
-	if receiver.UIDraw && !DEBUG_OPPORTUNITY_FIRE {
+	if receiver.UIDraw && !DEBUG_DISABLE_UI {
 		receiver.drawUI(timeLeft)
 	}
 	receiver.output.MoveCursor(0, 0)

@@ -5,7 +5,16 @@
     "name": "heavy/tank/top/tank",
     "duration": 300000000,
     "cycled": true,
-    "length": 2
+    "length": 2,
+    "custom": {
+      "#": 2,
+      "|": 2,
+      "__": 2,
+      "o": 6,
+      "x": 6,
+      ">": 6,
+      "<": 6
+    }
   },
   "state":  {
     "default": "normal",
@@ -14,7 +23,16 @@
       "name": "heavy/tank/top/tank",
       "duration": 300000000,
       "cycled": true,
-      "length": 2
+      "length": 2,
+      "custom": {
+        "#": 2,
+        "|": 2,
+        "__": 2,
+        "o": 6,
+        "x": 6,
+        ">": 6,
+        "<": 6
+      }
     },
     "items": {
       "appear": {
@@ -24,7 +42,16 @@
           "duration": 300000000,
           "cycled": true,
           "blink": 200000000,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "#": 2,
+            "|": 2,
+            "__": 2,
+            "o": 6,
+            "x": 6,
+            ">": 6,
+            "<": 6
+          }
         },
         "items": {
           "top": {
@@ -34,7 +61,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           },
           "bottom": {
@@ -44,7 +80,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           },
           "left": {
@@ -54,7 +99,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           },
           "right": {
@@ -64,7 +118,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 200000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           }
         }
@@ -76,7 +139,16 @@
           "duration": 300000000,
           "cycled": true,
           "blink": 100000000,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "#": 2,
+            "|": 2,
+            "__": 2,
+            "o": 6,
+            "x": 6,
+            ">": 6,
+            "<": 6
+          }
         },
         "items": {
           "top": {
@@ -86,7 +158,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 100000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           },
           "bottom": {
@@ -96,7 +177,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 100000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           },
           "left": {
@@ -106,7 +196,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 100000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           },
           "right": {
@@ -116,7 +215,16 @@
               "duration": 300000000,
               "cycled": true,
               "blink": 100000000,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           }
         }
@@ -127,7 +235,16 @@
           "name": "heavy/tank/top/tank",
           "duration": 300000000,
           "cycled": true,
-          "length": 2
+          "length": 2,
+          "custom": {
+            "#": 2,
+            "|": 2,
+            "__": 2,
+            "o": 6,
+            "x": 6,
+            ">": 6,
+            "<": 6
+          }
         },
         "items": {
           "top": {
@@ -136,7 +253,16 @@
               "name": "heavy/tank/top/tank",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           },
           "bottom": {
@@ -145,7 +271,16 @@
               "name": "heavy/tank/bottom/tank",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           },
           "left": {
@@ -154,7 +289,16 @@
               "name": "heavy/tank/left/tank",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           },
           "right": {
@@ -163,7 +307,16 @@
               "name": "heavy/tank/right/tank",
               "duration": 300000000,
               "cycled": true,
-              "length": 2
+              "length": 2,
+              "custom": {
+                "#": 2,
+                "|": 2,
+                "__": 2,
+                "o": 6,
+                "x": 6,
+                ">": 6,
+                "<": 6
+              }
             }
           }
         }

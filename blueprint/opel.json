@@ -1,7 +1,63 @@
 {
   "type":   "collectable",
   "sprite": "opel/opel_0",
-  "state":  "collectable",
+  "state":  {
+    "default": "normal",
+    "sprite": {
+      "type": "animation",
+      "name": "opel/opel",
+      "duration": 2000000000,
+      "cycled": true,
+      "blink": 200000000,
+      "length": 6,
+      "custom": {
+        "6": 3,
+        "*": 4,
+        "O": 5,
+        "/": 3,
+        "\\": 3,
+        "-=Z=-": 3
+      }
+    },
+    "items": {
+      "appear": {
+        "sprite": {
+          "type": "animation",
+          "name": "opel/opel",
+          "duration": 2000000000,
+          "cycled": true,
+          "blink": 200000000,
+          "length": 6,
+          "custom": {
+            "6": 3,
+            "*": 4,
+            "O": 5,
+            "/": 3,
+            "\\": 3,
+            "-=Z=-": 3
+          }
+        }
+      },
+      "normal": {
+        "sprite": {
+          "type": "animation",
+          "name": "opel/opel",
+          "duration": 2000000000,
+          "cycled": true,
+          "length": 6,
+          "custom": {
+            "6": 3,
+            "*": 4,
+            "O": 5,
+            "0": 5,
+            "/": 3,
+            "\\": 3,
+            "-=Z=-": 3
+          }
+        }
+      }
+    }
+  },
   "collision": {
     "type": "penetrate",
     "x": 0,
@@ -10,5 +66,6 @@
     "h": 4
   },
   "ttl": 10000000000,
+  "zIndex": -1,
   "tags": ["collectable", "opel", "highlights-appear"]
 }

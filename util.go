@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	direct "github.com/buger/goterm"
 	"math"
 	"math/rand"
@@ -157,10 +158,43 @@ func minInt(x, y int) int {
 	return y
 }
 
-func IsInf(f int64, sign int) bool {
+func isInf(f int64, sign int) bool {
 	// Test for infinity by comparing against maximum float.
 	// To avoid the floating-point hardware, could use:
 	//	x := Float64bits(f);
 	//	return sign >= 0 && x == uvinf || sign <= 0 && x == uvneginf;
 	return sign >= 0 && f > math.MaxInt64 || sign <= 0 && f < -math.MaxInt64
+}
+
+func every(duration time.Duration, ctx context.Context) <-chan time.Time {
+	output := make(chan time.Time)
+	go func(timer chan time.Time, ctx context.Context) {
+		innerTimer := time.NewTimer(duration)
+		for {
+			select {
+			case timeLeft := <-innerTimer.C:
+				timer <- timeLeft
+				innerTimer.Reset(duration)
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(output, ctx)
+	return output
+}
+
+func everyFunc(duration time.Duration, callback func(), ctx context.Context) {
+	output := make(chan time.Time)
+	go func(timer chan time.Time, ctx context.Context) {
+		innerTimer := time.NewTimer(duration)
+		for {
+			select {
+			case <-innerTimer.C:
+				go callback()
+				innerTimer.Reset(duration)
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(output, ctx)
 }

@@ -29,10 +29,12 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 	receiver.BlueprintManager.AddLoaderPackage(NewJsonPackage())
 	receiver.BlueprintManager.GameConfig = receiver.GameConfig
 	receiver.BlueprintManager.EventChanel = receiver.SpawnManager.UnitEventChanel //remove from builder
-	receiver.BlueprintManager.AddLoader("ai", func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{} {
-		ai, _ := receiver.BehaviorControlBuilder.Build()
-		return ai
-	})
+	if receiver.BehaviorControlBuilder != nil {
+		receiver.BlueprintManager.AddLoader("ai", func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{} {
+			ai, _ := receiver.BehaviorControlBuilder.Build()
+			return ai
+		})
+	}
 
 	scenario.DeclareBlueprint(func(blueprint string) {
 		builder, _ := receiver.BlueprintManager.CreateBuilder(blueprint)
@@ -41,10 +43,12 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 		} else {
 			receiver.SpawnManager.AddBuilder(blueprint, builder)
 		}
-		object, _ := receiver.BlueprintManager.Get(blueprint)
-		if projectile, ok := object.(*Projectile); ok {
-			if err := receiver.BehaviorControlBuilder.RegisterProjectile(projectile); err != nil {
-				logger.Println(err)
+		if receiver.BehaviorControlBuilder != nil {
+			object, _ := receiver.BlueprintManager.Get(blueprint)
+			if projectile, ok := object.(*Projectile); ok {
+				if err := receiver.BehaviorControlBuilder.RegisterProjectile(projectile); err != nil {
+					logger.Println(err)
+				}
 			}
 		}
 	})

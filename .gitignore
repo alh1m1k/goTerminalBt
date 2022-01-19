@@ -6,5 +6,10 @@
 images
 .idea
 prof
+sounds/*.mp3
+sounds/*.wav
+sounds/*.ogg
+sounds/*.flak
+config.json
 GoConsoleBT.exe
 GoConsoleBT

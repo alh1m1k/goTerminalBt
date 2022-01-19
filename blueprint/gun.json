@@ -1,7 +1,62 @@
 {
   "type":   "collectable",
   "sprite": "gun/gun_0",
-  "state":  "gun",
+  "state":  {
+    "default": "normal",
+    "sprite": {
+      "type": "animation",
+      "name": "gun/gun",
+      "duration": 2000000000,
+      "cycled": true,
+      "blink": 200000000,
+      "length": 6,
+      "custom": {
+        "6": 3,
+        "*": 4,
+        "O": 5,
+        "0": 5,
+        "-BIG-": 3,
+        "\\GUN/": 3
+      }
+    },
+    "items": {
+      "appear": {
+        "sprite": {
+          "type": "animation",
+          "name": "gun/gun",
+          "duration": 2000000000,
+          "cycled": true,
+          "blink": 200000000,
+          "length": 6,
+          "custom": {
+            "6": 3,
+            "*": 4,
+            "O": 5,
+            "0": 5,
+            "-BIG-": 3,
+            "\\GUN/": 3
+          }
+        }
+      },
+      "normal": {
+        "sprite": {
+          "type": "animation",
+          "name": "gun/gun",
+          "duration": 2000000000,
+          "cycled": true,
+          "length": 6,
+          "custom": {
+            "6": 3,
+            "*": 4,
+            "O": 5,
+            "0": 5,
+            "-BIG-": 3,
+            "\\GUN/": 3
+          }
+        }
+      }
+    }
+  },
   "collision": {
     "type": "penetrate",
     "x": 0,
@@ -10,5 +65,6 @@
     "h": 4
   },
   "ttl": 10000000000,
+  "zIndex": -1,
   "tags": ["collectable", "gun", "highlights-appear"]
 }

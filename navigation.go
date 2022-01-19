@@ -2,6 +2,7 @@ package main
 
 import (
 	"GoConsoleBT/collider"
+	"fmt"
 	pathfinding "github.com/xarg/gopathfinding"
 	"sync"
 	"time"
@@ -114,6 +115,9 @@ func (receiver *Navigation) buildPath(job *NavJob) error {
 }
 
 func (receiver *Navigation) SchedulePath(from Zone, to Zone, owner PathReceiver) error {
+	if from == to {
+		return fmt.Errorf("unable to schedule path: %w", ZoneCollisionError)
+	}
 	receiver.mutex.Lock()
 	defer receiver.mutex.Unlock()
 	id := genId()

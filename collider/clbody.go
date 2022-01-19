@@ -1,14 +1,13 @@
 package collider
 
 import (
+	"errors"
 	"github.com/tanema/ump"
 )
 
-const COLLISION_AT_LEFT = 0x1
-const COLLISION_AT_RIGHT = 0x2
-const COLLISION_AT_TOP = 0x5
-const COLLISION_AT_BOTTOM = 0x8
-const COLLISION_IMPACT = 0x10
+var (
+	CollisionNotFoundError = errors.New("collision not found")
+)
 
 type CollisionInfo struct {
 	Object  Collideable
@@ -60,6 +59,19 @@ func (receiver *ClBody) Resize(w, h float64) {
 	receiver.h = h
 }
 
+func (receiver *ClBody) FindExact(col *ump.Collision) (*ClBody, error) {
+	curr := receiver.First
+	for {
+		if curr == nil {
+			return nil, CollisionNotFoundError
+		}
+		if curr.realBody == col.Body {
+			return curr, nil
+		}
+		curr = curr.Next
+	}
+}
+
 func (receiver *ClBody) GetXY() (x float64, y float64) {
 	return receiver.x, receiver.y
 }
@@ -73,10 +85,6 @@ func (receiver *ClBody) GetRect() (x float64, y float64, w float64, h float64) {
 }
 
 func (receiver *ClBody) GetCenter() (float64, float64) {
-	return receiver.x + receiver.w/2, receiver.y + receiver.h/2
-}
-
-func (receiver *ClBody) GetCenter2() (float64, float64) {
 	return receiver.x + receiver.w/2, receiver.y + receiver.h/2
 }
 

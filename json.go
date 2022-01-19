@@ -10,11 +10,12 @@ type MinMax struct {
 }
 
 type GameConfig struct {
-	ColWidth     float64              `json:"colWidth"`
-	RowHeight    float64              `json:"rowHeight"`
-	LockfreePool bool                 `json:"lockfreePool"`
-	KeyBindings  []controller.KeyBind `json:"keyBindings"`
-	Box          Box                  `json:"box"`
+	ColWidth             float64              `json:"colWidth"`
+	RowHeight            float64              `json:"rowHeight"`
+	LockfreePool         bool                 `json:"lockfreePool"`
+	KeyBindings          []controller.KeyBind `json:"keyBindings"`
+	Box                  Box                  `json:"box"`
+	disableCustomization bool
 }
 
 func NewDefaultGameConfig() (*GameConfig, error) {

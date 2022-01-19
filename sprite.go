@@ -16,15 +16,14 @@ import (
 
 var sprites map[string]*Sprite = make(map[string]*Sprite, 20)
 var tokenRe = regexp.MustCompile(`<(?P<tag>\w+?)>(?P<val>\S+?)</(?P<tg>\w+)>`)
+var tokenReSimpl = regexp.MustCompile(`(\\033\[3%dm")<val>(\\033\[0m)`)
 
 var (
 	SpriteExistError       = errors.New("new sprite Id exist")
 	SpriteNotFoundError    = errors.New("sprite do not exist")
 	SpriteTransparentError = errors.New("transparent must set at load")
-)
-
-var (
-	ErrorSprite = NewContentSprite([]byte("!!!Error!!!"))
+	specialSymbols         = []string{"0", "\\", "3", "[", "m"}
+	ErrorSprite            = NewContentSprite([]byte("!!!Error!!!"))
 )
 
 type SizeI struct {
@@ -110,12 +109,12 @@ func GetSprite(id string, load bool, processTransparent bool) (*Sprite, error) {
 	return sprite, nil
 }
 
-func AddSprite(id string, sprite *Sprite) (*Sprite, error) {
+func AddSprite(id string, sprite *Sprite) error {
 	if _, ok := sprites[id]; ok {
-		return nil, SpriteExistError
+		return SpriteExistError
 	}
 	sprites[id] = sprite
-	return sprite, nil
+	return nil
 }
 
 func LoadSprite2(path string, processTransparent bool) (*Sprite, error) {
@@ -157,18 +156,33 @@ func CustomizeSprite(sprite *Sprite, custom CustomizeMap) (*Sprite, error) {
 		sprite = sprite.Parent
 	}
 	spriteBuffer := sprite.String()
-	match := tokenRe.FindAllStringSubmatch(spriteBuffer, -1)
-	for i, _ := range match {
-		if match[i][1] == match[i][3] {
-			if color, ok := custom[match[i][1]]; ok {
-				colored := direct.Color(match[i][2], color)
-				spriteBuffer = strings.Replace(spriteBuffer, match[i][0], colored, 1)
+	/*	match := tokenRe.FindAllStringSubmatch(spriteBuffer, -1)
+		for i, _ := range match {
+			if match[i][1] == match[i][3] {
+				if color, ok := custom[match[i][1]]; ok {
+					colored := direct.Color(match[i][2], color)
+					spriteBuffer = strings.Replace(spriteBuffer, match[i][0], colored, 1)
+				}
 			}
-		}
+		}*/
+	//simplified
+
+	if color, ok := custom["0"]; ok { //temporal fix, replace with regular expr
+		colored := direct.Color("0", color)
+		spriteBuffer = strings.Replace(spriteBuffer, "0", colored, -1)
 	}
+	for str, color := range custom {
+		if str == "0" {
+			continue
+		}
+		colored := direct.Color(str, color)
+		spriteBuffer = strings.Replace(spriteBuffer, str, colored, -1)
+	}
+
 	newSprite := NewSprite()
 	newSprite.Write([]byte(spriteBuffer))
 	newSprite.Parent = sprite
+	newSprite.Size = sprite.Size
 	return newSprite, nil
 }
 

@@ -4,7 +4,29 @@
     "type": "animation",
     "name": "explosion/explosion",
     "length": 5,
-    "duration": 500000000
+    "duration": 500000000,
+    "custom": {
+      "X": 3,
+      "x": 1,
+      "D": 3,
+      "d": 1,
+      "W": 3,
+      "w": 1,
+      "K": 3,
+      "k": 1,
+      "N": 3,
+      "n": 1,
+      "C": 3,
+      "c": 1,
+      "O": 3,
+      "o": 1,
+      "l": 1,
+      ".": 7,
+      ",": 7,
+      ":": 7,
+      "'": 7,
+      ";": 7
+    }
   },
   "collision": {
     "type": "penetrate",

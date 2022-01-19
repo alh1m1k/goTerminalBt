@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"math"
 	"math/rand"
 	"sync"
@@ -13,7 +15,9 @@ const GAME_START = 200
 const GAME_END_WIN = 201
 const GAME_END_LOSE = 202
 
-var GameInProgress = errors.New("game in progress")
+var (
+	GameInProgressError = errors.New("game in progress")
+)
 
 type Game struct {
 	players []*Player
@@ -21,19 +25,22 @@ type Game struct {
 	*ObservableObject
 	*Location
 	*EffectManager
+	*SoundManager
 	scenario                   *Scenario
-	terminator                 chan bool
 	spawnedPlayer, spawnedAi   int64
 	inProgress                 bool
 	mutex, delay, aiCountMutex sync.Mutex
 	nextDelayedTaskExec        time.Time
 	delayedSpawnRequest        []*SpawnRequest
 	delayedSpawnRequestCnt     int64
+	respawnTimer               *time.Timer
+	ctxGame                    context.Context
+	ctxCancel                  context.CancelFunc
 }
 
 func (receiver *Game) AddPlayer(player *Player) error {
 	if receiver.inProgress {
-		return GameInProgress
+		return GameInProgressError
 	}
 	receiver.players = append(receiver.players, player)
 	return nil
@@ -49,22 +56,22 @@ func (receiver *Game) Run(scenario *Scenario) error {
 	receiver.mutex.Lock()
 	if receiver.inProgress || scenario == nil {
 		receiver.mutex.Unlock()
-		return GameInProgress
+		return GameInProgressError
 	}
 	receiver.inProgress = true
 	receiver.mutex.Unlock()
 
 	receiver.scenario = scenario
 	receiver.spawnedPlayer = 0
-	receiver.terminator = make(chan bool)
+	receiver.ctxGame, receiver.ctxCancel = context.WithCancel(context.TODO())
 
-	go scenarioDispatcher(game, scenario.GetEventChanel(), receiver.terminator)
-	go gameCmdDispatcher(game, game.SpawnManager.UnitEventChanel, receiver.terminator)
+	go scenarioDispatcher(game, scenario.GetEventChanel(), receiver.ctxGame)
+	go gameCmdDispatcher(game, game.SpawnManager.UnitEventChanel, receiver.ctxGame)
 
 	err := scenario.Enter("start")
 
 	if err != nil {
-		close(receiver.terminator)
+		receiver.ctxCancel()
 		receiver.scenario = nil
 		receiver.SpawnManager.DeSpawnAll(nil)
 		receiver.inProgress = false
@@ -74,7 +81,7 @@ func (receiver *Game) Run(scenario *Scenario) error {
 
 	for pIndex, player := range receiver.players {
 		location, _ := receiver.location.Coordinate2Spawn(true)
-		if pIndex%2 == 0 && scenario.player2Blueprint != "" {
+		if (pIndex+1)%2 == 0 && scenario.player2Blueprint != "" {
 			player.Blueprint = scenario.player2Blueprint
 		} else if scenario.player1Blueprint != "" {
 			player.Blueprint = scenario.player1Blueprint
@@ -87,6 +94,11 @@ func (receiver *Game) Run(scenario *Scenario) error {
 		}
 		receiver.spawnedPlayer++
 	}
+
+	//timers block
+	everyFunc(time.Second/2, receiver.doDelayedSpawn, receiver.ctxGame)
+
+	receiver.playBackground("main")
 
 	receiver.Trigger(Event{
 		EType:   GAME_START,
@@ -102,39 +114,52 @@ func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) 
 		payload.Count = 1
 	}
 	for i := 0; i < payload.Count; i++ {
-		if scenario.limits.AiUnits > 0 && scenario.limits.AiUnits <= receiver.spawnedAi {
-			receiver.delayedSpawnRequest = append(receiver.delayedSpawnRequest, payload)
-			atomic.AddInt64(&receiver.delayedSpawnRequestCnt, 1)
-		} else {
-			receiver.doSpawn(scenario, payload)
+		if scenario.limits.AiUnits == 0 || scenario.limits.AiUnits > receiver.spawnedAi {
+			err := receiver.doSpawn(scenario, payload)
+			if err != nil {
+				logger.Println(err)
+			}
+			if err == nil || scenario.limits.AiUnits == 0 {
+				continue
+			}
 		}
+		receiver.delayedSpawnRequest = append(receiver.delayedSpawnRequest, payload)
+		atomic.AddInt64(&receiver.delayedSpawnRequestCnt, 1)
 	}
 }
 
-func (receiver *Game) execDelayedSpawn() {
+func (receiver *Game) doDelayedSpawn() {
+	needSpawn := scenario.limits.AiUnits - receiver.spawnedAi
+	if needSpawn <= 0 {
+		return
+	}
 	for idx, req := range receiver.delayedSpawnRequest {
 		if req == nil {
 			continue
 		}
-		if scenario.limits.AiUnits > 0 && scenario.limits.AiUnits > receiver.spawnedAi {
-			receiver.doSpawn(receiver.scenario, req)
+		err := receiver.doSpawn(receiver.scenario, req)
+		if err == nil {
 			atomic.AddInt64(&receiver.delayedSpawnRequestCnt, -1)
+			needSpawn--
 			receiver.delayedSpawnRequest[idx] = nil
 		} else {
+			logger.Print(err)
+			break
+		}
+		if needSpawn <= 0 {
 			break
 		}
 	}
 }
 
-func (receiver *Game) doSpawn(scenario *Scenario, payload *SpawnRequest) {
+func (receiver *Game) doSpawn(scenario *Scenario, payload *SpawnRequest) error {
 	var location Point
 	var err error
 	if payload.Location != ZoneAuto && payload.Position == PosAuto {
 		if receiver.Location != nil {
 			payload.Position, err = receiver.Location.CoordinateByIndex(payload.Location.X, payload.Location.Y)
 			if err != nil {
-				logger.Printf("unable to locate position: %s", err)
-				return
+				return fmt.Errorf("unable to locate position: %w", err)
 			}
 		}
 	}
@@ -142,8 +167,7 @@ func (receiver *Game) doSpawn(scenario *Scenario, payload *SpawnRequest) {
 		if receiver.Location != nil {
 			location, err = receiver.Location.Coordinate2Spawn(true)
 			if err != nil {
-				logger.Printf("unable to spawn: %s", err)
-				return
+				return fmt.Errorf("unable to spawn: %w", err)
 			}
 		} else {
 			location = Point{}
@@ -154,10 +178,11 @@ func (receiver *Game) doSpawn(scenario *Scenario, payload *SpawnRequest) {
 	receiver.location.CapturePoint(location)
 	object, err := receiver.SpawnManager.Spawn(location, payload.Blueprint, DefaultConfigurator, payload)
 	if err != nil {
-		logger.Print(err)
-	} else if object.HasTag("tank") && object.HasTag("ai") {
+		return err
+	} else if object.HasTag("ai") {
 		atomic.AddInt64(&receiver.spawnedAi, 1)
 	}
+	return nil
 }
 
 func (receiver *Game) onUnitFire(object *Unit, payload interface{}) {
@@ -165,6 +190,11 @@ func (receiver *Game) onUnitFire(object *Unit, payload interface{}) {
 		_, err := receiver.SpawnManager.SpawnProjectile(PosAuto, object.Gun.GetProjectile(), object)
 		if err != nil {
 			logger.Printf("unable to fire %s due: %s \n", object.Gun.GetProjectile(), err)
+		} else {
+			err = receiver.playSound("fire")
+			if err != nil {
+				logger.Println(err)
+			}
 		}
 	} else {
 		logger.Printf("unable to fire due projectile or gun not found %s \n", object.Gun.GetProjectile())
@@ -191,6 +221,9 @@ func (receiver *Game) onUnitDamage(object ObjectInterface, payload interface{}) 
 		if tank.FullHP/tankHp > 2 {
 			//wall.Enter("damage") //todo
 		}
+	}
+	if err := receiver.playSound("damage"); err != nil {
+		logger.Println(err)
 	}
 }
 
@@ -256,8 +289,35 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 		_, err := receiver.SpawnManager.SpawnExplosion(PosAuto, bl, object)
 		if err != nil {
 			logger.Printf("unable to spawn explosion: %s \n", err)
+		} else {
+			if err = receiver.playSound("explosion"); err != nil {
+				logger.Println(err)
+			}
+			if err = receiver.EffectManager.ApplyGlobalShake(0.3, time.Second*1); err != nil {
+				logger.Println(err)
+			}
 		}
-		receiver.EffectManager.ApplyGlobalShake(0.3, time.Second*1)
+		if err = receiver.playSound("explosion"); err != nil {
+			logger.Println(err)
+		}
+	} else {
+		if object.HasTag("obstacle") {
+			if err := receiver.playSound("damage"); err != nil {
+				logger.Println(err)
+			}
+		}
+	}
+
+	if object.HasTag("ice") {
+		bl, _ := object.GetTagValue("ice", "blueprint", "water")
+		point := Point{}
+		point.X, point.Y = object.GetXY()
+		_, err := receiver.SpawnManager.Spawn(point, bl, DefaultConfigurator, &SpawnRequest{
+			Team: object.(ObjectInterface).GetAttr().Team,
+		})
+		if err != nil {
+			logger.Printf("unable to spawn water: %s \n", err)
+		}
 	}
 
 	if object.HasTag("fanout") {
@@ -367,10 +427,6 @@ func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{
 		if v := receiver.DecrSpawnedAi(); v == 0 && receiver.delayedSpawnRequestCnt <= 0 {
 			receiver.End(GAME_END_WIN)
 		}
-
-		if receiver.delayedSpawnRequestCnt > 0 {
-			receiver.execDelayedSpawn()
-		}
 	}
 }
 
@@ -395,20 +451,19 @@ func (receiver *Game) End(code int) {
 	if DEBUG_SHUTDOWN {
 		logger.Println("begining despawn ALL")
 	}
+
 	receiver.SpawnManager.DeSpawnAll(func() {
 		//todo after despawn callback
 		if DEBUG_SHUTDOWN {
 			logger.Println("despawn ALL complete")
 		}
-
-		close(receiver.terminator)
+		receiver.ctxCancel()
 
 		if DEBUG_SHUTDOWN {
 			logger.Println("dispatcher shutdown")
 		}
 
 		receiver.scenario = nil
-		receiver.terminator = nil
 		receiver.mutex.Unlock()
 
 		if DEBUG_SHUTDOWN {
@@ -423,8 +478,27 @@ func (receiver *Game) End(code int) {
 	})
 }
 
+func (receiver *Game) playSound(key string) error {
+	if receiver.SoundManager != nil {
+		return receiver.SoundManager.Play(key)
+	}
+	return nil
+}
+
+func (receiver *Game) playBackground(key string) {
+	if receiver.SoundManager != nil {
+		receiver.SoundManager.Play(key)
+	}
+}
+
+func (receiver *Game) stopBackground(key string) {
+	if receiver.SoundManager != nil {
+		receiver.SoundManager.Play(key)
+	}
+}
+
 func NewGame(players []*Player, spm *SpawnManager) (*Game, error) {
-	game := &Game{
+	game = &Game{
 		players:      players,
 		SpawnManager: spm,
 		ObservableObject: &ObservableObject{
@@ -449,16 +523,14 @@ func (receiver *Game) playerByUnit(unit ObjectInterface) *Player {
 	return nil
 }
 
-func gameCmdDispatcher(instance *Game, unitEvent EventChanel, terminator <-chan bool) {
+func gameCmdDispatcher(instance *Game, unitEvent EventChanel, ctx context.Context) {
 	if instance == nil {
 		return
 	}
 	for {
 		select {
-		case _, ok := <-terminator:
-			if !ok {
-				return
-			}
+		case <-ctx.Done():
+			return
 		case event, ok := <-unitEvent:
 			if !ok {
 				panic("chanel error")
@@ -493,17 +565,14 @@ func gameCmdDispatcher(instance *Game, unitEvent EventChanel, terminator <-chan 
 		}
 	}
 }
-
-func scenarioDispatcher(instance *Game, scenarioEvent EventChanel, terminator <-chan bool) {
+func scenarioDispatcher(instance *Game, scenarioEvent EventChanel, ctx context.Context) {
 	if instance == nil {
 		return
 	}
 	for {
 		select {
-		case _, ok := <-terminator:
-			if !ok {
-				return
-			}
+		case <-ctx.Done():
+			return
 		case event, ok := <-scenarioEvent:
 			if !ok {
 				return

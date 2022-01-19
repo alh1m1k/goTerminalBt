@@ -65,7 +65,7 @@ func (receiver *Scenario) ApplyState(current *StateItem) error { /*
 	scenarioStateInfo := current.StateInfo.(*ScenarioStateInfo)
 
 	receiver.Location = scenarioStateInfo.Location
-	receiver.player1Blueprint = scenarioStateInfo.player2Blueprint
+	receiver.player1Blueprint = scenarioStateInfo.player1Blueprint
 	receiver.player2Blueprint = scenarioStateInfo.player2Blueprint
 	receiver.limits = scenarioStateInfo.limits
 
@@ -178,7 +178,7 @@ func NewFileScenario(filepath string) (*Scenario, error) {
 		if err == nil {
 			info := stateItem.StateInfo.(*ScenarioStateInfo)
 			instance.Location = info.Location
-			instance.player1Blueprint = info.player2Blueprint
+			instance.player1Blueprint = info.player1Blueprint
 			instance.player2Blueprint = info.player2Blueprint
 		}
 	}

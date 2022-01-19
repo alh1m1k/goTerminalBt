@@ -173,7 +173,9 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 				if loader := get("controlledObject"); loader != nil {
 					if outObj := loader(get, collector, payload); outObj != nil {
 						co = outObj.(*ControlledObject)
-						behaviorAi = true
+						if _, ok := co.Control.(*BehaviorControl); ok {
+							behaviorAi = true
+						}
 					}
 				} else {
 					collector.Add(fmt.Errorf("%s: %w", "controlledObject", LoaderNotFoundError))
@@ -619,12 +621,11 @@ func ControlledObjectLoader(get LoaderGetter, collector *LoadErrors, payload []b
 	if loader := get("ai"); loader != nil {
 		if obj := loader(get, collector, payload); obj != nil {
 			object, _ = NewControlledObject(obj.(controller.Controller), nil)
-			//collector.Add(err)
-		} else {
-			return nil
 		}
 	} else {
 		collector.Add(fmt.Errorf("%s: %w", "ai", LoaderNotFoundError))
+		simpl, _ := controller.NewAIControl()
+		object, _ = NewControlledObject(simpl, nil)
 	}
 
 	if object == nil {
@@ -641,6 +642,11 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 		collision *collider.ClBody
 		err       error
 	)
+
+	_, dType, _, _ := jsonparser.Get(payload, "animation")
+	if dType != jsonparser.NotExist {
+		collector.Add(fmt.Errorf("animation key is depricated for jsonLoaders: %w", ParseError))
+	}
 
 	//skip error because of dataType validation
 	spriteCfg, dType, _, _ := jsonparser.Get(payload, "sprite")
@@ -818,8 +824,19 @@ func CollisionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 func SpriteLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
 	var (
 		sprite Spriteer
+		cfg    *GameConfig
 		err    error
 	)
+
+	loader := get("gameConfig")
+	if loader != nil {
+		proxy := loader(get, collector, payload)
+		if proxy != nil {
+			cfg = proxy.(*GameConfig)
+		}
+	} else {
+		collector.Add(fmt.Errorf("gameConfig: %w", LoaderNotFoundError))
+	}
 
 	sType, _ := jsonparser.GetString(payload, "type")
 	switch sType {
@@ -847,32 +864,32 @@ func SpriteLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 			spriteInst, err = GetSprite(sId, true, isTransparent)
 			if !collector.Add(err) {
 				spriteInst.CalculateSize()
-				customBytes, dataType, _, _ := jsonparser.Get(payload, "custom")
-				switch dataType {
-				case jsonparser.Object:
-					custom := make(CustomizeMap)
-					if !collector.Add(json.Unmarshal(customBytes, &custom)) {
-						hash := hashCustomizeMap(custom)
-						customSprite, err := GetSprite(sId+"-"+hash, false, false)
-						if err != nil {
-							collector.Add(err)
-							spriteInst = customSprite
-						} else {
-							spriteInst, err = CustomizeSprite(spriteInst, custom)
-							if !collector.Add(err) {
-								spriteInst, err = AddSprite(sId+"-"+hash, spriteInst)
+				if !cfg.disableCustomization {
+					customBytes, dataType, _, _ := jsonparser.Get(payload, "custom")
+					switch dataType {
+					case jsonparser.Object:
+						custom := make(CustomizeMap)
+						if !collector.Add(json.Unmarshal(customBytes, &custom)) {
+							hash := hashCustomizeMap(custom)
+							customSprite, err := GetSprite(sId+"-"+hash, false, false)
+							if err == nil {
+								spriteInst = customSprite
+							} else {
+								spriteInst, err = CustomizeSprite(spriteInst, custom)
+								if !collector.Add(err) {
+									err = AddSprite(sId+"-"+hash, spriteInst)
+								}
 							}
+							collector.Add(err)
 						}
-						collector.Add(err)
+					case jsonparser.Null:
+						fallthrough
+					case jsonparser.NotExist:
+						//none
+					default:
+						collector.Add(fmt.Errorf("custom: %w", ParseError))
 					}
-				case jsonparser.Null:
-					fallthrough
-				case jsonparser.NotExist:
-					//none
-				default:
-					collector.Add(fmt.Errorf("custom: %w", ParseError))
 				}
-
 			}
 			sprite = spriteInst
 		} else {
@@ -938,8 +955,19 @@ func CompositionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) 
 func AnimationLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
 	var (
 		animation *Animation
+		cfg       *GameConfig
 		err       error
 	)
+
+	loader := get("gameConfig")
+	if loader != nil {
+		proxy := loader(get, collector, payload)
+		if proxy != nil {
+			cfg = proxy.(*GameConfig)
+		}
+	} else {
+		collector.Add(fmt.Errorf("gameConfig: %w", LoaderNotFoundError))
+	}
 
 	config := new(AnimationConfig)
 	err = json.Unmarshal(payload, config)
@@ -1009,14 +1037,16 @@ func AnimationLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 				collector.Add(fmt.Errorf("length != len(keyFrames) %d, %d:  %w", len(keyFrames), config.Length, ParseError))
 				return ErrorAnimation
 			}
-			AddAnimation(config.Name, animation)
+			err = AddAnimation(config.Name, animation)
+			collector.Add(err)
 			animation = animation.Copy()
 		case jsonparser.Null:
 			fallthrough
 		case jsonparser.NotExist:
 			animation, err = LoadAnimation2(config.Path, config.Length, config.IsTransparent)
 			if !collector.Add(err) {
-				AddAnimation(config.Name, animation)
+				err = AddAnimation(config.Name, animation)
+				collector.Add(err)
 				animation = animation.Copy()
 			}
 		default:
@@ -1025,6 +1055,21 @@ func AnimationLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 	}
 
 	if animation != ErrorAnimation {
+		//todo there is a problem, config.name is kind a animation key but to simplify usage we allow to override animation base config
+		if config.Custom != nil && !cfg.disableCustomization {
+			name := hashCustomizeMap(config.Custom)
+			if customized, err := GetAnimation2(config.Name + "-" + name); err != nil {
+				customized, err = CustomizeAnimation(animation, config.Name, config.Custom)
+				if !collector.Add(err) {
+					err = AddAnimation(config.Name+"-"+name, customized)
+					collector.Add(err)
+					animation = customized.Copy()
+				}
+			} else {
+				animation = customized
+			}
+		}
+
 		animation.Cycled = config.Cycled
 		animation.Duration = config.Duration
 		if config.Blink <= 0 {
@@ -1040,9 +1085,6 @@ func AnimationLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 		animation.Reversed = config.Reversed
 		if animation.Duration == 0 && animation.collection {
 			collector.Add(fmt.Errorf("Duration is zero: %w", ParseError))
-		}
-		if config.Custom != nil {
-			customizeSliceSprite(animation.keyFrames, config.Name, config.Custom, collector)
 		}
 	}
 
@@ -1087,17 +1129,32 @@ func StateItemLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 
 	//compatibility
 	//skip error because of dataType validation
+	compability := false
 	spriteCfg, dType, _, _ := jsonparser.Get(payload, "animation")
 	if dType == jsonparser.NotExist || dType == jsonparser.Null {
 		spriteCfg, dType, _, _ = jsonparser.Get(payload, "sprite")
+	} else {
+		if dType != jsonparser.NotExist {
+			collector.Add(fmt.Errorf("animation key is depricated for jsonLoaders: %w", ParseError))
+		}
+		compability = true
 	}
 
 	switch dType {
 	case jsonparser.String:
-		sprite, err = GetSprite(string(spriteCfg), true, false)
+		if compability {
+			sprite, err = ErrorAnimation, fmt.Errorf("string declaration in compability mode: %w", ParseError)
+		} else {
+			sprite, err = GetSprite(string(spriteCfg), true, false)
+		}
 		collector.Add(err)
 	case jsonparser.Object:
-		loader := get("sprite")
+		var loader Loader
+		if compability {
+			loader = get("animation")
+		} else {
+			loader = get("sprite")
+		}
 		if loader != nil {
 			proxy := loader(get, collector, spriteCfg)
 			if proxy != nil {
@@ -1181,24 +1238,4 @@ func arrayLength(array []byte, keys ...string) int {
 		index++
 	}, keys...)
 	return index
-}
-
-func customizeSliceSprite(sprites []Spriteer, name string, custom CustomizeMap, collector *LoadErrors) {
-	for i, frame := range sprites {
-		if s, ok := frame.(*Sprite); ok {
-			if !IsCustomizedSpriteVer(s) {
-				if frameCustom, err := GetSprite(customizedSpriteName(name, custom), false, false); frameCustom != nil {
-					collector.Add(err)
-					sprites[i] = frameCustom
-				} else {
-					frameCustom, err := CustomizeSprite(s, custom)
-					if !collector.Add(err) {
-						frameCustom, err = AddSprite(customizedSpriteName(name, custom), frameCustom)
-						collector.Add(err)
-						sprites[i] = frameCustom
-					}
-				}
-			}
-		}
-	}
 }

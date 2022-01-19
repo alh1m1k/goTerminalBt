@@ -3,7 +3,13 @@
   "sprite": {
     "type": "sprite",
     "name": "unseen",
-    "transparent": true
+    "transparent": true,
+    "custom": {
+      "o": 3,
+      "O": 3,
+      "\\": 3,
+      "*": 3
+    }
   },
   "collision": {
     "type": "penetrate",
