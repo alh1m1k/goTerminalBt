@@ -1,8 +1,8 @@
 # GoConsoleBT
 ![Alt-текст](/playerMenu.png "Menu")
 
-It's Battle City inspired game for terminal. Game use text 
-and ASCII control symbol as graphics. GoConsoleBT is a game engine and game prototype written fully on GO
+This is a terminal game inspired by the battle city. Game use text
+and ASCII control symbols as graphics. GoConsoleBT is a game engine and game prototype written fully on GO
 
 ### Platform
 Currently tested on Windows 10 and Debian 10. Use any modern terminal to start
@@ -12,7 +12,6 @@ Currently tested on Windows 10 and Debian 10. Use any modern terminal to start
 Install and update this app with `go get -u github.com/alh1m1k/goTerminalBt/blob/main/`
 then install all requirements, on linux platform also need install libasound2-dev `apt install libasound2-dev`.
 Run from app directory `go build . ` to build app, or `go run . ` to build and run (go lang must be installed)
-
 
 ![Alt-текст](/stage1Normal.png "Stage-1")
 
@@ -26,15 +25,18 @@ or use:
 + --withSound enable opt. sound support (sound will play on machine where game actually run)
 + --simplifyAl disabling behavioral ai and switching to random (behavior ai is kinda buggy for now)
 
-After startup, game save config and restart, when you see screen configurator
-![Alt-текст](/configurate.png "Cfg") zoom out until you see border.
-Game border control by config, you may increase it, but I don't recommend reducing it. Then Press Enter and game will start.
+After startup, game will save config and restart, then you see the screen configurator
+![Alt-текст](/configurate.png "Cfg") zoom out until you can see the border.
+Game border controlled by config, you may increase it, but I don't recommend reducing it. Then Press Enter and game will start.
 
 ### Controls
 By Default player-1 use `arrow keys` and `space` to fire, player-2 use `wsad` and `backspace` to fire
 
+### Sound
+This repository do not contain any sound's. If you need them, look `./sounds/readme.txt`
+
 ###  Uses and thanks
-Thank's to author's there libs
+Thanks to the authors of libraries
 
 | Author | Hub | Uses |
 |----------------|:---------:|----------------:|
@@ -46,16 +48,16 @@ Thank's to author's there libs
 | xarg | https://github.com/xarg/gopathfinding | A* impl |
 | xiaonanln | https://github.com/xiaonanln/go-lockfree-pool | pool |
 
-me for the bugs...
+and me for the game bugs...
 
 ## Problems
-+ Glitch ai behavior 
++ It's hard
++ Glitch ai behavior
 + Rare crash on closing
-+ Flickering then many unit displays on screen (only Windows Terminal), try to reduce unit count or disable color
++ Flickering when many unit displays on screen (only for Windows Terminal), try to reduce unit count or disable color
 
 ### Disclaimer 
 I'm not a game developer and not a Go developer 
-
 
 #### Random with color
 ![Alt-текст](/withColor.png "Colorfull")
