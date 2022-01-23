@@ -2,12 +2,14 @@ package main
 
 import (
 	"GoConsoleBT/controller"
+	"github.com/eiannone/keyboard"
 	"sync/atomic"
 )
 
 type Player struct {
 	*controller.Control
-	Unit *Unit
+	Keyboard <-chan keyboard.KeyEvent
+	Unit     *Unit
 	*CustomizeMap
 	Name      string
 	Blueprint string

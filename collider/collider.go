@@ -2,7 +2,7 @@ package collider
 
 import (
 	"errors"
-	"github.com/tanema/ump"
+	"github.com/alh1m1k/ump"
 	"log"
 	"math"
 	"os"
@@ -12,7 +12,7 @@ import (
 const GRID_COORD_TOLERANCE = .5
 
 var (
-	buf, _ = os.OpenFile("collider.log", os.O_CREATE|os.O_TRUNC, 644)
+	buf, _ = os.OpenFile("./collider.log", os.O_CREATE|os.O_TRUNC, 644)
 	logger = log.New(buf, "logger: ", log.Lshortfile)
 )
 

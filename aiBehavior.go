@@ -68,6 +68,7 @@ var (
 		Enter: func(control *BehaviorControl) {
 			if len(control.availableTargets) > 0 {
 				var base, unit *Unit
+				control.target = nil
 				for _, targetCandidate := range control.availableTargets {
 					if targetCandidate == nil || targetCandidate.destroyed {
 						continue
@@ -339,7 +340,9 @@ func NewPursuitBehavior() *Behavior {
 						control.AlignToZone(control.lastPath[0]) //direction to new zone
 					}
 				} else if err == MoveBlockedError {
-					logger.Printf("objectId: %d moving blocked -> %t, %t\n", control.avatar.ID, control.avatar.GetZone(), control.lastPath[0])
+					if DEBUG_AI_PATH {
+						logger.Printf("cycleId: %d, objectId: %d moving blocked -> %t, %t\n", CycleID, control.avatar.ID, control.avatar.GetZone(), control.lastPath[0])
+					}
 					control.Next(NewIdleUntilBehavior(func(control *BehaviorControl) bool {
 						return !control.IsFullBlock()
 					}, control.Behavior, true))

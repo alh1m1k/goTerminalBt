@@ -13,6 +13,18 @@ func (receiver *KeyboardRepeater) Subscribe() <-chan keyboard.KeyEvent {
 	return ch
 }
 
+func (receiver *KeyboardRepeater) Unsubscribe(chanel <-chan keyboard.KeyEvent) {
+	newSubscribers := make([]chan keyboard.KeyEvent, 0, maxInt(len(receiver.subscribers)-1, 1))
+	for idx, candidate := range receiver.subscribers {
+		if candidate == chanel {
+			newSubscribers = append(newSubscribers, receiver.subscribers[:idx]...)
+			newSubscribers = append(newSubscribers, receiver.subscribers[idx+1:]...)
+			close(candidate)
+		}
+	}
+	receiver.subscribers = newSubscribers
+}
+
 func NewKeyboardRepeater(origin <-chan keyboard.KeyEvent) (*KeyboardRepeater, error) {
 	instance := &KeyboardRepeater{
 		origin:      origin,

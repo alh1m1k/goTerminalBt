@@ -1,7 +1,9 @@
 package main
 
 import (
+	"GoConsoleBT/controller"
 	"encoding/json"
+	"github.com/buger/jsonparser"
 	"os"
 )
 
@@ -35,6 +37,17 @@ func loadConfig() (*GameConfig, error) {
 		return nil, err
 	}
 	config := new(GameConfig)
-	json.Unmarshal(payload, config)
-	return config, json.Unmarshal(payload, config)
+	err = json.Unmarshal(payload, config)
+	kb, dType, _, _ := jsonparser.Get(payload, "keyBindings")
+	switch dType {
+	case jsonparser.Array:
+		idx := 0
+		jsonparser.ArrayEach(kb, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+			bind := &controller.KeyBind{}
+			json.Unmarshal(value, bind)
+			config.KeyBindings[idx] = *bind
+			idx++
+		})
+	}
+	return config, err
 }

@@ -17,6 +17,8 @@
   "accelTime": 1000000000,
   "ttl":    1000000000,
   "damage": 0,
+  "name": "Smoke-2",
+  "description": "who know's what hidding there",
   "tags": ["projectile",
     {
       "name": "explosive",

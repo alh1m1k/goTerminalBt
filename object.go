@@ -3,7 +3,7 @@ package main
 import (
 	"GoConsoleBT/collider"
 	"errors"
-	"github.com/tanema/ump"
+	"github.com/alh1m1k/ump"
 	"time"
 )
 

@@ -1,7 +1,7 @@
+github.com/alh1m1k/ump v0.0.0-20220120150204-058cfbe97200 h1:0xNvws18eI5x4qY/2iOXnUSs/ayUMUhfpm0C4COZ76M=
+github.com/alh1m1k/ump v0.0.0-20220120150204-058cfbe97200/go.mod h1:Xxe8YyU+8N0hrhGbj4ugwVepqdNMF85QeI1jBTC1Kd4=
 github.com/fatih/set v0.2.1/go.mod h1:+RKtMCH+favT2+3YecHGxcc0b4KyVWA1QWWJUs4E0CI=
 github.com/mmatczuk/go_generics v0.0.0-20181212143635-0aaa050f9bab h1:QjLgi/L+MjxysinrA8KkNZLf3cAhTluBoSXUvFeN144=
 github.com/mmatczuk/go_generics v0.0.0-20181212143635-0aaa050f9bab/go.mod h1:Fs8p4al9GNa3b42YfZOoUVMdjQ2WlNEYlnoboJKPpJ8=
 github.com/scylladb/go-set v1.0.2 h1:SkvlMCKhP0wyyct6j+0IHJkBkSZL+TDzZ4E7f7BCcRE=
 github.com/scylladb/go-set v1.0.2/go.mod h1:DkpGd78rljTxKAnTDPFqXSGxvETQnJyuSOQwsHycqfs=
-github.com/tanema/ump v0.0.0-20171018143447-d5f261ac1de3 h1:9hXKNpWjknPZbmfNIMwYvRd3322CQmuJDllamOVQt+U=
-github.com/tanema/ump v0.0.0-20171018143447-d5f261ac1de3/go.mod h1:tNcSdB6uG6DwTjn4d4T5zSIFKRxKeGYPS9kR3CtvXCw=

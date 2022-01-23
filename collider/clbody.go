@@ -2,7 +2,7 @@ package collider
 
 import (
 	"errors"
-	"github.com/tanema/ump"
+	"github.com/alh1m1k/ump"
 )
 
 var (

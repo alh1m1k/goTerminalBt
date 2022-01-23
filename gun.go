@@ -11,6 +11,11 @@ var ReloadError = errors.New("gun on reload")
 var GunConfigError = errors.New("gun not configurated")
 var OutAmmoError = errors.New("out of ammo")
 
+type FireParams struct {
+	Position, Direction, BaseSpeed Point
+	Owner                          ObjectInterface
+}
+
 type GunState struct {
 	Projectile       string
 	Name             string
@@ -42,6 +47,7 @@ func (receiver *Gun) Fire() error {
 	}
 	current.lastShotTime = time.Now()
 	receiver.mutex.Unlock()
+	params := receiver.getParams()
 	for i := 0; i < current.ShotQueue; i++ {
 		if current.Ammo != -1 && current.Ammo <= 0 {
 			return OutAmmoError
@@ -49,7 +55,10 @@ func (receiver *Gun) Fire() error {
 		if current.PerShotQueueTime > 0 && i > 1 {
 			delayAccumulator += current.PerShotQueueTime
 			time.AfterFunc(delayAccumulator, func() {
-				receiver.Owner.Trigger(FireEvent, receiver.Owner, nil)
+				if receiver.Owner.destroyed {
+					return
+				}
+				receiver.Owner.Trigger(FireEvent, receiver.Owner, params)
 				current.lastShotTime = time.Now()
 				if current.Ammo > 0 {
 					current.Ammo--
@@ -57,7 +66,7 @@ func (receiver *Gun) Fire() error {
 			})
 
 		} else {
-			receiver.Owner.Trigger(FireEvent, receiver.Owner, nil)
+			receiver.Owner.Trigger(FireEvent, receiver.Owner, params)
 			current.lastShotTime = time.Now()
 			if current.Ammo > 0 {
 				current.Ammo--
@@ -130,6 +139,32 @@ func (receiver *Gun) Basic(state *GunState) {
 	defer receiver.mutex.Unlock()
 	receiver.State[0] = state
 	receiver.Current = state
+}
+
+func (receiver *Gun) getPosition() Point {
+	x, y := receiver.Owner.GetXY()
+	dir := receiver.Owner.Direction
+	w, h := receiver.Owner.GetWH()
+
+	if dir.X == 0 && dir.Y == 0 {
+		dir.Y = -1
+	}
+	centerX := x + w/2
+	centerY := y + h/2
+
+	return Point{
+		X: centerX + (dir.X * w / 2),
+		Y: centerY + (dir.Y * h / 2),
+	}
+}
+
+func (receiver *Gun) getParams() FireParams {
+	return FireParams{
+		Position:  receiver.getPosition(),
+		BaseSpeed: receiver.Owner.Speed,
+		Direction: receiver.Owner.Direction,
+		Owner:     receiver.Owner,
+	}
 }
 
 func (receiver *Gun) Copy() *Gun {

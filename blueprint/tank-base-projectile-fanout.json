@@ -15,5 +15,7 @@
   },
   "ttl":    3000000000,
   "damage": 0,
+  "name": "Shrap",
+  "description": "Shrapnel, 8 parts",
   "tags": ["projectile", "fanout"]
 }

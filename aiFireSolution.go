@@ -58,7 +58,7 @@ func (receiver *FireSolution) calculateProjectileSolution(unit *Unit, projectile
 	projectile.clearTags() //todo replace with fake collision
 
 	projectile.Reset()
-	ProjectileConfigurator(projectile, unit) //to apply speed and direction
+	ProjectileConfigurator(projectile, unit.Gun.getParams())
 
 	//sampleX
 	projectile.Move(0, 0)
@@ -87,7 +87,7 @@ func (receiver *FireSolution) calculateProjectileSolution(unit *Unit, projectile
 	solution.sampleX[len(solution.sampleX)-1].leave = timeLeft
 
 	projectile.Reset()
-	ProjectileConfigurator(projectile, unit) //to apply speed and direction
+	ProjectileConfigurator(projectile, unit.Gun.getParams()) //to apply speed and direction
 
 	//sampleY
 	projectile.Move(0, 0)

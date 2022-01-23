@@ -33,8 +33,8 @@ func NewDefaultGameConfig() (*GameConfig, error) {
 				Y: 0,
 			},
 			Size: Size{
-				W: 100,
-				H: 100,
+				W: 263,
+				H: 60,
 			},
 		},
 	}, nil

@@ -51,12 +51,17 @@ func (receiver *Location) Add(object Trackable) {
 		x, y := object.GetXY()
 		w, h := object.GetWH()
 		tracker.Update(x, y, w, h)
+		xi, yi := tracker.GetIndexes()
+		if receiver.zones[yi][xi] == ZoneSpawnPlaceholder {
+			receiver.zones[yi][xi] = nil
+			receiver.zonesLeft++
+		}
 		err := receiver.putInZone(object)
 		if err != nil {
-			xi, yi := tracker.GetIndexes()
 			logger.Printf("error on add object to location %d, %d, %s \n", xi, yi, err)
+		} else {
+			receiver.zonesLeft--
 		}
-		receiver.zonesLeft--
 		receiver.zoneLock.Unlock()
 	}
 }
@@ -474,8 +479,7 @@ func (receiver *Location) putInZone(object Trackable) error {
 		if receiver.zones[zyi][zxi] == object {
 			return ZoneCollisionError
 		} else if receiver.zones[zyi][zxi] == ZoneSpawnPlaceholder {
-			//todo some magic shit
-			receiver.zones[zyi][zxi] = nil
+			return ZoneCollisionError
 		} else if receiver.zones[zyi][zxi].GetTracker().IsNeedUpdateZone {
 			err := receiver.putInZone(receiver.zones[zyi][zxi])
 			if err != nil {

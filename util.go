@@ -9,7 +9,13 @@ import (
 	"time"
 )
 
-var monotonicId int64
+var (
+	monotonicId   int64
+	noDescription = struct {
+		Name        string
+		Description string
+	}{Name: "N/A", Description: "N/A"}
+)
 
 func newThrottle(every time.Duration, done bool) *throttle {
 	var left time.Duration = 0
@@ -197,4 +203,28 @@ func everyFunc(duration time.Duration, callback func(), ctx context.Context) {
 			}
 		}
 	}(output, ctx)
+}
+
+//temporal
+//todo remove
+func getProjectilePlDescription(blueprint string) struct {
+	Name        string
+	Description string
+} {
+	if buildManager == nil {
+		return noDescription
+	}
+	obj, err := buildManager.Get(blueprint)
+	if err != nil {
+		return noDescription
+	}
+	var projectile *Projectile
+	var ok bool
+	if projectile, ok = obj.(*Projectile); !ok {
+		return noDescription
+	}
+	return struct {
+		Name,
+		Description string
+	}{Name: projectile.GetAttr().Name, Description: projectile.GetAttr().Description}
 }

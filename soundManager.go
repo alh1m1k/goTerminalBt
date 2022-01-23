@@ -60,7 +60,6 @@ func (receiver *SoundManager) Register(key string, path string, prefeth bool) er
 		info.Handler = nil
 		info.Loaded = true
 	}
-	logger.Println(info.Format)
 	receiver.sounds[key] = &info
 	info.Ready = true
 	return nil

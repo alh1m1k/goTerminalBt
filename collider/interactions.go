@@ -1,7 +1,7 @@
 package collider
 
 import (
-	"github.com/tanema/ump"
+	"github.com/alh1m1k/ump"
 	"time"
 )
 

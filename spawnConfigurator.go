@@ -85,58 +85,53 @@ func CollectableConfigurator(object ObjectInterface, config interface{}) ObjectI
 }
 
 func ProjectileConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
+	var params FireParams
+	var ok bool
+	var centerOx, centerOy, x, y float64
 
-	owner := config.(*Unit)
-	projectile := object.(*Projectile)
-	object.GetAttr().Team = -1
-
-	x, y := owner.GetXY()
-	dir := owner.Direction
-	w, h := owner.GetWH()
-
-	if dir.X == 0 && dir.Y == 0 {
-		dir.Y = -1
+	if params, ok = config.(FireParams); !ok {
+		return nil
 	}
+	centerOx, centerOy = params.Position.X, params.Position.Y
+
+	projectile := object.(*Projectile)
+	object.GetAttr().Team = math.MaxInt8
 
 	//need for proper aligment
-	if dir.X > 0 {
+	if params.Direction.X > 0 {
 		projectile.Enter("right")
 	}
-	if dir.X < 0 {
+	if params.Direction.X < 0 {
 		projectile.Enter("left")
 	}
-	if dir.Y < 0 {
+	if params.Direction.Y < 0 {
 		projectile.Enter("top")
 	}
-	if dir.Y > 0 {
+	if params.Direction.Y > 0 {
 		projectile.Enter("bottom")
 	}
 
 	ow, oh := projectile.GetWH()
 
-	centerX := x + w/2
-	centerY := y + h/2
-
-	centerOx := centerX + (dir.X * w / 2) + (dir.X * ow / 2)
-	centerOy := centerY + (dir.Y * h / 2) + (dir.Y * oh / 2)
-
+	centerOx += params.Direction.X * ow / 2
+	centerOy += params.Direction.Y * oh / 2
 	x = centerOx - ow/2
 	y = centerOy - oh/2
 
 	projectile.Move(x, y)
 	//----- speed modify based at owner speed
-	projectile.ApplySpeed(owner.Speed)
+	projectile.ApplySpeed(params.BaseSpeed)
 	//-----
-	projectile.Direction.X = owner.Direction.X
-	projectile.Direction.Y = owner.Direction.Y
-	projectile.Owner = owner
+	projectile.Direction.X = params.Direction.X
+	projectile.Direction.Y = params.Direction.Y
+	projectile.Owner = params.Owner
 
 	if projectile.GetAttr().Team != 0 {
 		projectile.removeTag(projectile.GetAttr().TeamTag)
 	}
 
-	projectile.GetAttr().Team = owner.Team
-	projectile.GetAttr().TeamTag = owner.TeamTag
+	projectile.GetAttr().Team = params.Owner.GetAttr().Team
+	projectile.GetAttr().TeamTag = params.Owner.GetAttr().TeamTag
 	projectile.addTag(projectile.GetAttr().TeamTag)
 
 	return projectile

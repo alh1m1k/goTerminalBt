@@ -88,11 +88,14 @@ func (receiver *Game) Run(scenario *Scenario) error {
 		} else {
 			player.Blueprint = "player-tank"
 		}
-		_, err := receiver.SpawnManager.SpawnPlayerTank(location, player.Blueprint, player)
+		object, err := receiver.SpawnManager.SpawnPlayerTank(location, player.Blueprint, player)
 		if err != nil {
 			logger.Println("at spawning player error: ", err)
 		}
 		receiver.spawnedPlayer++
+		if unit, ok := object.(*Unit); ok && unit.Gun != nil {
+			unit.Gun.Current.Name = getProjectilePlDescription(unit.Gun.Current.Projectile).Name
+		}
 	}
 
 	//timers block
@@ -187,7 +190,7 @@ func (receiver *Game) doSpawn(scenario *Scenario, payload *SpawnRequest) error {
 
 func (receiver *Game) onUnitFire(object *Unit, payload interface{}) {
 	if object.Gun != nil && object.Gun.GetProjectile() != "" {
-		_, err := receiver.SpawnManager.SpawnProjectile(PosAuto, object.Gun.GetProjectile(), object)
+		_, err := receiver.SpawnManager.SpawnProjectile(PosAuto, object.Gun.GetProjectile(), payload.(FireParams))
 		if err != nil {
 			logger.Printf("unable to fire %s due: %s \n", object.Gun.GetProjectile(), err)
 		} else {
@@ -360,20 +363,22 @@ func (receiver *Game) onUnitCollect(object *Collectable, payload interface{}) {
 			unit.Gun.Current.ShotQueue += 2
 		}
 		if seed <= 8 && seed > 3 {
-
+			bl := GetConventionalProjectileName()
 			unit.Gun.Upgrade(&GunState{
-				Projectile:       GetConventionalProjectileName(),
+				Projectile:       bl,
+				Name:             getProjectilePlDescription(bl).Name,
 				Ammo:             10,
 				ShotQueue:        1,
 				PerShotQueueTime: time.Second / 5,
 				ReloadTime:       2 * time.Second,
+				lastShotTime:     time.Time{},
 			})
 
 		}
 		if seed >= 9 {
-
 			unit.Gun.Upgrade(&GunState{
 				Projectile:       "tank-base-projectile-apocalypse",
+				Name:             getProjectilePlDescription("tank-base-projectile-apocalypse").Name,
 				Ammo:             1,
 				ShotQueue:        1,
 				PerShotQueueTime: time.Second / 2,
@@ -394,18 +399,26 @@ func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{
 		receiver.End(GAME_END_LOSE)
 	}
 	if object.HasTag("player") {
-		for _, player := range receiver.players {
+		for idx, player := range receiver.players {
 			if player.Unit == object {
 				left := player.DecrRetry(1)
+				logger.Printf("cycleId: %d, player %d have %d retry\n", CycleID, idx+1, left)
 				if left <= 0 {
 					if atomic.AddInt64(&receiver.spawnedPlayer, -1) == 0 {
 						receiver.End(GAME_END_LOSE)
 					}
 				} else {
-					location, _ := receiver.location.Coordinate2Spawn(true)
 					if receiver.inProgress {
 						//todo theoretical may cause game freeze due send signal on closed dispatcher
-						receiver.SpawnManager.SpawnPlayerTank(location, player.Blueprint, player)
+						location, err := receiver.location.Coordinate2Spawn(true)
+						if err != nil {
+							logger.Printf("zones left %d", receiver.Location.zonesLeft)
+							logger.Println(fmt.Errorf("player %d: %w", idx+1, err))
+							location = PosAuto
+						}
+						if _, err = receiver.SpawnManager.SpawnPlayerTank(location, player.Blueprint, player); err != nil {
+							logger.Println("CRITICAL", err)
+						}
 					}
 				}
 			}
@@ -448,6 +461,7 @@ func (receiver *Game) End(code int) {
 	}
 	receiver.inProgress = false
 	receiver.EffectManager.CancelAllEffects()
+	receiver.stopBackground("main")
 	if DEBUG_SHUTDOWN {
 		logger.Println("begining despawn ALL")
 	}
@@ -492,9 +506,7 @@ func (receiver *Game) playBackground(key string) {
 }
 
 func (receiver *Game) stopBackground(key string) {
-	if receiver.SoundManager != nil {
-		receiver.SoundManager.Play(key)
-	}
+	logger.Println("stopping of bg playing not implemented")
 }
 
 func NewGame(players []*Player, spm *SpawnManager) (*Game, error) {

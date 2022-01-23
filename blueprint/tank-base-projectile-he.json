@@ -15,5 +15,7 @@
   },
   "ttl":    3000000000,
   "damage": 0,
+  "name": "HE",
+  "description": "high explosion projectile, zero projectile damage but cause explosion",
   "tags": ["projectile", "danger", "explosive"]
 }

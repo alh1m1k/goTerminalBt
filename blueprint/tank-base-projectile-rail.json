@@ -38,5 +38,7 @@
   "accelTime": 5000000000,
   "ttl":    5000000000,
   "damage": 40,
+  "name": "Rail",
+  "description": "high speed, all penetrate projectile",
   "tags": ["projectile", "danger", "projectile-penetrate"]
 }

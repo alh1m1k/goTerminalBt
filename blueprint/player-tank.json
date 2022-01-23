@@ -334,7 +334,7 @@
   "control": null,
   "hp":     100,
   "gun": {
-    "projectile": "tank-base-projectile-rail",
+    "projectile": "tank-base-projectile",
     "reloadTime": 800000000
   },
   "score": 1000,

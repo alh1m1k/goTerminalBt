@@ -26,6 +26,7 @@ type Renderer interface {
 	SetOffset(x, y int)
 	NeedCompact() bool
 	Compact()
+	Free()
 }
 
 var minFps float64 = math.MaxFloat64
@@ -146,6 +147,10 @@ func (receiver *Render) drawUI(timeLeft time.Duration) {
 			xOffset += len(buf)
 		}
 	}
+}
+
+func (receiver *Render) Free() {
+
 }
 
 func NewRender(queueSize int) (*Render, error) {

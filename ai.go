@@ -5,7 +5,7 @@ import (
 	"GoConsoleBT/controller"
 	"context"
 	"errors"
-	"github.com/tanema/ump"
+	"github.com/alh1m1k/ump"
 	"math"
 	"sync"
 	"sync/atomic"
@@ -104,7 +104,6 @@ func (receiver *BehaviorControl) See(object *Unit) {
 			logger.Printf("object id %d reset target due it destruction")
 		}
 		receiver.forget(receiver.target)
-		receiver.target = nil
 	}
 
 	if receiver.target != nil {

@@ -18,7 +18,6 @@ type RenderZIndex struct {
 	zQueue           map[int][]Renderable
 	output           output.ConsoleOutput
 	*UIData
-	uiThrottle       *throttle
 	UIDraw           bool
 	offsetX, offsetY int
 	total, empty     int64
@@ -104,9 +103,6 @@ func (receiver *RenderZIndex) Execute(timeLeft time.Duration) {
 				if oi, ok := object.(*Unit); ok && oi.GetAttr().AI {
 					receiver.output.Print(receiver.output.MoveTo(" "+receiver.output.Color(oi.Control.(*BehaviorControl).Behavior.Name(), direct.CYAN)+" ", x, y+1))
 				}
-				/*				if oi, ok := object.(*Unit); ok && oi.GetAttr().AI {
-								receiver.output.Print(receiver.output.MoveTo(" " + receiver.output.Color(fmt.Sprint(oi.Control.(*BehaviorControl).blockedDirection), direct.CYAN) + " ", x, y + 2))
-							}*/
 			}
 		}
 	}
@@ -129,6 +125,11 @@ func (receiver *RenderZIndex) UI(data *UIData) {
 func (receiver *RenderZIndex) SetOffset(x, y int) {
 	receiver.offsetX = x
 	receiver.offsetY = y
+}
+
+func (receiver *RenderZIndex) Free() {
+	receiver.output.CursorVisibility(true)
+	receiver.zQueue = make(map[int][]Renderable)
 }
 
 func (receiver *RenderZIndex) translateXY(x, y float64) (int, int) {
@@ -166,14 +167,37 @@ func (receiver *RenderZIndex) drawUI(timeLeft time.Duration) {
 	}
 
 	if receiver.UIData != nil {
-		var buf string
+		var buf, hp, ammo string
 		for i, player := range receiver.UIData.players {
 			if player == nil || player.Unit == nil {
 				continue
 			}
-			buf = fmt.Sprintf("P%d: %s Retry: %d  Score: %05d HP: %03d Ammo:%s:%d",
-				i+1, player.Name, player.Retry, player.Score, player.Unit.HP, player.Unit.Gun.GetName(), player.Unit.Gun.Current.Ammo)
-			buf = direct.Highlight(buf, player.Name, direct.CYAN)
+			if player.Unit.HP < 50 {
+				hp = direct.Color(fmt.Sprintf("%03d", player.Unit.HP), direct.RED)
+			} else {
+				hp = direct.Color(fmt.Sprintf("%03d", player.Unit.HP), direct.CYAN)
+			}
+			if player.Unit.Gun.Current.Ammo == -1 {
+				ammo = direct.Color("inf", direct.YELLOW)
+			} else {
+				ammo = direct.Color(fmt.Sprintf("%03d", player.Unit.Gun.Current.Ammo), direct.RED)
+			}
+			if player.Unit.destroyed && player.Retry <= 0 {
+				buf = fmt.Sprintf("P%d: %s  %s",
+					i+1,
+					direct.Color(player.Name, direct.CYAN),
+					direct.Color("IS DEAD", direct.RED),
+				)
+			} else {
+				buf = fmt.Sprintf("P%d: %s Retry: %s Score: %05d HP: %s Ammo: %s (%s)",
+					i+1,
+					direct.Color(player.Name, direct.CYAN),
+					direct.Color(strconv.Itoa(int(player.Retry)), direct.GREEN),
+					player.Score,
+					hp,
+					direct.Color(player.Unit.Gun.GetName(), direct.YELLOW),
+					ammo)
+			}
 			receiver.output.Print(direct.Bold(receiver.output.MoveTo(buf, xOffset+10, 0)))
 			xOffset += len(buf)
 		}
@@ -191,7 +215,6 @@ func NewRenderZIndex(queueSize int) (*RenderZIndex, error) {
 		defaultQueueSize: queueSize,
 		output:           backend,
 		UIData:           nil,
-		uiThrottle:       newThrottle(500*time.Millisecond, true),
 		UIDraw:           false,
 		defaultZIndex:    100,
 	}, nil

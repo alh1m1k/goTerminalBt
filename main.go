@@ -18,6 +18,11 @@ import (
 	"time"
 )
 
+/**
+* Go BattleTanks v0.3
+* @author Pyadukhov Roman
+ */
+
 const CYCLE = 100 * time.Millisecond
 
 const DEBUG = false
@@ -27,7 +32,7 @@ const DEBUG_EXEC = false
 const DEBUG_STATE = false
 const DEBUG_NO_AI = false
 const DEBUG_SHAKE = false
-const DEBUG_IMMORTAL_PLAYER = true
+const DEBUG_IMMORTAL_PLAYER = false
 const DEBUG_FREEZ_AI = false
 const DEBUG_AI_PATH = false
 const DEBUG_AI_BEHAVIOR = false
@@ -40,24 +45,26 @@ const DEBUG_DISABLE_UI = false
 const DEBUG_DISARM_AI = false
 const DEBUG_SHOW_ID = false
 const DEBUG_SHOW_AI_BEHAVIOR = false
+const DEBUG_FREE_SPACES = false
 
 const RENDERER_WITH_ZINDEX = true
 
 var (
-	buf, _          = os.OpenFile("log.txt", os.O_CREATE|os.O_TRUNC, 644)
+	buf, bufErr     = os.OpenFile("./log.txt", os.O_CREATE|os.O_TRUNC, 644)
 	logger          = log.New(buf, "logger: ", log.Lshortfile)
 	profilerHandler interface {
 		Stop()
 	}
 	CycleID int64 = 0
 
-	gameConfig  *GameConfig
-	game        *Game
-	render      Renderer
-	calibration *Calibration
-	scenario    *Scenario
-	aibuilder   *BehaviorControlBuilder
-	sound       *SoundManager
+	gameConfig   *GameConfig
+	game         *Game
+	render       Renderer
+	calibration  *Calibration
+	scenario     *Scenario
+	aibuilder    *BehaviorControlBuilder
+	sound        *SoundManager
+	buildManager *BlueprintManager
 
 	//flags
 	seed                 int64
@@ -76,6 +83,9 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if bufErr != nil {
+		log.Println(bufErr)
+	}
 	profile.ProfilePath(dir)
 	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "random generator seed")
 	flag.StringVar(&scenarioName, "scenario", "random", "run scenario")
@@ -91,7 +101,7 @@ func init() {
 	osSignal = make(chan os.Signal, 1)
 
 	//cause problem on debug
-	signal.Notify(osSignal, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL, syscall.SIGINT)
+	signal.Notify(osSignal, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
 
 	output.DEBUG = DEBUG
 	controller.DEBUG_DISARM_AI = DEBUG_DISARM_AI
@@ -118,7 +128,10 @@ func main() {
 	gameConfig, err = loadConfig()
 	if err != nil {
 		if !calibrate {
-			panic("no config found, run --calibrate")
+			gameConfig, _ = NewDefaultGameConfig()
+			saveConfig(gameConfig)
+			log.Println("no config found, default created. Run --calibrate if you want custom config. Restart game.")
+			return
 		} else {
 			gameConfig, _ = NewDefaultGameConfig()
 		}
@@ -130,9 +143,21 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	repeater, _ := NewKeyboardRepeater(keysEvents)
+	closingEvents := repeater.Subscribe()
+
+	//closing
 	defer func() {
 		_ = keyboard.Close()
 		profileStop()
+		render.Free()
+		buf.Sync()
+		buf.Close()
+		if !DEBUG {
+			direct.Clear()
+			direct.Printf("game seed is: %d \n", seed)
+			direct.Flush()
+		}
 	}()
 
 	//start pipeline
@@ -196,7 +221,7 @@ func main() {
 	pipe.Navigation = navigation
 
 	//builder
-	buildManager, _ := NewBlueprintManager()
+	buildManager, _ = NewBlueprintManager()
 
 	//ai
 	if !simplifyAi {
@@ -205,21 +230,6 @@ func main() {
 
 	if withSound {
 		sound, _ = NewSoundManager()
-		//temporal
-		err = sound.Register("main", "./sounds/main.mp3", false)
-		if err != nil {
-			logger.Println(err)
-		}
-		for key, path := range map[string]string{
-			"fire":      "./sounds/fire.mp3",
-			"explosion": "./sounds/explosion.mp3",
-			"damage":    "./sounds/damage.mp3",
-		} {
-			err = sound.Register(key, path, true)
-			if err != nil {
-				logger.Println(err)
-			}
-		}
 	}
 
 	//game
@@ -231,6 +241,7 @@ func main() {
 	//runner
 	runner, _ := NewGameRunner()
 	runner.Keyboard = keysEvents
+	runner.KeyboardRepeater = repeater
 	runner.Game = game
 	runner.GameConfig = gameConfig
 	runner.Scenario = scenario
@@ -238,6 +249,7 @@ func main() {
 	runner.BehaviorControlBuilder = aibuilder
 	runner.SpawnManager = spawner
 	runner.Renderer = render
+	runner.SoundManager = sound
 
 	//time
 	cycleTime := CYCLE
@@ -275,6 +287,15 @@ func main() {
 		time.AfterFunc(time.Second*5, debugMinimap)
 	}
 
+	if DEBUG_FREE_SPACES {
+		var debugFreeSpaces func()
+		debugFreeSpaces = func() {
+			logger.Printf("cycleId: %d, free spaces %d", CycleID, location.zonesLeft)
+
+		}
+		time.AfterFunc(time.Second*5, debugFreeSpaces)
+	}
+
 	if profileMod != "" {
 		profileStart(profileMod, profileDelay)
 	}
@@ -297,20 +318,14 @@ func main() {
 			case GAME_END_WIN:
 				fallthrough
 			case GAME_END_LOSE:
-				if !DEBUG {
-					direct.Clear()
-					direct.Printf("game seed is: %d \n", seed)
-					direct.Flush()
-				}
 				return
 			}
 		case <-osSignal:
-			if !DEBUG {
-				direct.Clear()
-				direct.Printf("game seed is: %d \n", seed)
-				direct.Flush()
-			}
 			return
+		case event := <-closingEvents:
+			if event.Key == keyboard.KeyCtrlC {
+				return
+			}
 		case timeEvent := <-cycleTimer.C:
 			timeLeft = timeEvent.Sub(timeCurrent)
 			timeCurrent = timeEvent

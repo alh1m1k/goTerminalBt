@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	buf, _ = os.OpenFile("output.log", os.O_CREATE|os.O_TRUNC, 644)
+	buf, _ = os.OpenFile("./output.log", os.O_CREATE|os.O_TRUNC, 644)
 	logger = log.New(buf, "logger: ", log.Lshortfile)
 	DEBUG = false
 )

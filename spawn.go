@@ -86,9 +86,11 @@ func (manager *SpawnManager) Execute(timeLeft time.Duration) {
 		delete(manager.spawned, object)
 		object.DeSpawn()
 		bl := object.GetAttr().Blueprint
-		if bl != "" && !deSpawnAll && manager.Flags.lockFree {
-			if poll, ok := manager.respawn[bl]; ok {
-				poll.Put(object)
+		if bl != "" {
+			if !deSpawnAll && manager.Flags.lockFree {
+				if poll, ok := manager.respawn[bl]; ok {
+					poll.Put(object)
+				}
 			}
 		} else {
 			logger.Println("no blueprint")
@@ -210,12 +212,12 @@ func (manager *SpawnManager) SpawnPlayerTank(coordinate Point, blueprint string,
 	return manager.Spawn(coordinate, blueprint, PlayerConfigurator, player)
 }
 
-func (manager *SpawnManager) SpawnProjectile(coordinate Point, blueprint string, owner *Unit) (ObjectInterface, error) {
+func (manager *SpawnManager) SpawnProjectile(coordinate Point, blueprint string, params FireParams) (ObjectInterface, error) {
 	//coordinate no sense
 	if DEBUG_SPAWN {
 		logger.Printf("spawn<user-item> attempt %s \n", blueprint)
 	}
-	return manager.Spawn(coordinate, blueprint, ProjectileConfigurator, owner)
+	return manager.Spawn(coordinate, blueprint, ProjectileConfigurator, params)
 }
 
 func (manager *SpawnManager) SpawnExplosion(coordinate Point, blueprint string, from ObjectInterface) (ObjectInterface, error) {

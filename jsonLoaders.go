@@ -776,6 +776,16 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 			object.zIndex = int(zIndex)
 		}
 
+		name, err := jsonparser.GetString(payload, "name")
+		if err == nil {
+			object.GetAttr().Name = name
+		}
+
+		descr, err := jsonparser.GetString(payload, "description")
+		if err == nil {
+			object.GetAttr().Description = descr
+		}
+
 		if object.HasTag("tracked") {
 			object.Tracker, err = NewTracker()
 			collector.Add(err)

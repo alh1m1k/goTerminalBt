@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	buf, _ = os.OpenFile("control.log", os.O_CREATE|os.O_TRUNC, 644)
+	buf, _ = os.OpenFile("./control.log", os.O_CREATE|os.O_TRUNC, 644)
 	logger = log.New(buf, "logger: ", log.Lshortfile)
 	PosIrrelevant = Point{-100, -100}
 	DEBUG_DISARM_AI = false
@@ -87,7 +87,6 @@ func (receiver *Control) Enable() error  {
 		go receiver.dispatcher(receiver, receiver.commandChanel, receiver.terminator)
 	}*/
 	receiver.enabled = true
-	logger.Printf("enable %p \n", receiver)
 	return nil
 }
 
@@ -147,6 +146,9 @@ func NewPlayerControl(event <-chan keyboard.KeyEvent, keyMapping KeyBind) (*Cont
 				if keyEvent.Key == 0 {
 					keyEvent.Key = keyboard.Key(keyEvent.Rune)
 				}
+				if keyEvent.Key == keyboard.KeyBackspace2 {
+					keyEvent.Key = keyboard.KeyBackspace //normalize backspace
+				}
 				switch keyEvent.Key {
 				case keyMapping.Up:
 					command.CType = CTYPE_MOVE
@@ -168,6 +170,7 @@ func NewPlayerControl(event <-chan keyboard.KeyEvent, keyMapping KeyBind) (*Cont
 					command.Pos.X =  1
 					command.Pos.Y =  0
 					command.Action = true
+
 				case keyMapping.Fire:
 					command.CType = CTYPE_FIRE
 					command.Pos 	= PosIrrelevant

@@ -10,12 +10,14 @@ import (
 
 type GameRunner struct {
 	Keyboard <-chan keyboard.KeyEvent
+	*KeyboardRepeater
 	*Scenario
 	*Game
 	*GameConfig
 	*BlueprintManager
 	*BehaviorControlBuilder
 	*SpawnManager
+	*SoundManager
 	Renderer
 }
 
@@ -25,6 +27,10 @@ func (receiver *GameRunner) Init() {
 
 func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel) (exitEvent Event) {
 	receiver.Game, receiver.Scenario = game, scenario
+
+	if receiver.KeyboardRepeater == nil {
+		receiver.KeyboardRepeater, _ = NewKeyboardRepeater(receiver.Keyboard)
+	}
 
 	receiver.BlueprintManager.AddLoaderPackage(NewJsonPackage())
 	receiver.BlueprintManager.GameConfig = receiver.GameConfig
@@ -53,6 +59,24 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 		}
 	})
 
+	//temporal
+	if receiver.SoundManager != nil {
+		err := receiver.SoundManager.Register("main", "./sounds/main.mp3", false)
+		if err != nil {
+			logger.Println(err)
+		}
+		for key, path := range map[string]string{
+			"fire":      "./sounds/fire.mp3",
+			"explosion": "./sounds/explosion.mp3",
+			"damage":    "./sounds/damage.mp3",
+		} {
+			err = receiver.SoundManager.Register(key, path, true)
+			if err != nil {
+				logger.Println(err)
+			}
+		}
+	}
+
 	receiver.clear()
 	receiver.wait(200 * time.Millisecond)
 	receiver.setupSize()
@@ -77,7 +101,8 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 func (receiver *GameRunner) setupSize() {
 	var configurationChanel EventChanel = make(EventChanel) //todo remove
 
-	screen, _ := NewSetupSizeDialog(receiver.GameConfig.Box, receiver.Keyboard, configurationChanel)
+	keyboard := receiver.KeyboardRepeater.Subscribe()
+	screen, _ := NewSetupSizeDialog(receiver.GameConfig.Box, keyboard, configurationChanel)
 	receiver.Renderer.Add(screen)
 	screen.Activate()
 
@@ -88,8 +113,7 @@ func (receiver *GameRunner) setupSize() {
 			case DIALOG_EVENT_SETUP_SIZE:
 				screen.Deactivate()
 				receiver.Renderer.Remove(screen)
-				direct.Clear()
-				direct.Flush() //todo may cause bug must be in render
+				receiver.KeyboardRepeater.Unsubscribe(keyboard)
 				return
 			}
 		}
@@ -99,7 +123,8 @@ func (receiver *GameRunner) setupSize() {
 func (receiver *GameRunner) setupPlayers() {
 
 	var configurationChanel EventChanel = make(EventChanel) //todo remove
-	screen, _ := NewPlayerSelectDialog(receiver.Keyboard, configurationChanel)
+	keyboard := receiver.KeyboardRepeater.Subscribe()
+	screen, _ := NewPlayerSelectDialog(keyboard, configurationChanel)
 	receiver.Renderer.Add(screen)
 	screen.Activate()
 
@@ -109,11 +134,13 @@ func (receiver *GameRunner) setupPlayers() {
 			switch configuration.EType {
 			case DIALOG_EVENT_PLAYER_SELECT:
 				screen.Deactivate()
+				receiver.KeyboardRepeater.Unsubscribe(keyboard)
 				payload := configuration.Payload.(*DialogInfo)
-				keyboardRepeater, _ := NewKeyboardRepeater(receiver.Keyboard)
 				for i := 0; i < payload.Value; i++ {
-					playerControl, _ := controller.NewPlayerControl(keyboardRepeater.Subscribe(), controller.KeyboardBindingPool[i])
+					pKeyboard := receiver.KeyboardRepeater.Subscribe()
+					playerControl, _ := controller.NewPlayerControl(pKeyboard, receiver.GameConfig.KeyBindings[i])
 					player, _ := NewPlayer("Player"+strconv.Itoa(i+1), playerControl)
+					player.Keyboard = pKeyboard
 					player.CustomizeMap = &CustomizeMap{
 						"gun":   direct.RED,
 						"armor": direct.YELLOW,
@@ -149,6 +176,9 @@ func (receiver *GameRunner) runGame() (exitEvent Event) {
 				fallthrough
 			case GAME_END_LOSE:
 				receiver.Renderer.UI(nil)
+				for _, player := range receiver.players {
+					receiver.KeyboardRepeater.Unsubscribe(player.Keyboard)
+				}
 				if DEBUG_SHUTDOWN {
 					logger.Println("receive GAME_END event")
 				}
