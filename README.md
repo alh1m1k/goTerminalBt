@@ -1,7 +1,6 @@
-![Alt-текст](/playerMenu.png "Menu")
-![Alt-текст](/stage1Normal.png "Stage-1")
-
 # GoConsoleBT
+![Alt-текст](/playerMenu.png "Menu")
+
 It's Battle City inspired game for console and terminal. Game use text 
 and ASCII control symbol as graphics. GoConsoleBT is a game engine and game prototype written fully on GO
 
@@ -15,6 +14,9 @@ then install all requirements, on linux platform also need install libasound2-de
 run from app directory `go build . ` to build app, or `go run . ` to build and run (go lang must be installed)
 
 ### Usage
+
+![Alt-текст](/stage1Normal.png "Stage-1")
+
 First of all, build game for platform you want. 
 then run terminal to start game, use --help to see all available opt.
 + --scenario run custom scenario (for now only one game scenario available: stage-1 `app --scenario stage-1` )  
@@ -47,6 +49,8 @@ Thank's to author's there libs
 me for the bugs...
 
 ## Problems
++ Glitch ai behavior 
++ Rare crash on closing
 
 ### Disclaimer 
 I'm not a game developer and not a Go developer 
