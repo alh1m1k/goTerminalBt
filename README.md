@@ -1,5 +1,5 @@
-![Alt-текст](https://github.com/alh1m1k/goTerminalBt/playerMenu.png "Cfg")
-![Alt-текст](https://github.com/alh1m1k/goTerminalBt/stage1Normal.png "Cfg")
+![Alt-текст](/playerMenu.png "Menu")
+![Alt-текст](/stage1Normal.png "Stage-1")
 
 # GoConsoleBT
 It's Battle City inspired game for console and terminal. Game use text 
@@ -10,7 +10,7 @@ Currently tested on Windows 10 and Debian 10. Use any modern terminal to start
 (cmd.exe not a case) on windows you may run on Windows Terminal
 
 ### Installation
-Install and update this app with `go get -u https://github.com/alh1m1k/goTerminalBt`
+Install and update this app with `go get -u github.com/alh1m1k/goTerminalBt/blob/main/`
 then install all requirements, on linux platform also need install libasound2-dev `apt install libasound2-dev`
 run from app directory `go build . ` to build app, or `go run . ` to build and run (go lang must be installed)
 
@@ -25,7 +25,7 @@ or use:
 + --simplifyAl disabling behavioral ai and switching to random (behavior ai is kinda buggy for now)
 
 After startup, game save config and restart, when you see screen configurator
-![Alt-текст](https://github.com/alh1m1k/goTerminalBt/configurate.png "Cfg") zoom out until you see border.
+![Alt-текст](/configurate.png "Cfg") zoom out until you see border.
 Game border control by config, you may increase it, but I don't recommend reducing it. Then Press Enter and game will start.
 
 ### Controls
@@ -53,4 +53,4 @@ I'm not a game developer and not a Go developer
 
 
 #### Random with color
-![Alt-текст](https://github.com/alh1m1k/goTerminalBt/withColor.png "Cfg")
+![Alt-текст](/withColor.png "Colorfull")
