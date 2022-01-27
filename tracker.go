@@ -16,27 +16,27 @@ type Tracker struct {
 	subscribers                []IndexTracker
 }
 
-func (receiver *Tracker) Update(x, y, w, h float64) bool {
-	if w != receiver.lastW || h != receiver.lastH {
-		halfW := w / 2
-		halfH := h / 2
+func (receiver *Tracker) Update(pos Point, size Size) bool {
+	if size.W != receiver.lastW || size.H != receiver.lastH {
+		halfW := size.W / 2
+		halfH := size.H / 2
 		receiver.maxDistance = halfW*halfW + halfH*halfH
-		receiver.lastW = w
-		receiver.lastH = h
+		receiver.lastW = size.W
+		receiver.lastH = size.H
 	}
-	if x == receiver.lastX && y == receiver.lastY {
+	if pos.X == receiver.lastX && pos.Y == receiver.lastY {
 		return false
 	}
 
 	if receiver.cell.X == receiver.cell.Y && receiver.cell.X == 0 {
-		receiver.MoveTo(x, y)
+		receiver.MoveTo(pos.X, pos.Y)
 		return true
 	}
 
-	dist := getDistance(x+w/2, y+h/2, receiver.cell.X, receiver.cell.Y)
+	dist := getDistance(pos.X+size.W/2, pos.Y+size.H/2, receiver.cell.X, receiver.cell.Y)
 	//NearestZoneByCoordinate check distance < half size (math.round) fix that this
 	if dist > receiver.maxDistance {
-		receiver.MoveTo(x, y)
+		receiver.MoveTo(pos.X, pos.Y)
 		return true
 	} else {
 
@@ -50,13 +50,13 @@ func (receiver *Tracker) GetTracker() *Tracker {
 }
 
 //to implement Trackable interface due simplyfy use
-func (receiver *Tracker) GetXY() (float64, float64) {
-	return receiver.lastX, receiver.lastY
+func (receiver *Tracker) GetXY() Point {
+	return Point{receiver.lastX, receiver.lastY}
 }
 
 //to implement Trackable interface due simplyfy use
-func (receiver *Tracker) GetWH() (float64, float64) {
-	return receiver.lastW, receiver.lastH
+func (receiver *Tracker) GetWH() Size {
+	return Size{receiver.lastW, receiver.lastH}
 }
 
 func (receiver *Tracker) MoveTo(x, y float64) error {

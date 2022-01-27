@@ -14,8 +14,8 @@ type WeatherEffect struct {
 	done bool
 }
 
-func (receiver *WeatherEffect) GetXY() (float64, float64) {
-	return receiver.Point.X, receiver.Point.Y
+func (receiver *WeatherEffect) GetXY() Point {
+	return Point{receiver.Point.X, receiver.Point.Y}
 }
 
 func (receiver *WeatherEffect) GetSprite() Spriteer {

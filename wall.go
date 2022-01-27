@@ -84,10 +84,6 @@ func (receiver *Wall) Spawn() error {
 	return nil
 }
 
-func (receiver *Wall) GetDisappearDuration() time.Duration {
-	return 1 * time.Second
-}
-
 func (receiver *Wall) ApplyState(current *StateItem) error {
 	SwitchSprite(current.StateInfo.(*UnitStateInfo).sprite, receiver.sprite)
 	receiver.sprite = current.StateInfo.(*UnitStateInfo).sprite

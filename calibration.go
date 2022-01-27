@@ -75,8 +75,8 @@ func (receiver *Calibration) process(active, passive *CalibrationObject) error {
 	receiver.GameConfig.ColWidth = colW
 	receiver.GameConfig.RowHeight = rowH
 
-	receiver.GameConfig.Box.LT.X = 0
-	receiver.GameConfig.Box.LT.Y = 0
+	receiver.GameConfig.Box.X = 0
+	receiver.GameConfig.Box.Y = 0
 	receiver.GameConfig.Box.W = avgW
 	receiver.GameConfig.Box.H = avgH
 

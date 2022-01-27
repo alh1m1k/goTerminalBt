@@ -47,8 +47,6 @@ const DEBUG_SHOW_ID = false
 const DEBUG_SHOW_AI_BEHAVIOR = false
 const DEBUG_FREE_SPACES = false
 
-const RENDERER_WITH_ZINDEX = true
-
 var (
 	buf, bufErr     = os.OpenFile("./log.txt", os.O_CREATE|os.O_TRUNC, 644)
 	logger          = log.New(buf, "logger: ", log.Lshortfile)
@@ -168,11 +166,7 @@ func main() {
 	pipe.AnimationManager = animator
 
 	//render
-	if RENDERER_WITH_ZINDEX {
-		render, _ = NewRenderZIndex(100)
-	} else {
-		render, _ = NewRender(100)
-	}
+	render, _ = NewRenderZIndex(100)
 	pipe.Render = render
 
 	//updater
@@ -209,7 +203,7 @@ func main() {
 	} else {
 		size = scenario.Location
 	}
-	location, _ := NewLocation(size.LT, size.Size)
+	location, _ := NewLocation(size.Point, size.Size)
 	detector.Add(location)
 	pipe.Location = location
 

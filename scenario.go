@@ -17,8 +17,8 @@ var (
 		Payload: nil,
 	}
 	EmptyLocation = Box{
-		LT:   Point{},
-		Size: Size{},
+		Point{},
+		Size{},
 	}
 )
 
@@ -213,8 +213,8 @@ func GetScenarioState(id string) (*State, error) { //todo refactor
 		if location, ok := m["location"]; ok {
 			//todo refactor this shit
 			locationMap := location.(map[string]interface{})
-			ssi.Location.LT.X = locationMap["x"].(float64)
-			ssi.Location.LT.Y = locationMap["y"].(float64)
+			ssi.Location.X = locationMap["x"].(float64)
+			ssi.Location.Y = locationMap["y"].(float64)
 			ssi.Location.W = locationMap["w"].(float64)
 			ssi.Location.H = locationMap["h"].(float64)
 		}

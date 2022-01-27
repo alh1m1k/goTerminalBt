@@ -140,10 +140,10 @@ func NewNavigation(location *Location, collider *collider.Collider) (*Navigation
 	var template pathfinding.MapData
 
 	if location != nil {
-		x, y := location.zoneX, location.zoneY
+		x, y := location.sizeZone.X, location.sizeZone.Y
 		template = *pathfinding.NewMapData(y, x)
-		for r := 0; r < location.zoneY; r++ {
-			for c := 0; c < location.zoneX; c++ {
+		for r := 0; r < location.sizeZone.Y; r++ {
+			for c := 0; c < location.sizeZone.X; c++ {
 				template[r][c] = pathfinding.LAND
 			}
 		}

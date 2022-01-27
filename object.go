@@ -9,31 +9,29 @@ import (
 
 const OBJECT_EVENT_DESTROY = 1
 const OBJECT_EVENT_DESPAWN = 2
-
 const OBJECT_EVENT_RESET = 3
 const OBJECT_EVENT_SPAWN = 4
 
-var DestroyEvent Event = Event{
-	EType:   OBJECT_EVENT_DESTROY,
-	Payload: nil,
-}
+var (
+	DestroyEvent Event = Event{
+		EType:   OBJECT_EVENT_DESTROY,
+		Payload: nil,
+	}
+	DeSpawnEvent Event = Event{
+		EType:   OBJECT_EVENT_DESPAWN,
+		Payload: nil,
+	}
+	ResetEvent Event = Event{
+		EType:   OBJECT_EVENT_RESET,
+		Payload: nil,
+	}
+	SpawnEvent Event = Event{
+		EType:   OBJECT_EVENT_SPAWN,
+		Payload: nil,
+	}
 
-var DeSpawnEvent Event = Event{
-	EType:   OBJECT_EVENT_DESPAWN,
-	Payload: nil,
-}
-
-var ResetEvent Event = Event{
-	EType:   OBJECT_EVENT_RESET,
-	Payload: nil,
-}
-
-var SpawnEvent Event = Event{
-	EType:   OBJECT_EVENT_SPAWN,
-	Payload: nil,
-}
-
-var Tag404Error = errors.New("tag not found")
+	Tag404Error = errors.New("tag not found")
+)
 
 type Scored interface {
 	GetScore() int
@@ -47,14 +45,6 @@ type Danger interface {
 type Vulnerable interface {
 	ReciveDamage(incoming Danger)
 	HasTag(tag string) bool
-}
-
-type Appearable interface {
-	GetAppearDuration() time.Duration
-}
-
-type Disappearable interface {
-	GetDisappearDuration() time.Duration
 }
 
 type Tagable interface {
@@ -78,7 +68,7 @@ type ObjectInterface interface {
 	Tagable
 	Seen
 	collider.Collideable
-	GetCenter() (float64, float64)
+	GetCenter() Center
 	GetTracker() *Tracker
 	GetAttr() *Attributes
 	GetOwner() ObjectInterface
@@ -111,7 +101,7 @@ func (receiver *Object) Update(timeLeft time.Duration) error {
 	}
 	receiver.Interactions.Interact(receiver, timeLeft)
 	if receiver.Tracker != nil {
-		receiver.Tracker.Update(receiver.GetClBody().GetRect())
+		receiver.Tracker.Update(receiver.GetXY(), receiver.GetWH())
 	}
 	return nil
 }
@@ -144,23 +134,12 @@ func (receiver *Object) RelativeMove(x, y float64) {
 	receiver.collision.RelativeMove(x, y)
 }
 
-func (receiver *Object) GetXY() (x, y float64) {
-	return receiver.collision.GetXY()
-}
-
-func (receiver *Object) GetXY2() Point {
+func (receiver *Object) GetXY() Point {
 	x, y := receiver.collision.GetXY()
-	return Point{
-		X: x,
-		Y: y,
-	}
+	return Point{x, y}
 }
 
-func (receiver *Object) GetWH() (x, y float64) {
-	return receiver.collision.GetWH()
-}
-
-func (receiver *Object) GetWH2() Size {
+func (receiver *Object) GetWH() Size {
 	w, h := receiver.collision.GetWH()
 	return Size{
 		W: w,
@@ -168,20 +147,16 @@ func (receiver *Object) GetWH2() Size {
 	}
 }
 
-func (receiver *Object) GetRect() (x, y, w, h float64) {
-	return receiver.collision.GetRect()
-}
-
-func (receiver *Object) GetCenter() (x, y float64) {
-	return receiver.collision.GetCenter()
-}
-
-func (receiver *Object) GetCenter2() Center {
+func (receiver *Object) GetCenter() Center {
 	x, y := receiver.collision.GetCenter()
 	return Center{
 		X: x,
 		Y: y,
 	}
+}
+
+func (receiver *Object) GetRect() (x, y, w, h float64) {
+	return receiver.collision.GetRect()
 }
 
 func (receiver *Object) GetTracker() *Tracker {

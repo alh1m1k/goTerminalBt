@@ -29,17 +29,17 @@ var (
 )
 
 type Trackable interface {
-	GetXY() (x, y float64)
-	GetWH() (w, h float64)
+	GetXY() Point
+	GetWH() Size
 	GetTracker() *Tracker
 }
 
 type Location struct {
 	left, right, top, bottom *collider.ClBody
-	setupSize                *Size
-	setupUnitSize            *Point
+	box                      Box
+	setupUnitSize            Point
 	zones                    [][]Trackable
-	zoneX, zoneY             int
+	startZone, sizeZone      Zone
 	zonesLeft                int
 	zoneLock                 sync.Mutex
 }
@@ -48,9 +48,7 @@ func (receiver *Location) Add(object Trackable) {
 	if tracker := object.GetTracker(); tracker != nil {
 		receiver.zoneLock.Lock()
 		tracker.Manager = receiver
-		x, y := object.GetXY()
-		w, h := object.GetWH()
-		tracker.Update(x, y, w, h)
+		tracker.Update(object.GetXY(),object.GetWH())
 		xi, yi := tracker.GetIndexes()
 		if receiver.zones[yi][xi] == ZoneSpawnPlaceholder {
 			receiver.zones[yi][xi] = nil
@@ -129,11 +127,11 @@ func (receiver *Location) Execute(timeLeft time.Duration) {
 func (receiver *Location) Minimap(withSpawnPoint bool, applyRoutes [][]Zone) ([][]byte, error) {
 	receiver.zoneLock.Lock()
 	defer receiver.zoneLock.Unlock()
-	minimap := make([][]byte, receiver.zoneY)
+	minimap := make([][]byte, receiver.sizeZone.Y)
 
 	empty := []byte(" ")
 	for i, _ := range minimap {
-		minimap[i] = bytes2.Repeat(empty, receiver.zoneX)
+		minimap[i] = bytes2.Repeat(empty, receiver.sizeZone.X)
 	}
 
 	if applyRoutes != nil {
@@ -179,7 +177,7 @@ func (receiver *Location) Minimap(withSpawnPoint bool, applyRoutes [][]Zone) ([]
 func (receiver *Location) Mapdata() ([]*Tracker, error) {
 	receiver.zoneLock.Lock()
 	defer receiver.zoneLock.Unlock()
-	mapdata := make([]*Tracker, 0, receiver.zoneX*receiver.zoneY-receiver.zonesLeft)
+	mapdata := make([]*Tracker, 0, receiver.sizeZone.X * receiver.sizeZone.Y - receiver.zonesLeft)
 
 	for _, row := range receiver.zones {
 		for _, object := range row {
@@ -203,8 +201,8 @@ func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
 	defer receiver.zoneLock.Unlock()
 
 	if !empty { //generate random coord in grid, no zone taked
-		xi := rand.Intn(receiver.zoneX)
-		yi := rand.Intn(receiver.zoneY)
+		xi := rand.Intn(receiver.sizeZone.X)
+		yi := rand.Intn(receiver.sizeZone.Y)
 		return newPointFromZone(
 			receiver.setupUnitSize.X,
 			receiver.setupUnitSize.Y,
@@ -217,8 +215,8 @@ func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
 	}
 	deadline := 100
 	for true {
-		xi := rand.Intn(receiver.zoneX)
-		yi := rand.Intn(receiver.zoneY)
+		xi := rand.Intn(receiver.sizeZone.X)
+		yi := rand.Intn(receiver.sizeZone.Y)
 		if receiver.zones[yi][xi] == nil {
 			receiver.zones[yi][xi] = ZoneSpawnPlaceholder
 			receiver.zonesLeft--
@@ -265,7 +263,7 @@ func (receiver *Location) CapturePoint(point Point) error {
 
 func (receiver *Location) CoordinateByIndex(x, y int) (Point, error) {
 
-	if x >= receiver.zoneX || y >= receiver.zoneY {
+	if x >= receiver.sizeZone.X || y >= receiver.sizeZone.Y {
 		return NoPos, ZoneRangeError
 	}
 
@@ -277,7 +275,7 @@ func (receiver *Location) CoordinateByIndex(x, y int) (Point, error) {
 
 func (receiver *Location) CoordinateByZone(zone Zone) (Point, error) {
 
-	if zone.X >= receiver.zoneX || zone.Y >= receiver.zoneY {
+	if zone.X >= receiver.sizeZone.X || zone.Y >= receiver.sizeZone.Y {
 		return NoPos, ZoneRangeError
 	}
 
@@ -289,7 +287,7 @@ func (receiver *Location) CoordinateByZone(zone Zone) (Point, error) {
 
 func (receiver *Location) CenterByIndex(x, y int) (Center, error) {
 
-	if x >= receiver.zoneX || y >= receiver.zoneY {
+	if x >= receiver.sizeZone.X || y >= receiver.sizeZone.Y {
 		return NoCenter, ZoneRangeError
 	}
 
@@ -306,14 +304,14 @@ func (receiver *Location) NearestZoneByCoordinate(point Point) Zone {
 	if xi < 0 {
 		xi = 0
 	}
-	if xi >= receiver.zoneX {
-		xi = receiver.zoneX - 1
+	if xi >= receiver.sizeZone.X {
+		xi = receiver.sizeZone.X - 1
 	}
 	if yi < 0 {
 		yi = 0
 	}
-	if yi >= receiver.zoneY {
-		yi = receiver.zoneY - 1
+	if yi >= receiver.sizeZone.Y {
+		yi = receiver.sizeZone.Y - 1
 	}
 
 	return Zone{
@@ -344,14 +342,14 @@ func (receiver *Location) IndexByPos(x, y float64) (xi, yi int) {
 	if xi < 0 {
 		xi = 0
 	}
-	if xi >= receiver.zoneX {
-		xi = receiver.zoneX - 1
+	if xi >= receiver.sizeZone.X {
+		xi = receiver.sizeZone.X - 1
 	}
 	if yi < 0 {
 		yi = 0
 	}
-	if yi >= receiver.zoneY {
-		yi = receiver.zoneY - 1
+	if yi >= receiver.sizeZone.Y {
+		yi = receiver.sizeZone.Y - 1
 	}
 
 	return xi, yi
@@ -363,14 +361,14 @@ func (receiver *Location) ZoneByCoordinate(point Point) Zone {
 	if xi < 0 {
 		xi = 0
 	}
-	if xi >= receiver.zoneX {
-		xi = receiver.zoneX - 1
+	if xi >= receiver.sizeZone.X {
+		xi = receiver.sizeZone.X - 1
 	}
 	if yi < 0 {
 		yi = 0
 	}
-	if yi >= receiver.zoneY {
-		yi = receiver.zoneY - 1
+	if yi >= receiver.sizeZone.Y {
+		yi = receiver.sizeZone.Y - 1
 	}
 
 	return Zone{
@@ -380,48 +378,47 @@ func (receiver *Location) ZoneByCoordinate(point Point) Zone {
 }
 
 func (receiver *Location) Setup(pos Point, size Size) error {
-	return receiver.setup(&pos, &size)
+	return receiver.setup(Box{pos, size})
 }
 
 func (receiver *Location) SetupZones(size Point) error {
-	receiver.setupUnitSize = &size
-	receiver.zoneX = int(receiver.setupSize.W / size.X)
-	receiver.zoneY = int(receiver.setupSize.H / size.Y)
-	receiver.zones = make([][]Trackable, receiver.zoneY)
+	receiver.setupUnitSize = size
+	receiver.sizeZone  = Zone{int(receiver.box.W / size.X), int(receiver.box.H / size.Y)}
+	receiver.zones = make([][]Trackable, receiver.sizeZone.Y)
 	for ri, _ := range receiver.zones {
-		receiver.zones[ri] = make([]Trackable, receiver.zoneX)
+		receiver.zones[ri] = make([]Trackable, receiver.sizeZone.X)
 	}
-	receiver.zonesLeft = receiver.zoneX * receiver.zoneY
+	receiver.zonesLeft = receiver.sizeZone.X * receiver.sizeZone.Y
 	return nil
 }
 
-func (receiver *Location) setup(pos *Point, size *Size) error {
-	receiver.setupSize = size
+func (receiver *Location) setup(box Box) error {
+	receiver.box = box
 	if receiver.left == nil {
 		receiver.left = collider.NewStaticCollision(
-			pos.X-BORDER_SIZE,
-			pos.Y,
+			box.X-BORDER_SIZE,
+			box.Y,
 			BORDER_SIZE,
-			size.H,
+			box.H,
 		)
 	} else {
 		panic("location resize not implemented")
 	}
 	if receiver.right == nil {
 		receiver.right = collider.NewStaticCollision(
-			pos.X+size.W,
-			pos.Y,
+			box.X+box.W,
+			box.Y,
 			BORDER_SIZE,
-			size.H,
+			box.H,
 		)
 	} else {
 		panic("location resize not implemented")
 	}
 	if receiver.top == nil {
 		receiver.top = collider.NewStaticCollision(
-			pos.X-BORDER_SIZE,
-			pos.Y-BORDER_SIZE,
-			BORDER_SIZE+size.W,
+			box.X-BORDER_SIZE,
+			box.Y-BORDER_SIZE,
+			BORDER_SIZE+box.W,
 			BORDER_SIZE,
 		)
 	} else {
@@ -429,9 +426,9 @@ func (receiver *Location) setup(pos *Point, size *Size) error {
 	}
 	if receiver.bottom == nil {
 		receiver.bottom = collider.NewStaticCollision(
-			pos.X-BORDER_SIZE,
-			pos.Y+size.H,
-			BORDER_SIZE+size.W,
+			box.X-BORDER_SIZE,
+			box.Y+box.H,
+			BORDER_SIZE+box.W,
 			BORDER_SIZE,
 		)
 	} else {
@@ -464,7 +461,7 @@ func NewLocation(pos Point, size Size) (*Location, error) {
 		top:    nil,
 		bottom: nil,
 	}
-	location.setup(&pos, &size)
+	location.setup(Box{pos, size})
 	return location, nil
 }
 
@@ -472,7 +469,7 @@ func (receiver *Location) putInZone(object Trackable) error {
 	tracker := object.GetTracker()
 	zxi, zyi := tracker.GetIndexes()
 	tracker.IsNeedUpdateZone = false
-	if zxi >= receiver.zoneX || zyi >= receiver.zoneY || zxi < 0 || zyi < 0 {
+	if zxi >= receiver.sizeZone.X || zyi >= receiver.sizeZone.Y || zxi < 0 || zyi < 0 {
 		return ZoneRangeError
 	}
 	if receiver.zones[zyi][zxi] != nil {

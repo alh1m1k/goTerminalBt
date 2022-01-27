@@ -68,10 +68,6 @@ func (receiver *Collectable) Collect(by *Unit) error {
 	return nil
 }
 
-func (receiver *Collectable) GetAppearDuration() time.Duration {
-	return 3 * time.Second
-}
-
 func (receiver *Collectable) Destroy(nemesis ObjectInterface) error {
 	if receiver.destroyed {
 		return nil

@@ -49,19 +49,19 @@ func PlayerConfigurator(object ObjectInterface, config interface{}) ObjectInterf
 func ExplosionConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
 	from := config.(ObjectInterface)
 	owner := from.GetOwner()
-	x, y := from.GetXY()
-	w, h := from.GetWH()
-	gX := x + w/2
-	gY := y + h/2
+	point := from.GetXY()
+	size  := from.GetWH()
+	gX := point.X + size.W/2
+	gY := point.Y + size.H/2
 
 	explosion := object.(*Explosion)
-	expW, expH := explosion.GetWH()
+	expSize := explosion.GetWH()
 
 	explosion.Owner = owner
-	x, y = gX-expW/2, gY-expH/2
-	x = math.Min(math.Max(x, 0), float64(maxX)-expW-0.5) //align to border, sux but truly need
-	y = math.Min(math.Max(y, 0), float64(maxY)-expH-0.5)
-	explosion.Move(x, y)
+	point.X, point.Y = gX-expSize.W/2, gY-expSize.H/2
+	point.X = math.Min(math.Max(point.X, 0), float64(maxX)-expSize.W-0.5) //align to border, sux but truly need
+	point.Y = math.Min(math.Max(point.Y, 0), float64(maxY)-expSize.H-0.5)
+	explosion.Move(point.X, point.Y)
 
 	explosion.GetAttr().ID = -100
 	explosion.GetAttr().Team = -1
@@ -73,10 +73,10 @@ func ExplosionConfigurator(object ObjectInterface, config interface{}) ObjectInt
 func CollectableConfigurator(object ObjectInterface, config interface{}) ObjectInterface {
 	from := config.(*Unit)
 	collectable := object.(*Collectable)
-	x, y := from.GetXY()
+	point := from.GetXY()
 
 	collectable.Owner = from
-	collectable.Move(x, y)
+	collectable.Move(point.X, point.Y)
 	collectable.GetAttr().ID = -1
 	collectable.GetAttr().Team = -100
 	collectable.GetAttr().TeamTag = "team--100"
@@ -111,12 +111,12 @@ func ProjectileConfigurator(object ObjectInterface, config interface{}) ObjectIn
 		projectile.Enter("bottom")
 	}
 
-	ow, oh := projectile.GetWH()
+	size := projectile.GetWH()
 
-	centerOx += params.Direction.X * ow / 2
-	centerOy += params.Direction.Y * oh / 2
-	x = centerOx - ow/2
-	y = centerOy - oh/2
+	centerOx += params.Direction.X * size.W / 2
+	centerOy += params.Direction.Y * size.H / 2
+	x = centerOx - size.W/2
+	y = centerOy - size.H/2
 
 	projectile.Move(x, y)
 	//----- speed modify based at owner speed

@@ -73,7 +73,7 @@ func (receiver *FireSolution) calculateProjectileSolution(unit *Unit, projectile
 	point = Point{} //0:0
 	for timeLeft = CYCLE / 4; timeLeft <= ttl; timeLeft += CYCLE / 4 {
 		projectile.Update(CYCLE / 4)
-		newPoint := projectile.GetXY2()
+		newPoint := projectile.GetXY()
 		if math.Round(newPoint.X) != math.Round(point.X) {
 			solution.sampleX[len(solution.sampleX)-1].leave = timeLeft
 			solution.sampleX = append(solution.sampleX, &FireSolutionSample{
@@ -101,7 +101,7 @@ func (receiver *FireSolution) calculateProjectileSolution(unit *Unit, projectile
 	point = Point{} //0:0
 	for timeLeft = CYCLE / 4; timeLeft <= ttl; timeLeft += CYCLE / 4 {
 		projectile.Update(CYCLE / 4)
-		newPoint := projectile.GetXY2()
+		newPoint := projectile.GetXY()
 		if math.Round(newPoint.Y) != math.Round(point.Y) {
 			solution.sampleY[len(solution.sampleY)-1].leave = timeLeft
 			solution.sampleY = append(solution.sampleY, &FireSolutionSample{

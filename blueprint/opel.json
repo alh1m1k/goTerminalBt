@@ -67,5 +67,10 @@
   },
   "ttl": 10000000000,
   "zIndex": -1,
-  "tags": ["collectable", "opel", "highlights-appear"]
+  "tags": ["collectable", "opel", {
+    "name": "highlights-appear",
+    "values": {
+      "duration": "3000000000"
+    }
+  }]
 }

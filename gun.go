@@ -142,19 +142,19 @@ func (receiver *Gun) Basic(state *GunState) {
 }
 
 func (receiver *Gun) getPosition() Point {
-	x, y := receiver.Owner.GetXY()
+	point := receiver.Owner.GetXY()
 	dir := receiver.Owner.Direction
-	w, h := receiver.Owner.GetWH()
+	size := receiver.Owner.GetWH()
 
 	if dir.X == 0 && dir.Y == 0 {
 		dir.Y = -1
 	}
-	centerX := x + w/2
-	centerY := y + h/2
+	centerX := point.X + size.W/2
+	centerY := point.Y + size.H/2
 
 	return Point{
-		X: centerX + (dir.X * w / 2),
-		Y: centerY + (dir.Y * h / 2),
+		X: centerX + (dir.X * size.W / 2),
+		Y: centerY + (dir.Y * size.H / 2),
 	}
 }
 

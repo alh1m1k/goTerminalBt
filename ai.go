@@ -249,7 +249,7 @@ func (receiver *BehaviorControl) InZone(zone Zone) bool {
 	if receiver.avatar == nil || receiver.avatar.GetTracker() == nil {
 		return false
 	}
-	center := receiver.avatar.GetCenter2()
+	center := receiver.avatar.GetCenter()
 	centerOfZone, _ := receiver.Location.CenterByIndex(zone.X, zone.Y)
 	if center == centerOfZone {
 		return true
@@ -262,7 +262,7 @@ func (receiver *BehaviorControl) InZone(zone Zone) bool {
 
 func (receiver *BehaviorControl) IsAlignToZone(zone Zone) bool {
 	//todo cache center pos in zone
-	center := receiver.avatar.GetCenter2()
+	center := receiver.avatar.GetCenter()
 	centerOfZone, _ := receiver.Location.CenterByIndex(zone.X, zone.Y)
 
 	var delta float64
@@ -290,7 +290,7 @@ func (receiver *BehaviorControl) AlignToZone(zone Zone) (done bool) {
 	if receiver.IsStop() {
 
 	}
-	center := receiver.avatar.GetCenter2()
+	center := receiver.avatar.GetCenter()
 	centerOfZone, _ := receiver.Location.CenterByIndex(zone.X, zone.Y)
 
 	moveCommand := controller.Command{
@@ -378,7 +378,7 @@ func (receiver *BehaviorControl) GetFollowZone() Zone {
 
 func (receiver *BehaviorControl) GetDirection2Zone(zone Zone) Point {
 	//todo cache center pos in zone
-	center := receiver.avatar.GetCenter2()
+	center := receiver.avatar.GetCenter()
 	centerOfZone, _ := receiver.Location.CenterByIndex(zone.X, zone.Y)
 
 	var delta float64
@@ -402,13 +402,13 @@ func (receiver *BehaviorControl) GetDirection2Zone(zone Zone) Point {
 }
 
 func (receiver *BehaviorControl) GetDirection2Target(target *Unit) Point {
-	centerOfZone := target.GetCenter2()
+	centerOfZone := target.GetCenter()
 	return receiver.GetDirection2Point(Point(centerOfZone))
 }
 
 func (receiver *BehaviorControl) GetDirection2Point(point Point) Point {
 	//todo cache center pos in zone
-	center := receiver.avatar.GetCenter2()
+	center := receiver.avatar.GetCenter()
 	centerOfZone := Center(point)
 
 	var delta float64
@@ -449,7 +449,7 @@ func (receiver *BehaviorControl) IsStop() bool {
 
 func (receiver *BehaviorControl) MoveToZone(zone Zone, timeLeft time.Duration) (done bool, err error) {
 	//todo cache center pos in zone
-	center := receiver.avatar.GetCenter2()
+	center := receiver.avatar.GetCenter()
 	avatarSpeed := receiver.avatar.Speed
 	centerOfZone, _ := receiver.Location.CenterByIndex(zone.X, zone.Y)
 
@@ -733,8 +733,8 @@ func (receiver *BehaviorControl) OnTickCollide(object collider.Collideable, coll
 
 		tcenterX, tcenterY := body.GetCenter()
 		tw, th := body.GetWH()
-		acenter := receiver.avatar.GetCenter2()
-		awh := receiver.avatar.GetWH2()
+		acenter := receiver.avatar.GetCenter()
+		awh := receiver.avatar.GetWH()
 
 		direction := receiver.GetDirection2Point(Point{tcenterX, tcenterY})
 

@@ -28,12 +28,12 @@ func NewDefaultGameConfig() (*GameConfig, error) {
 			controller.Player2DefaultKeyBinding,
 		},
 		Box: Box{
-			LT: Point{
+			Point{
 				X: 0,
 				Y: 0,
 			},
-			Size: Size{
-				W: 263,
+			Size{
+				W: 264,
 				H: 60,
 			},
 		},

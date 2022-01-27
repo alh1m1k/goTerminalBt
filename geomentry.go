@@ -3,18 +3,10 @@ package main
 import "math"
 
 type Located interface {
-	GetXY() (x float64, y float64)
-}
-
-type Located2 interface {
 	GetXY() Point
 }
 
 type Sized interface {
-	GetWH() (w float64, h float64)
-}
-
-type Sized2 interface {
 	GetWH() Size
 }
 
@@ -121,7 +113,7 @@ func (receiver Center) Round() Center {
 }
 
 type Box struct {
-	LT Point
+	Point
 	Size
 }
 

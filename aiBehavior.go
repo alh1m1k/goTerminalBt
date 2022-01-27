@@ -130,8 +130,8 @@ var (
 			avatar := control.avatar
 
 			tdir := target.Direction
-			tPos := target.GetCenter2()
-			aPos := avatar.GetCenter2()
+			tPos := target.GetCenter()
+			aPos := avatar.GetCenter()
 			dir2Target := control.GetDirection2Target(target)
 
 			crossing := dir2Target.Plus(tdir)
@@ -159,11 +159,11 @@ var (
 			target := control.target
 			avatar := control.avatar
 
-			acenter := avatar.GetCenter2()
-			aw, ah := avatar.GetWH()
-			tcenter := target.GetCenter2()
-			tw, th := target.GetWH()
-			tdir := target.Direction
+			acenter := avatar.GetCenter()
+			asize 	:= avatar.GetWH()
+			tcenter := target.GetCenter()
+			tsize 	:= target.GetWH()
+			tdir 	:= target.Direction
 			dir2Target := control.GetDirection2Target(target)
 			preemption := NoSolutionPoint
 
@@ -173,12 +173,12 @@ var (
 			}
 			centerDistance := acenter.Minus(tcenter).Abs()
 			borderDistance := centerDistance.Minus(Center{
-				X: aw/2 + tw/2,
-				Y: ah/2 + th/2,
+				X: asize.W/2 + tsize.W/2,
+				Y: asize.H/2 + tsize.H/2,
 			}).Round()
 			fireDistance := centerDistance.Minus(Center{
-				X: tw / 2,
-				Y: th / 2,
+				X: tsize.W / 2,
+				Y: tsize.H / 2,
 			}).Round()
 			crossing := dir2Target.Plus(tdir)
 			if DEBUG_OPPORTUNITY_FIRE {
@@ -239,8 +239,8 @@ func NewHuntBehavior() *Behavior {
 				}
 			}
 
-			apoint := control.avatar.GetCenter2()
-			tpoint := control.target.GetCenter2()
+			apoint := control.avatar.GetCenter()
+			tpoint := control.target.GetCenter()
 			tzone := control.target.GetZone()
 			adir, tdir := control.avatar.Direction, control.target.Direction
 			cPrecX, cPrecY := control.setupUnitSize.X/4, control.setupUnitSize.Y/4
@@ -249,7 +249,7 @@ func NewHuntBehavior() *Behavior {
 			oneLineX, oneLineY := math.Abs(apoint.Y-tpoint.Y) < cPrecY, math.Abs(apoint.X-tpoint.X) < cPrecX
 
 			if len(control.lastPath) == 0 && oneLineX || oneLineY {
-				asize, tsize := control.avatar.GetWH2(), control.target.GetWH2()
+				asize, tsize := control.avatar.GetWH(), control.target.GetWH()
 				distance := apoint.Minus(tpoint).Abs().Minus(Center{X: asize.W/2 + tsize.W/2, Y: asize.H/2 + tsize.H/2})
 				if (distance.X < asize.W*2 && oneLineX) || (distance.Y < asize.H*2 && oneLineY) {
 					current := control.Behavior
@@ -568,14 +568,14 @@ func NewAttackBehavior(next func(control *BehaviorControl)) *Behavior {
 			if !control.IsStop() {
 				control.Stop()
 			}
-			apoint := control.avatar.GetCenter2()
-			tpoint := control.target.GetCenter2()
+			apoint := control.avatar.GetCenter()
+			tpoint := control.target.GetCenter()
 			tzone := control.target.GetZone()
 			cPrecX, cPrecY := control.setupUnitSize.X/4, control.setupUnitSize.Y/4
 
 			oneLineX, oneLineY := math.Abs(apoint.Y-tpoint.Y) < cPrecY, math.Abs(apoint.X-tpoint.X) < cPrecX
 
-			asize, tsize := control.avatar.GetWH2(), control.target.GetWH2()
+			asize, tsize := control.avatar.GetWH(), control.target.GetWH()
 			distance := apoint.Minus(tpoint).Abs().Minus(Center{X: asize.W/2 + tsize.W/2, Y: asize.H/2 + tsize.H/2})
 			if (distance.X < asize.W*2 && oneLineX) || (distance.Y < asize.H*2 && oneLineY) {
 				if control.CanFire(Point(tpoint)) {

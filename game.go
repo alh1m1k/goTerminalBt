@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -215,8 +216,12 @@ func (receiver *Game) onUnitDamage(object ObjectInterface, payload interface{}) 
 	if object.HasTag("highlights-damage") {
 		toState, _ := object.GetTagValue("highlights-damage", "moveToState", "receiveDamage")
 		returnToState, _ := object.GetTagValue("highlights-damage", "returnToState", ToDefaultState)
-		object.(Stater).Enter(toState)
-		delayedEnterState(object.(Stater), returnToState, time.Millisecond*500)
+		if toState == "" {
+			logger.Printf("highlights-damage: toState is empty")
+		} else {
+			object.(Stater).Enter(toState)
+			delayedEnterState(object.(Stater), returnToState, time.Millisecond * 500)
+		}
 	}
 	if object.HasTag("tank") {
 		tank := object.(*Unit)
@@ -269,8 +274,16 @@ func (receiver *Game) onObjectReset(object ObjectInterface, payload interface{})
 
 func (receiver *Game) onObjectSpawn(object ObjectInterface, payload interface{}) {
 	if object.HasTag("highlights-appear") {
-		object.(Stater).Enter("appear")
-		delayedEnterState(object.(Stater), "normal", object.(Appearable).GetAppearDuration())
+		toState, _ 			:= object.GetTagValue("highlights-appear", "moveToState", "appear")
+		returnToState, _ 	:= object.GetTagValue("highlights-appear", "returnToState", ToDefaultState)
+		durStr, _ 			:= object.GetTagValue("highlights-appear", "duration", "8000000000")
+		duration, err := strconv.Atoi(durStr)
+		if err != nil || toState == "" {
+			logger.Printf("highlights-appear: invalid duration value %s or toState value %s", durStr, toState)
+		} else {
+			object.(Stater).Enter(toState)
+			delayedEnterState(object.(Stater), returnToState, time.Duration(duration))
+		}
 	}
 }
 
@@ -313,8 +326,7 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 
 	if object.HasTag("ice") {
 		bl, _ := object.GetTagValue("ice", "blueprint", "water")
-		point := Point{}
-		point.X, point.Y = object.GetXY()
+		point := object.GetXY()
 		_, err := receiver.SpawnManager.Spawn(point, bl, DefaultConfigurator, &SpawnRequest{
 			Team: object.(ObjectInterface).GetAttr().Team,
 		})
@@ -329,12 +341,19 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 
 	if object.HasTag("highlights-disappear") {
 		despawnNow = false
-		object.(Stater).Enter("disappear")
-		time.AfterFunc(object.(Disappearable).GetDisappearDuration(), func() {
-			if receiver.inProgress { //todo fix in game method
-				receiver.SpawnManager.DeSpawn(object)
-			}
-		})
+		toState, _ 	:= object.GetTagValue("highlights-disappear", "moveToState", "disappear")
+		durStr, _   := object.GetTagValue("highlights-disappear", "duration", "1000000000")
+		duration, err := strconv.Atoi(durStr)
+		if err != nil || toState == "" {
+			logger.Printf("highlights-appear: invalid duration value %s or toState value %s", durStr, toState)
+		} else {
+			object.(Stater).Enter(toState)
+			time.AfterFunc(time.Duration(duration), func() {
+				if receiver.inProgress { //todo fix in game method
+					receiver.SpawnManager.DeSpawn(object)
+				}
+			})
+		}
 	}
 
 	if despawnNow {
@@ -618,7 +637,7 @@ type fanoutConfig struct {
 
 func doFanoutSpawn(instance *Game, object ObjectInterface) {
 	var bl string
-	x, y := object.GetXY()
+	pos := object.GetXY()
 	coords := []Point{Point{X: -1, Y: -1}, Point{X: 0, Y: -1}, Point{X: 1, Y: -1},
 		Point{X: -1, Y: 0}, Point{X: 1, Y: 0},
 		Point{X: -1, Y: 1}, Point{X: 0, Y: 1}, Point{X: 1, Y: 1},
@@ -631,10 +650,7 @@ func doFanoutSpawn(instance *Game, object ObjectInterface) {
 			sscale = 1.0
 		}
 		bl, _ = object.GetTagValue("fanout", "blueprint", "projectile-sharp")
-		instance.Spawn(Point{
-			X: x,
-			Y: y,
-		}, bl, FanoutProjectileConfigurator, &fanoutConfig{
+		instance.Spawn(pos, bl, FanoutProjectileConfigurator, &fanoutConfig{
 			Owner:      object,
 			Direction:  coord,
 			SpeedScale: sscale,

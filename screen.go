@@ -40,11 +40,11 @@ type Screen struct {
 	size   Point
 }
 
-func (receiver *Screen) GetXY() (x float64, y float64) {
+func (receiver *Screen) GetXY() Point {
 	if receiver.size == FullScreenSize {
-		return 0, 0
+		return Point{}
 	} else {
-		return float64(direct.Width())/2 - receiver.size.X/2, float64(direct.Height())/2 - receiver.size.Y/2
+		return Point{float64(direct.Width())/2 - receiver.size.X/2, float64(direct.Height())/2 - receiver.size.Y/2}
 	}
 }
 
@@ -136,7 +136,7 @@ func NewLogoScreen() (*Screen, error) {
 func NewSetupSizeDialog(config Box, keyboard <-chan keyboard.KeyEvent, chanel EventChanel) (*Dialog, error) {
 	logoS, err := GetSprite("setup_size_s", true, false)
 	logoM, err := GetSprite("setup_size_m", true, false)
-	right := NewContentSprite([]byte(strings.Repeat("###\n", int(math.Round(config.H))-3)))
+	right  := NewContentSprite([]byte(strings.Repeat("###\n", int(math.Round(config.H))-3)))
 	bottom := NewContentSprite([]byte(strings.Repeat(strings.Repeat("#", int(math.Round(config.W)))+"\n", 2)))
 	composition, _ := NewComposition(nil)
 	composition.addFrame(logoS, 0, 0, 0)

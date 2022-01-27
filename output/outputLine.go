@@ -25,7 +25,7 @@ var (
 
 type ConsoleOutputLine struct {
 	currX, currY    int
-	rowsRepaint     map[int]bool
+	rowsRepaint     []bool
 	rowsRepaintCnt  int
 	needFullRepaint bool
 	clipMode  int
@@ -40,8 +40,8 @@ func (co *ConsoleOutputLine) PrintSprite(stringer fmt.Stringer, x, y, w, h int) 
 		return 0, OutOfRenderRangeError
 	}
 	str := stringer.String()
-	for i := 0; i < h; i++ {
-		co.rowsRepaint[i + y] = true
+	for i := maxInt(y, 0); i < y + h; i++ {
+		co.rowsRepaint[i] = true
 		co.rowsRepaintCnt++
 	}
 	str = co.MoveTo(str, x, y)
@@ -56,8 +56,8 @@ func (co *ConsoleOutputLine) PrintDynamicSprite(stringer fmt.Stringer, x, y, w, 
 		return 0, OutOfRenderRangeError
 	}
 	str := stringer.String()
-	for i := 0; i < h; i++ {
-		co.rowsRepaint[i + y] = true
+	for i := maxInt(y, 0); i < y + h; i++ {
+		co.rowsRepaint[i] = true
 		co.rowsRepaintCnt++
 	}
 	str = co.MoveTo(str, x, y)
@@ -72,7 +72,7 @@ func (co *ConsoleOutputLine) Print(str string) (n int, err error) {
 		}
 		return 0, OutOfRenderRangeError
 	}
-	for i := co.currY; i < co.currY+ strH; i++ {
+	for i := maxInt(co.currY, 0); i < co.currY+ strH; i++ {
 		co.rowsRepaint[i] = true
 		co.rowsRepaintCnt++
 	}
@@ -169,7 +169,7 @@ func NewConsoleOutputLine() (*ConsoleOutputLine,error)  {
 	instance := &ConsoleOutputLine{
 		currX:           0,
 		currY:           0,
-		rowsRepaint:     make(map[int]bool, output.Height()),
+		rowsRepaint:     make([]bool, output.Height() + 3),
 		rowsRepaintCnt:  0,
 		needFullRepaint: false,
 		width:           0,
@@ -185,7 +185,13 @@ func updateSizesDispatcher(cOut *ConsoleOutputLine)  {
 	var check func()
 	check = func() {
 		w, h := output.Width(), output.Height()
+		withTolerance := h + cOut.hTolerance
 		if cOut.width != w || cOut.height != h {
+			if rLen := len(cOut.rowsRepaint); rLen < withTolerance {
+				cOut.rowsRepaint = append(cOut.rowsRepaint, make([]bool, withTolerance - rLen)...)
+			} else if rLen > h {
+				cOut.rowsRepaint = cOut.rowsRepaint[:withTolerance]
+			}
 			cOut.width, cOut.height = w,h
 			cOut.needFullRepaint = true
 		}

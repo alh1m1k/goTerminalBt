@@ -79,8 +79,8 @@ func (receiver *EffectManager) ApplyGlobalShake(power float64, duration time.Dur
 }
 
 func (receiver *EffectManager) ApplyGlobalWeather(name string, power float64, duration time.Duration) error {
-	w := receiver.render.(*RenderZIndex).output.Width() //todo refactor
-	h := receiver.render.(*RenderZIndex).output.Height()
+	w := receiver.render.(*Render).output.Width() //todo refactor
+	h := receiver.render.(*Render).output.Height()
 	totalSpace := w * h
 	realSpace := int(float64(totalSpace) * power)
 	rate := totalSpace / realSpace
