@@ -100,7 +100,6 @@ func (co *ConsoleOutputLine) ClipMode(mode int) {
 }
 
 func (co *ConsoleOutputLine) MoveTo(str string, x int, y int) (out string) {
-	co.currY = y
 	return output.MoveTo(str, x + 1, y + 1)
 }
 

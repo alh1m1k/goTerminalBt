@@ -17,36 +17,39 @@ import (
 var sprites map[string]*Sprite = make(map[string]*Sprite, 20)
 var tokenRe = regexp.MustCompile(`<(?P<tag>\w+?)>(?P<val>\S+?)</(?P<tg>\w+)>`)
 var tokenReSimpl = regexp.MustCompile(`(\\033\[3%dm")<val>(\\033\[0m)`)
+var tokenReZeros = regexp.MustCompile("0+")
 
 var (
-	SpriteExistError       = errors.New("new sprite Id exist")
-	SpriteNotFoundError    = errors.New("sprite do not exist")
-	SpriteTransparentError = errors.New("transparent must set at load")
-	specialSymbols         = []string{"0", "\\", "3", "[", "m"}
-	ErrorSprite            = NewContentSprite([]byte("!!!Error!!!"))
+	SpriteExistError         = errors.New("new sprite Id exist")
+	InvalidSpriteParentError = errors.New("invalid sprite parent")
+	SpriteNotFoundError      = errors.New("sprite do not exist")
+	SpriteTransparentError   = errors.New("transparent must set at load")
+	specialSymbols           = []string{"0", "\\", "3", "[", "m"}
+	ErrorSprite              = NewContentSprite([]byte("!!!Error!!!"))
 )
 
-type SizeI struct {
-	X, Y int
+type SpriteInfo struct {
+	Parent                              Spriteer
+	Size                                GeoSize
+	Len                                 int64 //pure len without \\blabla100500
+	isTransparent, isNoClip, isAbsolute bool
 }
 
 type Spriteer interface {
 	io.Writer
 	fmt.Stringer
-	GetWH() GeoSize
+	GetInfo() *SpriteInfo
 }
 
 type CustomizeMap map[string]int
 
 type Sprite struct {
-	Parent                  *Sprite
-	Buf                     *bytes.Buffer
-	Size                    GeoSize
-	isTransparent, isNoClip bool
+	Buf *bytes.Buffer
+	*SpriteInfo
 }
 
-func (s *Sprite) GetWH() GeoSize {
-	return s.Size
+func (s *Sprite) GetInfo() *SpriteInfo {
+	return s.SpriteInfo
 }
 
 func (s *Sprite) Write(p []byte) (int, error) {
@@ -64,9 +67,8 @@ func (s *Sprite) CalculateSize() {
 func NewSprite() *Sprite {
 
 	box := new(Sprite)
-	box.Parent = nil
+	box.SpriteInfo = new(SpriteInfo)
 	box.Buf = new(bytes.Buffer)
-	box.isTransparent = false
 
 	return box
 }
@@ -74,9 +76,8 @@ func NewSprite() *Sprite {
 func NewContentSprite(buffer []byte) *Sprite {
 
 	box := new(Sprite)
-	box.Parent = nil
+	box.SpriteInfo = new(SpriteInfo)
 	box.Buf = bytes.NewBuffer(buffer)
-	box.isTransparent = false
 	box.CalculateSize()
 
 	return box
@@ -153,30 +154,38 @@ func IsCustomizedSpriteVer(sprite *Sprite) bool {
 
 func CustomizeSprite(sprite *Sprite, custom CustomizeMap) (*Sprite, error) {
 	if sprite.Parent != nil { //customize only base sprite
-		sprite = sprite.Parent
+		var ok bool
+		if sprite, ok = sprite.Parent.(*Sprite); !ok {
+			return ErrorSprite, InvalidSpriteParentError
+		}
 	}
-	spriteBuffer := sprite.String()
-	/*	match := tokenRe.FindAllStringSubmatch(spriteBuffer, -1)
-		for i, _ := range match {
-			if match[i][1] == match[i][3] {
-				if color, ok := custom[match[i][1]]; ok {
-					colored := direct.Color(match[i][2], color)
-					spriteBuffer = strings.Replace(spriteBuffer, match[i][0], colored, 1)
-				}
-			}
-		}*/
-	//simplified
 
-	if color, ok := custom["0"]; ok { //temporal fix, replace with regular expr
-		colored := direct.Color("0", color)
-		spriteBuffer = strings.Replace(spriteBuffer, "0", colored, -1)
+	index := make([]string, 0)
+	for key, _ := range custom {
+		index = append(index, key)
 	}
-	for str, color := range custom {
+	//no sort for now, order dictating by config
+	/*	sort.Slice(index, func(i, j int) bool {
+		return len(index[i]) > len(index[j]) //wide first
+	})*/
+
+	spriteBuffer := sprite.String()
+	if color, ok := custom["0"]; ok {
+		colored := direct.Color("0", color)
+		spriteBuffer = strings.ReplaceAll(spriteBuffer, "0", colored)
+	}
+	for _, str := range index {
 		if str == "0" {
 			continue
 		}
-		colored := direct.Color(str, color)
+		colored := direct.Color(str, custom[str])
 		spriteBuffer = strings.Replace(spriteBuffer, str, colored, -1)
+		reg, err := regexp.Compile(fmt.Sprintf("(%s)+", regexp.QuoteMeta(str)))
+		if err == nil {
+			spriteBuffer = tokenReSimpleReplaceAll(reg, spriteBuffer, colored)
+		} else {
+			logger.Println(err)
+		}
 	}
 
 	newSprite := NewSprite()
@@ -287,4 +296,18 @@ func hashCustomizeMap(customizeMap CustomizeMap) string {
 	}
 
 	return string(hash.Sum(nil))
+}
+
+func tokenReSimpleReplaceAll(token *regexp.Regexp, target string, newValue string) string {
+	return token.ReplaceAllString(target, newValue)
+}
+
+func tokenReReplaceAll(token *regexp.Regexp, target string, newValue string) string {
+	match := token.FindAllStringSubmatch(target, -1)
+	for i, _ := range match {
+		if match[i][1] == match[i][3] {
+			target = strings.Replace(target, match[i][0], newValue, 1)
+		}
+	}
+	return target
 }

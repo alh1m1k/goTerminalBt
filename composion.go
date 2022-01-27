@@ -27,7 +27,7 @@ func (receiver *Composition) addFrame(frame Spriteer, offsetX, offsetY, zIndex i
 		offsetY:  offsetY,
 	})
 	//calc approx size
-	wh := frame.GetWH()
+	wh := frame.GetInfo().Size
 	receiver.Sprite.Size.W = maxInt(receiver.Sprite.Size.W, offsetX+wh.W)
 	receiver.Sprite.Size.H = maxInt(receiver.Sprite.Size.H, offsetY+wh.H)
 }
@@ -44,13 +44,13 @@ func (receiver *Composition) Compose() {
 		} else {
 			fmt.Fprint(receiver.Sprite, frameInfo.Spriteer) // :(
 		}
-		wh := frameInfo.Spriteer.GetWH()
+		wh := frameInfo.Spriteer.GetInfo().Size
 		receiver.Sprite.Size.W = maxInt(receiver.Sprite.Size.W, wh.W+frameInfo.offsetX)
 		receiver.Sprite.Size.H = maxInt(receiver.Sprite.Size.H, wh.H+frameInfo.offsetY)
 	}
 	if receiver.writeProxy.Buf.Len() > 0 {
 		fmt.Fprint(receiver.Sprite, receiver.writeProxy)
-		wh := receiver.writeProxy.GetWH()
+		wh := receiver.writeProxy.GetInfo().Size
 		receiver.Sprite.Size.W = maxInt(receiver.Sprite.Size.W, wh.W)
 		receiver.Sprite.Size.H = maxInt(receiver.Sprite.Size.H, wh.H)
 	}

@@ -18,6 +18,7 @@ type GameRunner struct {
 	*BehaviorControlBuilder
 	*SpawnManager
 	*SoundManager
+	*UiSprite
 	Renderer
 }
 
@@ -171,11 +172,16 @@ func (receiver *GameRunner) runGame() (exitEvent Event) {
 		case gameEvent := <-receiver.Game.GetEventChanel():
 			switch gameEvent.EType {
 			case GAME_START:
-				receiver.Renderer.UI(&UIData{players: game.GetPlayers()})
+				if receiver.UiSprite != nil {
+					receiver.UiSprite.UIData = &UIData{players: game.GetPlayers()}
+					receiver.Renderer.Add(receiver.UiSprite)
+				}
 			case GAME_END_WIN:
 				fallthrough
 			case GAME_END_LOSE:
-				receiver.Renderer.UI(nil)
+				if receiver.UiSprite != nil {
+					receiver.Renderer.Remove(receiver.UiSprite)
+				}
 				for _, player := range receiver.players {
 					receiver.KeyboardRepeater.Unsubscribe(player.Keyboard)
 				}

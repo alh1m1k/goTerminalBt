@@ -63,6 +63,7 @@ var (
 	aibuilder    *BehaviorControlBuilder
 	sound        *SoundManager
 	buildManager *BlueprintManager
+	ui           *UiSprite
 
 	//flags
 	seed                 int64
@@ -200,8 +201,11 @@ func main() {
 	var size Box
 	if scenario.Location == EmptyLocation {
 		size = gameConfig.Box
+		size.Y += 3
+		size.H -= 3 //respect UI, todo try to impl something better
 	} else {
 		size = scenario.Location
+		size.Y += 3 //expect that scenario know about UI offset
 	}
 	location, _ := NewLocation(size.Point, size.Size)
 	detector.Add(location)
@@ -232,6 +236,12 @@ func main() {
 	game.EffectManager = pipe.EffectManager
 	game.SoundManager = sound
 
+	//ui
+	if !DEBUG_DISABLE_UI {
+		ui, _ = NewDefaultUI()
+		pipe.UiSprite = ui
+	}
+
 	//runner
 	runner, _ := NewGameRunner()
 	runner.Keyboard = keysEvents
@@ -244,6 +254,7 @@ func main() {
 	runner.SpawnManager = spawner
 	runner.Renderer = render
 	runner.SoundManager = sound
+	runner.UiSprite = ui
 
 	//time
 	cycleTime := CYCLE

@@ -39,7 +39,7 @@ type Location struct {
 	box                      Box
 	setupUnitSize            Point
 	zones                    [][]Trackable
-	startZone, sizeZone      Zone
+	sizeZone                 Zone
 	zonesLeft                int
 	zoneLock                 sync.Mutex
 }
@@ -48,7 +48,7 @@ func (receiver *Location) Add(object Trackable) {
 	if tracker := object.GetTracker(); tracker != nil {
 		receiver.zoneLock.Lock()
 		tracker.Manager = receiver
-		tracker.Update(object.GetXY(),object.GetWH())
+		tracker.Update(object.GetXY(), object.GetWH())
 		xi, yi := tracker.GetIndexes()
 		if receiver.zones[yi][xi] == ZoneSpawnPlaceholder {
 			receiver.zones[yi][xi] = nil
@@ -177,7 +177,7 @@ func (receiver *Location) Minimap(withSpawnPoint bool, applyRoutes [][]Zone) ([]
 func (receiver *Location) Mapdata() ([]*Tracker, error) {
 	receiver.zoneLock.Lock()
 	defer receiver.zoneLock.Unlock()
-	mapdata := make([]*Tracker, 0, receiver.sizeZone.X * receiver.sizeZone.Y - receiver.zonesLeft)
+	mapdata := make([]*Tracker, 0, receiver.sizeZone.X*receiver.sizeZone.Y-receiver.zonesLeft)
 
 	for _, row := range receiver.zones {
 		for _, object := range row {
@@ -204,10 +204,9 @@ func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
 		xi := rand.Intn(receiver.sizeZone.X)
 		yi := rand.Intn(receiver.sizeZone.Y)
 		return newPointFromZone(
-			receiver.setupUnitSize.X,
-			receiver.setupUnitSize.Y,
-			xi,
-			yi,
+			receiver.box.Point,
+			receiver.setupUnitSize,
+			Zone{xi, yi},
 		), nil
 	}
 	if receiver.zonesLeft < 1 {
@@ -221,10 +220,9 @@ func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
 			receiver.zones[yi][xi] = ZoneSpawnPlaceholder
 			receiver.zonesLeft--
 			return newPointFromZone(
-				receiver.setupUnitSize.X,
-				receiver.setupUnitSize.Y,
-				xi,
-				yi,
+				receiver.box.Point,
+				receiver.setupUnitSize,
+				Zone{xi, yi},
 			), nil
 		}
 		if deadline <= 0 {
@@ -383,7 +381,7 @@ func (receiver *Location) Setup(pos Point, size Size) error {
 
 func (receiver *Location) SetupZones(size Point) error {
 	receiver.setupUnitSize = size
-	receiver.sizeZone  = Zone{int(receiver.box.W / size.X), int(receiver.box.H / size.Y)}
+	receiver.sizeZone = Zone{int(receiver.box.W / size.X), int(receiver.box.H / size.Y)}
 	receiver.zones = make([][]Trackable, receiver.sizeZone.Y)
 	for ri, _ := range receiver.zones {
 		receiver.zones[ri] = make([]Trackable, receiver.sizeZone.X)
@@ -494,9 +492,10 @@ func (receiver *Location) putInZone(object Trackable) error {
 	return nil
 }
 
-func newPointFromZone(uw, uh float64, zoneX, zoneY int) Point {
+//todo make size a size
+func newPointFromZone(lt Point, unit Point, zone Zone) Point {
 	return Point{
-		X: float64(zoneX) * uw,
-		Y: float64(zoneY) * uh,
+		X: float64(zone.X)*unit.X + lt.X,
+		Y: float64(zone.Y)*unit.Y + lt.Y,
 	}
 }

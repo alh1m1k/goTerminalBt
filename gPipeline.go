@@ -17,6 +17,7 @@ type GPipeline struct {
 	*EffectManager
 	*Location
 	*Navigation
+	*UiSprite
 	stage    int64
 	pipe     chan int64
 	ret      chan bool
@@ -89,6 +90,13 @@ func (receiver *GPipeline) doSpawn() {
 	receiver.pipe <- 1
 }
 
+func (receiver *GPipeline) doUI() {
+	if receiver.UiSprite != nil {
+		receiver.UiSprite.Execute(receiver.timeLeft)
+	}
+	receiver.pipe <- 1
+}
+
 func NewGPipeline() (*GPipeline, error) {
 	pl := &GPipeline{
 		Updater:       nil,
@@ -121,11 +129,12 @@ func plDispatcher(pl *GPipeline) {
 				go pl.doCollide()
 				go pl.doEffect()
 				go pl.doCollect()
-			case 8:
+				go pl.doUI()
+			case 9:
 				go pl.doRender()
 				go pl.doVision()
 				go pl.doMap()
-			case 11:
+			case 12:
 				pl.ret <- true
 			}
 		}

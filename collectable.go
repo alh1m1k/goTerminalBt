@@ -61,7 +61,9 @@ func (receiver *Collectable) Collect(by *Unit) error {
 	if receiver.destroyed {
 		return nil
 	}
-	logger.Printf("collected by %d cycleId %d", by.ID, CycleID)
+	if DEBUG {
+		logger.Printf("collected by %d cycleId %d", by.ID, CycleID)
+	}
 	receiver.Trigger(CollectEvent, receiver, by)
 	//todo enteer state collected
 	receiver.Destroy(nil)
