@@ -56,7 +56,7 @@ func (receiver *Location) Add(object Trackable) {
 		}
 		err := receiver.putInZone(object)
 		if err != nil {
-			logger.Printf("error on add object to location %d, %d, %s \n", xi, yi, err)
+			logger.Printf("error on add object %d %t to location %d, %d, %s \n", object.(ObjectInterface).GetAttr().ID, receiver.zones[yi][xi], xi, yi, err)
 		} else {
 			receiver.zonesLeft--
 		}
@@ -212,26 +212,38 @@ func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
 	if receiver.zonesLeft < 1 {
 		return NoPos, ZoneEmptyError
 	}
-	deadline := 100
-	for true {
-		xi := rand.Intn(receiver.sizeZone.X)
-		yi := rand.Intn(receiver.sizeZone.Y)
-		if receiver.zones[yi][xi] == nil {
-			receiver.zones[yi][xi] = ZoneSpawnPlaceholder
-			receiver.zonesLeft--
-			return newPointFromZone(
-				receiver.box.Point,
-				receiver.setupUnitSize,
-				Zone{xi, yi},
-			), nil
+
+	xi := rand.Intn(receiver.sizeZone.X)
+	yi := rand.Intn(receiver.sizeZone.Y)
+	bxi, byi := xi-1, yi
+	for ; yi < receiver.sizeZone.Y; yi++ {
+		for ; xi < receiver.sizeZone.X; xi++ {
+			zone := Zone{xi, yi}
+			if receiver.captureZone(zone) {
+				return newPointFromZone(
+					receiver.box.Point,
+					receiver.setupUnitSize,
+					zone,
+				), nil
+			}
 		}
-		if deadline <= 0 {
-			return NoPos, ZoneEmptyError
+		xi = 0
+	}
+	for ; byi >= 0; byi-- {
+		for ; bxi >= 0; bxi-- {
+			zone := Zone{bxi, byi}
+			if receiver.captureZone(zone) {
+				return newPointFromZone(
+					receiver.box.Point,
+					receiver.setupUnitSize,
+					zone,
+				), nil
+			}
 		}
-		deadline--
+		bxi = receiver.sizeZone.X - 1
 	}
 
-	return NoPos, ZoneSetupError
+	return NoPos, ZoneEmptyError
 }
 
 func (receiver *Location) CaptureZone(zone Zone) error {
@@ -254,21 +266,18 @@ func (receiver *Location) CaptureZone(zone Zone) error {
 	return ZoneEmptyError
 }
 
+func (receiver *Location) captureZone(zone Zone) bool {
+	if receiver.zones[zone.Y][zone.X] == nil {
+		receiver.zones[zone.Y][zone.X] = ZoneSpawnPlaceholder
+		receiver.zonesLeft--
+		return true
+	}
+	return false
+}
+
 func (receiver *Location) CapturePoint(point Point) error {
 	zone := receiver.ZoneByCoordinate(point)
 	return receiver.CaptureZone(zone)
-}
-
-func (receiver *Location) CoordinateByIndex(x, y int) (Point, error) {
-
-	if x >= receiver.sizeZone.X || y >= receiver.sizeZone.Y {
-		return NoPos, ZoneRangeError
-	}
-
-	return Point{
-		X: float64(x) * receiver.setupUnitSize.X,
-		Y: float64(y) * receiver.setupUnitSize.Y,
-	}, nil
 }
 
 func (receiver *Location) CoordinateByZone(zone Zone) (Point, error) {
@@ -278,8 +287,8 @@ func (receiver *Location) CoordinateByZone(zone Zone) (Point, error) {
 	}
 
 	return Point{
-		X: float64(zone.X) * receiver.setupUnitSize.X,
-		Y: float64(zone.Y) * receiver.setupUnitSize.Y,
+		X: receiver.box.X + (float64(zone.X) * receiver.setupUnitSize.X),
+		Y: receiver.box.Y + (float64(zone.Y) * receiver.setupUnitSize.Y),
 	}, nil
 }
 
@@ -290,14 +299,14 @@ func (receiver *Location) CenterByIndex(x, y int) (Center, error) {
 	}
 
 	return Center{
-		X: float64(x)*receiver.setupUnitSize.X + receiver.setupUnitSize.X/2,
-		Y: float64(y)*receiver.setupUnitSize.Y + receiver.setupUnitSize.Y/2,
+		X: receiver.box.X + (float64(x)*receiver.setupUnitSize.X + receiver.setupUnitSize.X/2),
+		Y: receiver.box.Y + (float64(y)*receiver.setupUnitSize.Y + receiver.setupUnitSize.Y/2),
 	}, nil
 }
 
 func (receiver *Location) NearestZoneByCoordinate(point Point) Zone {
-	xi, yi := int(math.Round(point.X/receiver.setupUnitSize.X)),
-		int(math.Round(point.Y/receiver.setupUnitSize.Y))
+	xi, yi := int(math.Round((point.X-receiver.box.X)/receiver.setupUnitSize.X)),
+		int(math.Round((point.Y-receiver.box.Y)/receiver.setupUnitSize.Y))
 
 	if xi < 0 {
 		xi = 0
@@ -318,10 +327,6 @@ func (receiver *Location) NearestZoneByCoordinate(point Point) Zone {
 	}
 }
 
-func (receiver *Location) AffectedZone(x, y float64, buffer []Point) ([]Point, error) {
-	panic("not implemented")
-}
-
 func (receiver *Location) Center2Coordinate(center Center) Point {
 	center.X -= receiver.setupUnitSize.X / 2
 	center.Y -= receiver.setupUnitSize.Y / 2
@@ -334,27 +339,8 @@ func (receiver *Location) Coordinate2Center(coordinate Point) Center {
 	return Center(coordinate)
 }
 
-func (receiver *Location) IndexByPos(x, y float64) (xi, yi int) {
-	xi, yi = int(x/receiver.setupUnitSize.X), int(y/receiver.setupUnitSize.Y)
-
-	if xi < 0 {
-		xi = 0
-	}
-	if xi >= receiver.sizeZone.X {
-		xi = receiver.sizeZone.X - 1
-	}
-	if yi < 0 {
-		yi = 0
-	}
-	if yi >= receiver.sizeZone.Y {
-		yi = receiver.sizeZone.Y - 1
-	}
-
-	return xi, yi
-}
-
 func (receiver *Location) ZoneByCoordinate(point Point) Zone {
-	xi, yi := int(point.X/receiver.setupUnitSize.X), int(point.Y/receiver.setupUnitSize.Y)
+	xi, yi := int((point.X-receiver.box.X)/receiver.setupUnitSize.X), int((point.Y-receiver.box.Y)/receiver.setupUnitSize.Y)
 
 	if xi < 0 {
 		xi = 0

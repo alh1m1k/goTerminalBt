@@ -13,7 +13,7 @@ type UIData struct {
 	players []*Player
 }
 
-type UiSprite struct {
+type UI struct {
 	Point
 	zIndex int
 	*Sprite
@@ -21,7 +21,7 @@ type UiSprite struct {
 	TimeLeft time.Duration
 }
 
-func (receiver *UiSprite) Execute(timeLeft time.Duration) {
+func (receiver *UI) Execute(timeLeft time.Duration) {
 	buffer := receiver.Sprite.Buf
 	buffer.Reset()
 
@@ -75,20 +75,20 @@ func (receiver *UiSprite) Execute(timeLeft time.Duration) {
 	}
 }
 
-func (receiver *UiSprite) GetXY() Point {
+func (receiver *UI) GetXY() Point {
 	return receiver.Point
 }
 
-func (receiver *UiSprite) GetSprite() Spriteer {
+func (receiver *UI) GetSprite() Spriteer {
 	return receiver.Sprite
 }
 
-func (receiver *UiSprite) GetZIndex() int {
+func (receiver *UI) GetZIndex() int {
 	return receiver.zIndex
 }
 
-func NewDefaultUI() (*UiSprite, error) {
-	inst := new(UiSprite)
+func NewDefaultUI() (*UI, error) {
+	inst := new(UI)
 	inst.Sprite = NewSprite()
 	inst.Sprite.isAbsolute = true
 	inst.Size.W, inst.Size.H = 0, 3

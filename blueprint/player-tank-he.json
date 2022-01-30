@@ -1,12 +1,6 @@
 {
   "type":   "unit",
-  "sprite": {
-    "type": "animation",
-    "name": "tank_top",
-    "duration": 400000000,
-    "cycled": true,
-    "length": 2
-  },
+  "sprite": "none",
   "state":  {
     "default": "normal",
     "sprite": {

@@ -2,10 +2,7 @@
   "type":   "projectile",
   "sprite": "projectile",
   "state":  "projectile",
-  "collision": {
-    "type": "penetrate",
-    "x": 0,
-    "y": 0,
+  "size": {
     "w": 1,
     "h": 1
   },

@@ -85,8 +85,9 @@ func newLoadErrors() (*LoadErrors, error) {
 
 type ObjectGetter func(blueprint string) interface{} //todo simplify loader by this getter ie encapsulate loader acquire and it's call
 type LoaderGetter func(blueprint string) Loader
-type Loader func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{}
+type Loader func(get LoaderGetter, eCollector *LoadErrors, preset interface{}, payload []byte) interface{}
 type Builder func() interface{}
+type RequireFunc func(blueprint string) error
 
 type FileBuf struct {
 	buf []byte
@@ -117,7 +118,7 @@ func (receiver *BlueprintManager) Get(blueprint string) (ObjectInterface, error)
 	payload, _ := receiver.load(blueprint)
 	if root, ok := receiver.loaders["/"]; ok {
 		collector, _ := newLoadErrors()
-		if stuff := root(receiver.getLoader, collector, payload); stuff == nil {
+		if stuff := root(receiver.getLoader, collector, nil, payload); stuff == nil {
 			collector.Add(errors.New("object wont created"))
 			return nil, collector
 		} else {
@@ -187,9 +188,9 @@ func (receiver *BlueprintManager) AddLoaderPackage(p *Package) {
 }
 
 func (receiver *BlueprintManager) wrapLoader(loader Loader, blueprint string) Loader {
-	return func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{} {
+	return func(get LoaderGetter, eCollector *LoadErrors, preset interface{}, payload []byte) interface{} {
 		eCollector.tracePush(blueprint) //trace wrapper
-		ret := loader(get, eCollector, payload)
+		ret := loader(get, eCollector, preset, payload)
 		eCollector.tracePop()
 		return ret
 	}
@@ -276,11 +277,17 @@ func NewBlueprintManager() (*BlueprintManager, error) {
 	instance.proto = make(map[string]ObjectInterface)
 	instance.protoShadow = make(map[string]ObjectInterface)
 
-	instance.AddLoader("eventChanel", func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{} {
+	instance.AddLoader("eventChanel", func(get LoaderGetter, eCollector *LoadErrors, preset interface{}, payload []byte) interface{} {
 		return instance.EventChanel
 	})
-	instance.AddLoader("gameConfig", func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{} {
+	instance.AddLoader("gameConfig", func(get LoaderGetter, eCollector *LoadErrors, preset interface{}, payload []byte) interface{} {
 		return instance.GameConfig
+	})
+	instance.AddLoader("require", func(get LoaderGetter, eCollector *LoadErrors, preset interface{}, payload []byte) interface{} {
+		return RequireFunc(func(blueprint string) error {
+			_, err := instance.Get(blueprint)
+			return err
+		})
 	})
 
 	return instance, nil

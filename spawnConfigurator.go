@@ -39,8 +39,17 @@ func PlayerConfigurator(object ObjectInterface, config interface{}) ObjectInterf
 	object.GetAttr().Team = -1
 	object.GetAttr().TeamTag = "team-" + strconv.Itoa(-1)
 	object.GetAttr().Player = true
+	object.GetAttr().AI = false
 	unit := object.(*Unit)
 	unit.addTag(object.GetAttr().TeamTag)
+	if !unit.HasTag("player") {
+		logger.Println("warn: player unit hasn't player tag")
+		unit.addTag("player")
+	}
+	if unit.HasTag("ai") {
+		logger.Println("warn: player unit have tag ai")
+		unit.removeTag("ai")
+	}
 	unit.Control = player.Control
 	player.Unit = unit
 	return object
@@ -50,7 +59,7 @@ func ExplosionConfigurator(object ObjectInterface, config interface{}) ObjectInt
 	from := config.(ObjectInterface)
 	owner := from.GetOwner()
 	point := from.GetXY()
-	size  := from.GetWH()
+	size := from.GetWH()
 	gX := point.X + size.W/2
 	gY := point.Y + size.H/2
 

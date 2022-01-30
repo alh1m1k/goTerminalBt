@@ -121,7 +121,7 @@ func (receiver *Collectable) Copy() *Collectable {
 	return &instance
 }
 
-func NewCollectable2(obj *Object, oo *ObservableObject, state *State, Owner ObjectInterface) (*Collectable, error) {
+func NewCollectable(obj *Object, oo *ObservableObject, state *State, Owner ObjectInterface) (*Collectable, error) {
 	instance := &Collectable{
 		Object:           obj,
 		ObservableObject: oo,

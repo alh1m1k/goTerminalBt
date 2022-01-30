@@ -1,36 +1,33 @@
 {
   "type":   "projectile",
   "sprite": "rail/projectile_v",
-  "collision": {
-    "type": "penetrate",
-    "x": 0,
-    "y": 0,
+  "size": {
     "w": 1,
     "h": 1
   },
   "state":  {
-  "default": "normal",
-  "sprite": "rail/projectile_v",
-  "items": {
-    "normal": {
-      "sprite": "rail/projectile_v",
-      "items": {
-        "top": {
-          "sprite": "rail/projectile_v"
-        },
-        "bottom": {
-          "sprite": "rail/projectile_v"
-        },
-        "left": {
-          "sprite": "rail/projectile_h"
-        },
-        "right": {
-          "sprite": "rail/projectile_h"
+    "default": "normal",
+    "sprite": "rail/projectile_v",
+    "items": {
+      "normal": {
+        "sprite": "rail/projectile_v",
+        "items": {
+          "top": {
+            "sprite": "rail/projectile_v"
+          },
+          "bottom": {
+            "sprite": "rail/projectile_v"
+          },
+          "left": {
+            "sprite": "rail/projectile_h"
+          },
+          "right": {
+            "sprite": "rail/projectile_h"
+          }
         }
       }
     }
-  }
-},
+  },
   "speed": {
     "min": 15,
     "max": 15

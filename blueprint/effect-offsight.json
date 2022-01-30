@@ -3,22 +3,19 @@
   "sprite": {
     "type": "sprite",
     "name": "unseen",
-    "transparent": true,
-    "custom": {
-      "o": 3,
-      "O": 3,
-      "\\": 3,
-      "*": 3
-    }
+    "transparent": true
   },
-  "collision": {
-    "type": "penetrate",
-    "x": 0,
-    "y": 0,
-    "w": 7,
-    "h": 10
+  "size": {
+    "w": 0,
+    "h": 0
   },
   "ttl": 1000000000,
   "damage": 0,
-  "tags": ["effect"]
+  "tags": ["effect", "nocolision"],
+  "custom": {
+    "o": 3,
+    "O": 3,
+    "\\": 3,
+    "*": 3
+  }
 }

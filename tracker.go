@@ -17,6 +17,10 @@ type Tracker struct {
 }
 
 func (receiver *Tracker) Update(pos Point, size Size) bool {
+	if receiver.Manager == nil {
+		logger.Println("BUG: call Tracker::Update on unmanaged track")
+		return false
+	}
 	if size.W != receiver.lastW || size.H != receiver.lastH {
 		halfW := size.W / 2
 		halfH := size.H / 2

@@ -194,6 +194,13 @@ func (manager *SpawnManager) Spawn(coordinate Point, blueprint string, configura
 		object.Move(coordinate.X, coordinate.Y)
 	}
 
+	/*	if tracker := object.GetTracker(); tracker != nil {
+		tracker.Manager = manager.location
+		tracker.Update(object.GetXY(), object.GetWH())
+		xi, yi := tracker.GetIndexes()
+		logger.Printf("spawn object %d to location %d, %d", object.GetAttr().ID, xi, yi, object.GetXY())
+	}*/
+
 	manager.spawnMutex.Lock()
 	manager.pendingSpawn = append(manager.pendingSpawn, object)
 	manager.spawnMutex.Unlock()

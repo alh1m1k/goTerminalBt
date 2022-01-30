@@ -55,12 +55,7 @@ type Tagable interface {
 type Obstacle interface {
 }
 
-type Prototyped interface {
-	GetPrototype() ObjectInterface
-}
-
 type ObjectInterface interface {
-	Prototyped
 	Located
 	Sized
 	Updateable
@@ -177,6 +172,7 @@ func (receiver *Object) GetZIndex() int {
 
 func (receiver *Object) Destroy(nemesis ObjectInterface) error {
 	receiver.destroyed = true
+	receiver.Attributes.Destroyed = true
 	return nil
 }
 
@@ -188,12 +184,14 @@ func (receiver *Object) Spawn() error {
 	}
 	receiver.spawned = true
 	receiver.spawnCount++
+	receiver.Attributes.Spawned = true
 	return nil
 }
 
 func (receiver *Object) DeSpawn() error {
 	SwitchSprite(nil, receiver.sprite)
 	receiver.spawned = false
+	receiver.Attributes.Spawned = false
 	return nil
 }
 
@@ -269,6 +267,7 @@ func (receiver *Object) GetTagValue(tag string, key string, defaultValue string)
 
 func (receiver *Object) Reset() error {
 	receiver.destroyed = false
+	receiver.Attributes.Destroyed = false
 	receiver.Interactions.Clear()
 	return nil
 }

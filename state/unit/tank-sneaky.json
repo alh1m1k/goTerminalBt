@@ -1,0 +1,676 @@
+{
+  "default": "stealth",
+  "sprite": "none",
+  "items": {
+    "appear": {
+      "sprite": "none",
+      "items": {
+        "top": {
+          "sprite": {
+            "type": "animation",
+            "name": "tank_top",
+            "duration": 300000000,
+            "cycled": true,
+            "blink": 200000000,
+            "length": 2,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "bottom": {
+          "sprite": {
+            "type": "animation",
+            "name": "tank_bottom",
+            "duration": 300000000,
+            "cycled": true,
+            "blink": 200000000,
+            "length": 2,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "left": {
+          "sprite": {
+            "type": "animation",
+            "name": "tank_left",
+            "duration": 300000000,
+            "cycled": true,
+            "blink": 200000000,
+            "length": 2,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "right": {
+          "sprite": {
+            "type": "animation",
+            "name": "tank_right",
+            "duration": 300000000,
+            "cycled": true,
+            "blink": 200000000,
+            "length": 2,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        }
+      }
+    },
+    "receiveDamage": {
+      "sprite": "none",
+      "items": {
+        "top": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealthTopBlink",
+            "length": 2,
+            "blink": 100000000,
+            "keyFrames": [
+              {
+                "type": "animation",
+                "name": "stealthTopBlinkShow",
+                "path": "stealth/tank/top/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": true,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              },
+              {
+                "type": "animation",
+                "name": "stealthTopBlinkHide",
+                "path": "stealth/tank/top/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": false,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              }
+            ]
+          }
+        },
+        "bottom": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealthBottomBlink",
+            "blink": 100000000,
+            "length": 2,
+            "keyFrames": [
+                {
+                  "type": "animation",
+                  "name": "rDamageBottomBlinkShow",
+                  "path": "stealth/tank/bottom/tank",
+                  "duration": 500000000,
+                  "length": 17,
+                  "reversed": true,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
+                },
+                {
+                  "type": "animation",
+                  "name": "rDamageBottomBlinkHide",
+                  "path": "stealth/tank/bottom/tank",
+                  "duration": 500000000,
+                  "length": 17,
+                  "reversed": false,
+                  "custom": {
+                    "0": 6,
+                    "o": 6,
+                    "x": 6,
+                    "<": 6,
+                    ">": 6,
+                    "__": 6,
+                    "|": 6
+                  }
+                }
+            ]
+          }
+        },
+        "left": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealthLeftBlink",
+            "blink": 100000000,
+            "length": 2,
+            "keyFrames": [
+              {
+                "type": "animation",
+                "name": "stealthLeftBlinkShow",
+                "path": "stealth/tank/left/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": true,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              },
+              {
+                "type": "animation",
+                "name": "stealthLeftBlinkHide",
+                "path": "stealth/tank/left/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": false,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              }
+            ]
+          }
+        },
+        "right": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealthRightBlink",
+            "blink": 100000000,
+            "length": 2,
+            "keyFrames": [
+              {
+                "type": "animation",
+                "name": "stealthRightBlinkShow",
+                "path": "stealth/tank/right/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": true,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              },
+              {
+                "type": "animation",
+                "name": "stealthRightBlinkHide",
+                "path": "stealth/tank/right/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": false,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "stealth": {
+      "sprite": "none",
+      "items": {
+        "top": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealthTopBlink",
+            "length": 2,
+            "keyFrames": [
+              {
+                "type": "animation",
+                "name": "stealthTopBlinkShow",
+                "path": "stealth/tank/top/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": true,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              },
+              {
+                "type": "animation",
+                "name": "stealthTopBlinkHide",
+                "path": "stealth/tank/top/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": false,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              }
+            ]
+          }
+        },
+        "bottom": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealthBottomBlink",
+            "length": 2,
+            "keyFrames": [
+              {
+                "type": "animation",
+                "name": "rDamageBottomBlinkShow",
+                "path": "stealth/tank/bottom/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": true,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              },
+              {
+                "type": "animation",
+                "name": "rDamageBottomBlinkHide",
+                "path": "stealth/tank/bottom/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": false,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              }
+            ]
+          }
+        },
+        "left": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealthLeftBlink",
+            "length": 2,
+            "keyFrames": [
+              {
+                "type": "animation",
+                "name": "stealthLeftBlinkShow",
+                "path": "stealth/tank/left/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": true,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              },
+              {
+                "type": "animation",
+                "name": "stealthLeftBlinkHide",
+                "path": "stealth/tank/left/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": false,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              }
+            ]
+          }
+        },
+        "right": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealthRightBlink",
+            "length": 2,
+            "keyFrames": [
+              {
+                "type": "animation",
+                "name": "stealthRightBlinkShow",
+                "path": "stealth/tank/right/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": true,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              },
+              {
+                "type": "animation",
+                "name": "stealthRightBlinkHide",
+                "path": "stealth/tank/right/tank",
+                "duration": 500000000,
+                "length": 17,
+                "reversed": false,
+                "custom": {
+                  "0": 6,
+                  "o": 6,
+                  "x": 6,
+                  "<": 6,
+                  ">": 6,
+                  "__": 6,
+                  "|": 6
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "stealthIn": {
+      "sprite": "none",
+      "items": {
+        "top": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealth/tank/top/tank",
+            "duration": 1000000000,
+            "cycled": true,
+            "length": 17,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "bottom": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealth/tank/bottom/tank",
+            "duration": 1000000000,
+            "cycled": true,
+            "length": 17,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "left": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealth/tank/left/tank",
+            "duration": 1000000000,
+            "cycled": true,
+            "length": 17,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "right": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealth/tank/right/tank",
+            "duration": 1000000000,
+            "cycled": true,
+            "length": 17,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        }
+      }
+    },
+    "stealthOut": {
+      "sprite": "none",
+      "items": {
+        "top": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealth/tank/top/tank",
+            "duration": 1000000000,
+            "cycled": true,
+            "length": 17,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "bottom": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealth/tank/bottom/tank",
+            "duration": 1000000000,
+            "cycled": true,
+            "length": 17,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "left": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealth/tank/left/tank",
+            "duration": 1000000000,
+            "cycled": true,
+            "length": 17,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "right": {
+          "sprite": {
+            "type": "animation",
+            "name": "stealth/tank/right/tank",
+            "duration": 1000000000,
+            "cycled": true,
+            "length": 17,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        }
+      }
+    },
+    "normal": {
+      "sprite": "none",
+      "items": {
+        "top": {
+          "sprite": {
+            "type": "animation",
+            "name": "tank_top",
+            "duration": 300000000,
+            "cycled": true,
+            "length": 2,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "bottom": {
+          "sprite": {
+            "type": "animation",
+            "name": "tank_bottom",
+            "duration": 300000000,
+            "cycled": true,
+            "length": 2,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "left": {
+          "sprite": {
+            "type": "animation",
+            "name": "tank_left",
+            "duration": 300000000,
+            "cycled": true,
+            "length": 2,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        },
+        "right": {
+          "sprite": {
+            "type": "animation",
+            "name": "tank_right",
+            "duration": 300000000,
+            "cycled": true,
+            "length": 2,
+            "custom": {
+              "0": 6,
+              "o": 6,
+              "x": 6,
+              "<": 6,
+              ">": 6,
+              "__": 6,
+              "|": 6
+            }
+          }
+        }
+      }
+    }
+  }
+}

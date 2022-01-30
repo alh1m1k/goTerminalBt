@@ -5,24 +5,13 @@
     "name": "base/base",
     "duration": 400000000,
     "cycled": true,
-    "length": 2,
-    "custom": {
-      "X": 3,
-      "x": 3,
-      "/": 3,
-      "\\": 3,
-      "'": 3
-    }
+    "length": 2
   },
-  "collision": {
-    "x": 0,
-    "y": 0,
+  "size": {
     "w": 7,
     "h": 4
   },
   "vision": {
-    "x": 0,
-    "y": 0,
     "w": 70,
     "h": 46
   },
@@ -36,5 +25,12 @@
     "scored": true,
     "vulnerable": true,
     "tracked": true
+  },
+  "custom": {
+    "X": 3,
+    "x": 3,
+    "/": 3,
+    "\\": 3,
+    "'": 3
   }
 }

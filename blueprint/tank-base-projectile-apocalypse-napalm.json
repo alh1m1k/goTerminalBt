@@ -1,0 +1,28 @@
+{
+  "type":   "projectile",
+  "require": ["projectile-sharp-apoc-napalm-start", "projectile-sharp-apoc-napalm-end", "tank-special-napalm"],
+  "sprite": "projectile-fanout",
+  "state":  "projectile-fanout",
+  "collision": {
+    "type": "penetrate",
+    "x": 0,
+    "y": 0,
+    "w": 1,
+    "h": 1
+  },
+  "speed": {
+    "min": 5,
+    "max": 5
+  },
+  "ttl":    3500000000,
+  "damage": 0,
+  "name": "Apoc-N",
+  "description": "apocalypse projectile, projectile separate few time than each surviving part burn terrain",
+  "tags": {
+      "projectile": true,
+      "apocalypse": true,
+      "fanout": {
+          "blueprint": "projectile-sharp-apoc-napalm-start"
+      }
+  }
+}

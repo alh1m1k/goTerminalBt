@@ -1,11 +1,9 @@
 {
   "type":   "projectile",
+  "require": ["tank-base-explosion"],
   "sprite": "projectile-he",
   "state":  "projectile-he",
-  "collision": {
-    "type": "penetrate",
-    "x": 0,
-    "y": 0,
+  "size": {
     "w": 1,
     "h": 1
   },

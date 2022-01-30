@@ -6,19 +6,16 @@
     "length": 2,
     "duration": 3000000000,
     "transparent": true,
-    "cycled": true,
-    "custom": {
-      "|": 2
-    }
+    "cycled": true
   },
-  "collision": {
-    "type": "penetrate",
-    "x": 0,
-    "y": 0,
+  "size": {
     "w": 8,
     "h": 4
   },
   "hp": 0,
   "zIndex": 200,
-  "tags": ["forest"]
+  "tags": ["forest", "nocolision", "static"],
+  "custom": {
+    "|": 2
+  }
 }

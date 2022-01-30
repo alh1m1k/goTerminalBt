@@ -1,20 +1,12 @@
 package main
 
 import (
-	"GoConsoleBT/collider"
 	"time"
 )
 
 type Moving struct {
 	Speed     Point
 	Direction Point
-}
-
-type MotionObjectConfig struct {
-	Position, Speed, Direction Point
-	Sprite                     Spriteer
-	Collision                  *collider.ClBody
-	Team                       int8
 }
 
 type Motioner interface {

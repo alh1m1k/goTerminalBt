@@ -63,7 +63,8 @@ var (
 	aibuilder    *BehaviorControlBuilder
 	sound        *SoundManager
 	buildManager *BlueprintManager
-	ui           *UiSprite
+	ui           *UI
+	Require      RequireFunc
 
 	//flags
 	seed                 int64
@@ -109,17 +110,16 @@ func init() {
 func main() {
 	var err error
 	//EffectAnimDisappear("stealth/tank/left/tank", 16, 42)
-	//EffectAnimInterference("stealth/tank/bottom/tank", 10, 0.3)
+	//EffectAnimInterference("napalm/persist/smokeGrow", 6, 0.3)
 
 	//EffectVerFlip(bytes.NewReader([]byte("123\n456\n789")), os.Stdout)
 	/*	EffectAnimNormalizeNewLine("stealth/tank/right/tank", 17)
 		EffectAnimVerFlip("stealth/tank/right/tank", 17)*/
 
 	/*	EffectAnimNormalizeNewLine("flak/left/flak", 10)
-		EffectAnimVerFlip("flak/left/flak", 10)
+		EffectAnimVerFlip("flak/left/flak", 10)*/
 
-		os.Exit(0)*/
-
+	//os.Exit(0)
 	flag.Parse()
 
 	rand.Seed(seed)
@@ -220,6 +220,10 @@ func main() {
 
 	//builder
 	buildManager, _ = NewBlueprintManager()
+	Require = func(blueprint string) error {
+		_, err := buildManager.Get(blueprint)
+		return err
+	}
 
 	//ai
 	if !simplifyAi {
@@ -239,7 +243,7 @@ func main() {
 	//ui
 	if !DEBUG_DISABLE_UI {
 		ui, _ = NewDefaultUI()
-		pipe.UiSprite = ui
+		pipe.UI = ui
 	}
 
 	//runner
@@ -254,7 +258,7 @@ func main() {
 	runner.SpawnManager = spawner
 	runner.Renderer = render
 	runner.SoundManager = sound
-	runner.UiSprite = ui
+	runner.UI = ui
 
 	//time
 	cycleTime := CYCLE

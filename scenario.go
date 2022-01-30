@@ -122,10 +122,12 @@ func NewRandomScenario(tankCnt int, wallCnt int) (scenario *Scenario, err error)
 			Position:  PosAuto,
 			Location:  ZoneAuto,
 			Blueprint: blList[rand.Intn(len(blList))],
-			Team:      100,
+			Team:      1,
 		})
 	}
 	start, _ := NewStateItem(scenario.State.root, &ScenarioStateInfo{
+		player1Blueprint: "player-tank",
+		player2Blueprint: "player-tank",
 		Declare: []string{
 			"player-tank",
 			"tank",
@@ -138,13 +140,10 @@ func NewRandomScenario(tankCnt int, wallCnt int) (scenario *Scenario, err error)
 			"tank-base-projectile-rail",
 			"tank-base-projectile-flak",
 			"tank-special-projectile-smoke",
-			"tank-special-smokescreen-1",
-			"tank-special-smokescreen-2",
 			"tank-base-projectile-fanout",
-			"projectile-sharp",
 			"tank-base-projectile-apocalypse",
-			"projectile-sharp-apoc-start",
-			"projectile-sharp-apoc-end",
+			"tank-special-projectile-napalm",
+			"tank-base-projectile-apocalypse-napalm",
 			"effect-onsight",
 			"effect-offsight",
 			"opel",

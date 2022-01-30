@@ -88,6 +88,10 @@ func (receiver *ClBody) GetCenter() (float64, float64) {
 	return receiver.x + receiver.w/2, receiver.y + receiver.h/2
 }
 
+func (receiver *ClBody) SetStatic(value bool) {
+	receiver.static = value
+}
+
 func (receiver *ClBody) IsStatic() bool {
 	return receiver.static
 }

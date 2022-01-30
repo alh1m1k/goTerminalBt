@@ -41,27 +41,47 @@ func NewDefaultGameConfig() (*GameConfig, error) {
 }
 
 type AnimationConfig struct {
-	Name           string        `json:"name"`
-	Path           string        `json:"path"`
+	SpriteerConfig
 	Duration       time.Duration `json:"duration"`
 	RepeatDuration time.Duration `json:"repeatDuration"`
 	Cycled         bool          `json:"cycled"`
 	Blink          time.Duration `json:"blink"`
 	Length         int           `json:"length"`
-	Custom         CustomizeMap  `json:"custom"`
 	Reversed       bool          `json:"reversed"`
-	IsTransparent  bool          `json:"transparent"`
+}
+
+type SpriteerConfig struct {
+	Type          string       `json:"type"`
+	Name          string       `json:"name"`
+	Path          string       `json:"path"`
+	Custom        CustomizeMap `json:"custom"`
+	IsTransparent bool         `json:"transparent"`
+	IsAbsolute    bool         `json:"absolute"`
+}
+
+type SpriteConfig struct {
+	SpriteerConfig
 }
 
 type CompositionLayerConfig struct {
+	SpriteerConfig
 	ZIndex  int `json:"zIndex"`
 	OffsetX int `json:"offsetX"`
 	OffsetY int `json:"offsetY"`
 }
 
-type MotionObjectConfig2 struct {
+type CompositionConfig struct {
+	SpriteerConfig
+}
+
+type MotionObjectConfig struct {
 	Direction     Point
 	Speed         MinMax
 	AccelTime     time.Duration `json:"accelTime"`
 	AccelTimeFunc string        `json:"accelTimeFunc"`
+}
+
+type SizeConfig struct {
+	W float64 `json:"w"`
+	H float64 `json:"h"`
 }

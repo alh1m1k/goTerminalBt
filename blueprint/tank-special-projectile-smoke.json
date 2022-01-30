@@ -1,5 +1,6 @@
 {
   "type":   "projectile",
+  "require": ["tank-special-smokescreen-2"],
   "sprite": "projectile",
   "state":  "projectile",
   "collision": {

@@ -18,7 +18,7 @@ type GameRunner struct {
 	*BehaviorControlBuilder
 	*SpawnManager
 	*SoundManager
-	*UiSprite
+	*UI
 	Renderer
 }
 
@@ -37,7 +37,7 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 	receiver.BlueprintManager.GameConfig = receiver.GameConfig
 	receiver.BlueprintManager.EventChanel = receiver.SpawnManager.UnitEventChanel //remove from builder
 	if receiver.BehaviorControlBuilder != nil {
-		receiver.BlueprintManager.AddLoader("ai", func(get LoaderGetter, eCollector *LoadErrors, payload []byte) interface{} {
+		receiver.BlueprintManager.AddLoader("ai", func(get LoaderGetter, eCollector *LoadErrors, preset interface{}, payload []byte) interface{} {
 			ai, _ := receiver.BehaviorControlBuilder.Build()
 			return ai
 		})
@@ -172,15 +172,15 @@ func (receiver *GameRunner) runGame() (exitEvent Event) {
 		case gameEvent := <-receiver.Game.GetEventChanel():
 			switch gameEvent.EType {
 			case GAME_START:
-				if receiver.UiSprite != nil {
-					receiver.UiSprite.UIData = &UIData{players: game.GetPlayers()}
-					receiver.Renderer.Add(receiver.UiSprite)
+				if receiver.UI != nil {
+					receiver.UI.UIData = &UIData{players: game.GetPlayers()}
+					receiver.Renderer.Add(receiver.UI)
 				}
 			case GAME_END_WIN:
 				fallthrough
 			case GAME_END_LOSE:
-				if receiver.UiSprite != nil {
-					receiver.Renderer.Remove(receiver.UiSprite)
+				if receiver.UI != nil {
+					receiver.Renderer.Remove(receiver.UI)
 				}
 				for _, player := range receiver.players {
 					receiver.KeyboardRepeater.Unsubscribe(player.Keyboard)

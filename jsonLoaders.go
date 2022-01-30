@@ -37,6 +37,7 @@ func NewJsonPackage() *Package {
 	instance.M["state"] = StateLoader
 	instance.M["stateItem"] = StateItemLoader
 	instance.M["collision"] = CollisionLoader
+	instance.M["spriter"] = SpriterLoader
 	instance.M["sprite"] = SpriteLoader
 	instance.M["animation"] = AnimationLoader
 	instance.M["composition"] = CompositionLoader
@@ -44,18 +45,55 @@ func NewJsonPackage() *Package {
 	return instance
 }
 
-func RootLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func lGetObject(blueprint string, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) (interface{}, error) {
+	loader := get(blueprint)
+	if loader == nil {
+		return nil, fmt.Errorf("%s: %w", blueprint, LoaderNotFoundError)
+	}
+	object := loader(get, collector, preset, payload)
+	if object == nil {
+		return nil, fmt.Errorf("%s: %w", blueprint, InstanceError)
+	}
+	return object, nil
+}
+
+func RootLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+	requireBytes, dType, _, _ := jsonparser.Get(payload, "require")
+	if dType == jsonparser.String || dType == jsonparser.Array {
+		var requireFunc RequireFunc
+		if obj, err := lGetObject("require", get, collector, preset, payload); !collector.Add(err) {
+			requireFunc = obj.(RequireFunc)
+			if dType == jsonparser.String {
+				err := requireFunc(string(requireBytes))
+				if err != nil {
+					collector.Add(fmt.Errorf("unable to require %s: %w", requireBytes, err))
+				} else {
+					jsonparser.ArrayEach(requireBytes, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+						if dataType != jsonparser.String {
+							collector.Add(fmt.Errorf("require skip value, it has ubnormal format %w", ParseError))
+							return
+						}
+						err = requireFunc(string(value))
+						if err != nil {
+							collector.Add(fmt.Errorf("unable to require %s: %w", requireBytes, err))
+						}
+						return
+					})
+				}
+			}
+		}
+	} else if dType == jsonparser.Null || dType == jsonparser.NotExist {
+		//none
+	} else {
+		collector.Add(fmt.Errorf("require has ubnormal format %w", ParseError))
+	}
+
 	uType, err := jsonparser.GetString(payload, "type")
 	if collector.Add(err) {
 		return nil
 	}
-	loader := get(uType)
-	if loader == nil {
-		collector.Add(fmt.Errorf("%s: %w", uType, LoaderNotFoundError))
-		return nil
-	}
-	object := loader(get, collector, payload)
-	if object == nil {
+	object, err := lGetObject(uType, get, collector, preset, payload)
+	if collector.Add(err) {
 		return nil
 	}
 	object.(ObjectInterface).GetAttr().Type = uType
@@ -63,10 +101,10 @@ func RootLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 	return object
 }
 
-func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func UnitLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		output     EventChanel
-		motionObj  *MotionObject
+		object     *MotionObject
 		stateObj   *State
 		oo         *ObservableObject
 		co         *ControlledObject
@@ -77,50 +115,44 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		err        error
 	)
 
-	if loader := get("motionObject"); loader != nil {
-		if moObj := loader(get, collector, payload); moObj != nil {
-			motionObj = moObj.(*MotionObject)
-		}
+	if obj, err := lGetObject("motionObject", get, collector, preset, payload); !collector.Add(err) {
+		object = obj.(*MotionObject)
 	} else {
-		collector.Add(fmt.Errorf("%s: %w", "motionObject", LoaderNotFoundError))
-	}
-	//skip error because of dataType validation
-	stateCfg, dType, _, err := jsonparser.Get(payload, "state")
-	switch dType {
-	case jsonparser.String:
-		//todo rename
-		stateObj, err = GetObjectState(string(stateCfg))
-		collector.Add(err)
-	case jsonparser.Object:
-		if loader := get("state"); loader != nil {
-			if stObj := loader(get, collector, stateCfg); stObj != nil {
-				stateObj = stObj.(*State)
-			}
-		} else {
-			collector.Add(fmt.Errorf("%s: %w", "state", LoaderNotFoundError))
-		}
-	case jsonparser.Null:
-		fallthrough
-	case jsonparser.NotExist:
-		//nope
-	default:
-		collector.Add(fmt.Errorf("state: %w", ParseError))
-	}
-
-	if motionObj == nil {
 		return nil
 	}
 
 	//skip error because of dataType validation
-	gunCfg, dType, _, _ := jsonparser.Get(payload, "gun")
+	stateCfg, dType, _, _ := jsonparser.Get(payload, "state")
+	switch dType {
+	case jsonparser.String:
+		stateBytes, err := loadState(string(stateCfg))
+		if !collector.Add(err) {
+			if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+				Custom: object.Attributes.Custom,
+			}, stateBytes); !collector.Add(err) {
+				stateObj = obj.(*State)
+			}
+		}
+	case jsonparser.Object:
+		if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+			Custom: object.Attributes.Custom,
+		}, stateCfg); !collector.Add(err) {
+			stateObj = obj.(*State)
+		}
+	case jsonparser.Null:
+		fallthrough
+	case jsonparser.NotExist:
+		//none
+	default:
+		collector.Add(fmt.Errorf("state: %w", ParseError))
+	}
+
+	//skip error because of dataType validation
+	gunBytes, dType, _, _ := jsonparser.Get(payload, "gun")
 	switch dType {
 	case jsonparser.Object:
-		if loader := get("gun"); loader != nil {
-			if gunObj := loader(get, collector, gunCfg); gunObj != nil {
-				gun = gunObj.(*Gun)
-			}
-		} else {
-			collector.Add(fmt.Errorf("%s: %w", "gun", LoaderNotFoundError))
+		if object, err := lGetObject("gun", get, collector, preset, gunBytes); !collector.Add(err) {
+			gun = object.(*Gun)
 		}
 	case jsonparser.Null:
 		fallthrough
@@ -131,18 +163,12 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 	}
 
 	if !DEBUG_DISABLE_VISION {
-		visionCfg, dType, _, _ := jsonparser.Get(payload, "vision")
+		visionBytes, dType, _, _ := jsonparser.Get(payload, "vision")
 		switch dType {
 		case jsonparser.Object:
-			loader := get("collision")
-			if loader != nil {
-				proxy := loader(get, collector, visionCfg)
-				if proxy != nil {
-					vision = proxy.(*collider.ClBody)
-				}
-			} else {
-				collector.Add(fmt.Errorf("collision: %w", LoaderNotFoundError))
-			}
+			size := Size{}
+			json.Unmarshal(visionBytes, &size)
+			vision = collider.NewPenetrateCollision(0, 0, size.W, size.H)
 		case jsonparser.Null:
 		case jsonparser.NotExist:
 		default:
@@ -150,12 +176,9 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		}
 	}
 
-	if loader := get("eventChanel"); loader != nil {
-		if outObj := loader(get, collector, payload); outObj != nil {
-			output = outObj.(EventChanel)
-		}
-	} else {
-		collector.Add(fmt.Errorf("%s: %w", "eventChanel", LoaderNotFoundError))
+	//todo remove
+	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+		output = obj.(EventChanel)
 	}
 
 	oo, err = NewObservableObject(output, nil)
@@ -170,15 +193,11 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 				obj, _ := controller.NewAIControl()
 				co, err = NewControlledObject(obj, nil)
 			default:
-				if loader := get("controlledObject"); loader != nil {
-					if outObj := loader(get, collector, payload); outObj != nil {
-						co = outObj.(*ControlledObject)
-						if _, ok := co.Control.(*BehaviorControl); ok {
-							behaviorAi = true
-						}
+				if obj, err := lGetObject("controlledObject", get, collector, preset, payload); !collector.Add(err) {
+					co = obj.(*ControlledObject)
+					if _, ok := co.Control.(*BehaviorControl); ok {
+						behaviorAi = true
 					}
-				} else {
-					collector.Add(fmt.Errorf("%s: %w", "controlledObject", LoaderNotFoundError))
 				}
 			}
 		} else {
@@ -186,7 +205,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 			co, err = NewControlledObject(obj, nil)
 		}
 		if !collector.Add(err) {
-			unit, err = NewUnit(co, oo, motionObj, stateObj, vision)
+			unit, err = NewUnit(co, oo, object, stateObj, vision)
 			unit.ObservableObject.Owner = unit
 		}
 		if !collector.Add(err) {
@@ -226,7 +245,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 	return unit
 }
 
-func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func WallLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object   *Object
 		stateObj *State
@@ -236,45 +255,42 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		err      error
 	)
 
-	if loader := get("object"); loader != nil {
-		if obj := loader(get, collector, payload); obj != nil {
-			object = obj.(*Object)
-		}
+	if obj, err := lGetObject("object", get, collector, preset, payload); !collector.Add(err) {
+		object = obj.(*Object)
 	} else {
-		collector.Add(fmt.Errorf("%s: %w", "object", LoaderNotFoundError))
+		return nil
 	}
 
 	//skip error because of dataType validation
 	stateCfg, dType, _, _ := jsonparser.Get(payload, "state")
 	switch dType {
-	case jsonparser.NotExist:
-		//nope
 	case jsonparser.String:
 		//todo rename
-		stateObj, err = GetObjectState(string(stateCfg))
-		collector.Add(err)
-	case jsonparser.Object:
-		if loader := get("state"); loader != nil {
-			if stObj := loader(get, collector, stateCfg); stObj != nil {
-				stateObj = stObj.(*State)
+		stateBytes, err := loadState(string(stateCfg))
+		if !collector.Add(err) {
+			if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+				Custom: object.Attributes.Custom,
+			}, stateBytes); !collector.Add(err) {
+				stateObj = obj.(*State)
 			}
-		} else {
-			collector.Add(fmt.Errorf("%s: %w", "state", LoaderNotFoundError))
 		}
+	case jsonparser.Object:
+		if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+			Custom: object.Attributes.Custom,
+		}, stateCfg); !collector.Add(err) {
+			stateObj = obj.(*State)
+		}
+	case jsonparser.Null:
+		fallthrough
+	case jsonparser.NotExist:
+		//none
 	default:
 		collector.Add(fmt.Errorf("state: %w", ParseError))
 	}
 
-	if object == nil {
-		return nil
-	}
-
-	if loader := get("eventChanel"); loader != nil {
-		if outObj := loader(get, collector, payload); outObj != nil {
-			output = outObj.(EventChanel)
-		}
-	} else {
-		collector.Add(fmt.Errorf("%s: %w", "eventChanel", LoaderNotFoundError))
+	//todo remove
+	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+		output = obj.(EventChanel)
 	}
 
 	oo, err = NewObservableObject(output, nil)
@@ -291,7 +307,7 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 		wall.Attributes.Evented = true
 
 		hp, err := jsonparser.GetInt(payload, "hp")
-		if !collector.Add(err) {
+		if collector.Add(err) {
 			wall.FullHP = int(hp)
 			wall.HP = int(hp)
 		}
@@ -305,7 +321,7 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfa
 	return wall
 }
 
-func CollectableLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func CollectableLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object   *Object
 		stateObj *State
@@ -315,12 +331,10 @@ func CollectableLoader(get LoaderGetter, collector *LoadErrors, payload []byte) 
 		err      error
 	)
 
-	if loader := get("object"); loader != nil {
-		if obj := loader(get, collector, payload); obj != nil {
-			object = obj.(*Object)
-		}
+	if obj, err := lGetObject("object", get, collector, preset, payload); !collector.Add(err) {
+		object = obj.(*Object)
 	} else {
-		collector.Add(fmt.Errorf("%s: %w", "object", LoaderNotFoundError))
+		return nil
 	}
 
 	//skip error because of dataType validation
@@ -328,36 +342,37 @@ func CollectableLoader(get LoaderGetter, collector *LoadErrors, payload []byte) 
 	switch dType {
 	case jsonparser.String:
 		//todo rename
-		stateObj, err = GetObjectState(string(stateCfg))
-		collector.Add(err)
-	case jsonparser.Object:
-		if loader := get("state"); loader != nil {
-			if stObj := loader(get, collector, stateCfg); stObj != nil {
-				stateObj = stObj.(*State)
+		stateBytes, err := loadState(string(stateCfg))
+		if !collector.Add(err) {
+			if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+				Custom: object.Attributes.Custom,
+			}, stateBytes); !collector.Add(err) {
+				stateObj = obj.(*State)
 			}
-		} else {
-			collector.Add(fmt.Errorf("%s: %w", "state", LoaderNotFoundError))
 		}
+	case jsonparser.Object:
+		if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+			Custom: object.Attributes.Custom,
+		}, stateCfg); !collector.Add(err) {
+			stateObj = obj.(*State)
+		}
+	case jsonparser.Null:
+		fallthrough
+	case jsonparser.NotExist:
+		//none
 	default:
 		collector.Add(fmt.Errorf("state: %w", ParseError))
 	}
 
-	if object == nil {
-		return nil
-	}
-
-	if loader := get("eventChanel"); loader != nil {
-		if outObj := loader(get, collector, payload); outObj != nil {
-			output = outObj.(EventChanel)
-		}
-	} else {
-		collector.Add(fmt.Errorf("%s: %w", "eventChanel", LoaderNotFoundError))
+	//todo remove
+	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+		output = obj.(EventChanel)
 	}
 
 	oo, err = NewObservableObject(output, nil)
 
 	if !collector.Add(err) {
-		collect, err = NewCollectable2(object, oo, stateObj, nil)
+		collect, err = NewCollectable(object, oo, stateObj, nil)
 		collect.ObservableObject.Owner = collect
 		collector.Add(err)
 	}
@@ -375,52 +390,24 @@ func CollectableLoader(get LoaderGetter, collector *LoadErrors, payload []byte) 
 	return collect
 }
 
-func ExplosionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func ExplosionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
-		object *Object
-		/*		stateObj  	*State*/
+		object    *Object
 		oo        *ObservableObject
 		explosion *Explosion
 		output    EventChanel
 		err       error
 	)
 
-	if loader := get("object"); loader != nil {
-		if obj := loader(get, collector, payload); obj != nil {
-			object = obj.(*Object)
-		}
+	if obj, err := lGetObject("object", get, collector, preset, payload); !collector.Add(err) {
+		object = obj.(*Object)
 	} else {
-		collector.Add(fmt.Errorf("%s: %w", "object", LoaderNotFoundError))
-	}
-
-	/*	stateCfg, dType, _, err := jsonparser.Get(payload, "state")
-		switch dType {
-		case jsonparser.String:
-			//todo rename
-			stateObj, err = GetObjectState(string(stateCfg))
-			collector.Add(err)
-		case jsonparser.Object:
-			if loader := get("state"); loader != nil {
-				if stObj := loader(get, collector, stateCfg); stObj != nil {
-					stateObj = stObj.(*State)
-				}
-			} else {
-				collector.Add(fmt.Errorf("%s: %w", "state", LoaderNotFoundError))
-			}
-		default:
-			collector.Add(fmt.Errorf("state: %w", ParseError))
-		}*/
-
-	if object == nil {
 		return nil
 	}
 
-	if loader := get("eventChanel"); loader != nil {
-		if outObj := loader(get, collector, payload); outObj != nil {
-			output = outObj.(EventChanel)
-		}
-	} else {
-		collector.Add(fmt.Errorf("%s: %w", "eventChanel", LoaderNotFoundError))
+	//todo remove
+	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+		output = obj.(EventChanel)
 	}
 
 	oo, err = NewObservableObject(output, nil)
@@ -453,9 +440,9 @@ func ExplosionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 	return explosion
 }
 
-func ProjectileLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func ProjectileLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
-		motionObj  *MotionObject
+		object     *MotionObject
 		stateObj   *State
 		oo         *ObservableObject
 		projectile *Projectile
@@ -463,49 +450,47 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, payload []byte) i
 		err        error
 	)
 
-	if loader := get("motionObject"); loader != nil {
-		if moObj := loader(get, collector, payload); moObj != nil {
-			motionObj = moObj.(*MotionObject)
-		}
+	if obj, err := lGetObject("motionObject", get, collector, preset, payload); !collector.Add(err) {
+		object = obj.(*MotionObject)
 	} else {
-		collector.Add(fmt.Errorf("%s: %w", "motionObject", LoaderNotFoundError))
+		return nil
 	}
 
 	//skip error because of dataType validation
 	stateCfg, dType, _, _ := jsonparser.Get(payload, "state")
 	switch dType {
 	case jsonparser.String:
-		//todo rename
-		stateObj, err = GetObjectState(string(stateCfg))
-		collector.Add(err)
-	case jsonparser.Object:
-		if loader := get("state"); loader != nil {
-			if stObj := loader(get, collector, stateCfg); stObj != nil {
-				stateObj = stObj.(*State)
+		stateBytes, err := loadState(string(stateCfg))
+		if !collector.Add(err) {
+			if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+				Custom: object.Attributes.Custom,
+			}, stateBytes); !collector.Add(err) {
+				stateObj = obj.(*State)
 			}
-		} else {
-			collector.Add(fmt.Errorf("%s: %w", "state", LoaderNotFoundError))
 		}
+	case jsonparser.Object:
+		if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+			Custom: object.Attributes.Custom,
+		}, stateCfg); !collector.Add(err) {
+			stateObj = obj.(*State)
+		}
+	case jsonparser.Null:
+		fallthrough
+	case jsonparser.NotExist:
+		//none
 	default:
 		collector.Add(fmt.Errorf("state: %w", ParseError))
 	}
 
-	if motionObj == nil {
-		return nil
-	}
-
-	if loader := get("eventChanel"); loader != nil {
-		if outObj := loader(get, collector, payload); outObj != nil {
-			output = outObj.(EventChanel)
-		}
-	} else {
-		collector.Add(fmt.Errorf("%s: %w", "eventChanel", LoaderNotFoundError))
+	//todo remove
+	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+		output = obj.(EventChanel)
 	}
 
 	oo, err = NewObservableObject(output, nil)
 
 	if !collector.Add(err) {
-		projectile, err = NewProjectile2(motionObj, oo, stateObj, nil)
+		projectile, err = NewProjectile2(object, oo, stateObj, nil)
 		projectile.ObservableObject.Owner = projectile
 		if !collector.Add(err) {
 
@@ -538,7 +523,7 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, payload []byte) i
 	return projectile
 }
 
-func GunLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func GunLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object *Gun
 		err    error
@@ -560,49 +545,47 @@ func GunLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interfac
 	return object
 }
 
-func MotionObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func MotionObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object *MotionObject
-		err    error
+		config *MotionObjectConfig
 	)
 
-	if loader := get("object"); loader != nil {
-		if obj := loader(get, collector, payload); obj != nil {
-			config := new(MotionObjectConfig2)
-			if !collector.Add(json.Unmarshal(payload, config)) {
-				if config.Direction.X == 0 && config.Direction.Y == 0 {
-					config.Direction.Y = -1
-				}
-				_, spdMin, _, _ := jsonparser.Get(payload, "speed", "min")
-				_, spdMax, _, _ := jsonparser.Get(payload, "speed", "max")
-				object, err = NewMotionObject(obj.(*Object), config.Direction, Point{
-					X: config.Speed.Min,
-					Y: config.Speed.Min,
-				})
-				collector.Add(err)
-				if spdMin == jsonparser.Number {
-					object.MinSpeed.X = config.Speed.Min
-					object.MinSpeed.Y = config.Speed.Min
-				}
-				if spdMax == jsonparser.Number {
-					object.MaxSpeed.X = config.Speed.Max
-					object.MaxSpeed.Y = config.Speed.Max
-				}
-				if config.AccelTimeFunc != "" {
-					tf, err := GetTimeFunc(config.AccelTimeFunc)
-					if !collector.Add(err) {
-						object.AccelTimeFunc = tf
-					}
-				}
-				if config.AccelTime > 0 {
-					object.AccelDuration = config.AccelTime
-				}
-			}
+	if obj, err := lGetObject("object", get, collector, preset, payload); !collector.Add(err) {
+		if cfg, ok := preset.(*MotionObjectConfig); ok { //todo separate defaults and params
+			config = cfg
 		} else {
-			return nil
+			config = new(MotionObjectConfig)
 		}
-	} else {
-		collector.Add(fmt.Errorf("%s: %w", "object", LoaderNotFoundError))
+		collector.Add(json.Unmarshal(payload, config))
+		if config.Direction.X == 0 && config.Direction.Y == 0 {
+			config.Direction.Y = -1
+		}
+		_, spdMin, _, _ := jsonparser.Get(payload, "speed", "min")
+		_, spdMax, _, _ := jsonparser.Get(payload, "speed", "max")
+		object, err = NewMotionObject(obj.(*Object), config.Direction, Point{
+			X: config.Speed.Min,
+			Y: config.Speed.Min,
+		})
+		collector.Add(err)
+		if spdMin == jsonparser.Number {
+			object.MinSpeed.X = config.Speed.Min
+			object.MinSpeed.Y = config.Speed.Min
+		}
+		if spdMax == jsonparser.Number {
+			object.MaxSpeed.X = config.Speed.Max
+			object.MaxSpeed.Y = config.Speed.Max
+		}
+		if config.AccelTimeFunc != "" {
+			tf, err := GetTimeFunc(config.AccelTimeFunc)
+			if !collector.Add(err) {
+				object.AccelTimeFunc = tf
+			}
+		}
+		if config.AccelTime > 0 {
+			object.AccelDuration = config.AccelTime
+		}
+
 	}
 
 	if object != nil {
@@ -612,16 +595,13 @@ func MotionObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte)
 	return object
 }
 
-func ControlledObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func ControlledObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object *ControlledObject
-		//err    error
 	)
 
-	if loader := get("ai"); loader != nil {
-		if obj := loader(get, collector, payload); obj != nil {
-			object, _ = NewControlledObject(obj.(controller.Controller), nil)
-		}
+	if obj, err := lGetObject("ai", get, collector, preset, payload); !collector.Add(err) {
+		object, _ = NewControlledObject(obj.(controller.Controller), nil)
 	} else {
 		collector.Add(fmt.Errorf("%s: %w", "ai", LoaderNotFoundError))
 		simpl, _ := controller.NewAIControl()
@@ -636,10 +616,12 @@ func ControlledObjectLoader(get LoaderGetter, collector *LoadErrors, payload []b
 	return object
 }
 
-func ObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func ObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		sprite    Spriteer
 		collision *collider.ClBody
+		cfg       *GameConfig
+		custom    CustomizeMap
 		err       error
 	)
 
@@ -648,21 +630,39 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 		collector.Add(fmt.Errorf("animation key is depricated for jsonLoaders: %w", ParseError))
 	}
 
+	if obj, err := lGetObject("gameConfig", get, collector, preset, payload); !collector.Add(err) {
+		cfg = obj.(*GameConfig)
+	}
+
+	if !cfg.disableCustomization {
+		customBytes, dataType, _, _ := jsonparser.Get(payload, "custom")
+		switch dataType {
+		case jsonparser.Object:
+			custom = make(CustomizeMap)
+			collector.Add(json.Unmarshal(customBytes, &custom))
+		case jsonparser.Null:
+			fallthrough
+		case jsonparser.NotExist:
+			//none
+		default:
+			collector.Add(fmt.Errorf("custom: %w", ParseError))
+		}
+	}
+
 	//skip error because of dataType validation
 	spriteCfg, dType, _, _ := jsonparser.Get(payload, "sprite")
 	switch dType {
 	case jsonparser.String:
-		sprite, err = GetSprite(string(spriteCfg), true, false)
-		collector.Add(err)
-	case jsonparser.Object:
-		loader := get("sprite")
-		if loader != nil {
-			proxy := loader(get, collector, spriteCfg)
-			if proxy != nil {
-				sprite = proxy.(Spriteer)
+		if sprite, err = GetSprite2(string(spriteCfg)); err != nil {
+			if sprite, err = LoadSprite2(string(spriteCfg), false); !collector.Add(err) {
+				collector.Add(AddSprite(string(spriteCfg), sprite.(*Sprite)))
 			}
-		} else {
-			collector.Add(fmt.Errorf("sprite: %w", LoaderNotFoundError))
+		}
+	case jsonparser.Object:
+		if obj, err := lGetObject("spriter", get, collector, SpriteerConfig{
+			Custom: custom,
+		}, spriteCfg); !collector.Add(err) {
+			sprite = obj.(Spriteer)
 		}
 	default:
 		collector.Add(fmt.Errorf("sprite: %w", ParseError))
@@ -672,15 +672,13 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 	collisionCfg, dType, _, _ := jsonparser.Get(payload, "collision")
 	switch dType {
 	case jsonparser.Object:
-		loader := get("collision")
-		if loader != nil {
-			proxy := loader(get, collector, collisionCfg)
-			if proxy != nil {
-				collision = proxy.(*collider.ClBody)
-			}
-		} else {
-			collector.Add(fmt.Errorf("collision: %w", LoaderNotFoundError))
+		if obj, err := lGetObject("collision", get, collector, preset, collisionCfg); !collector.Add(err) {
+			collision = obj.(*collider.ClBody)
 		}
+	case jsonparser.Null:
+		fallthrough
+	case jsonparser.NotExist:
+		//nope if size and proper tags are set
 	default:
 		collector.Add(fmt.Errorf("collision: %w", ParseError))
 	}
@@ -771,6 +769,33 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 			collector.Add(fmt.Errorf("tags: %w", ParseError))
 		}
 
+		//size
+		if sizePl, dt, _, _ := jsonparser.Get(payload, "size"); dt == jsonparser.Object {
+			if collision != nil {
+				collector.Add(fmt.Errorf("only one of collision|size must be set: %w", ParseError))
+			} else {
+				size := Size{}
+				collector.Add(json.Unmarshal(sizePl, &size))
+				if object.HasTag("nocolision") {
+					object.collision = collider.NewFakeCollision(0, 0, size.W, size.H)
+				} else if object.HasTag("projectile") || object.HasTag("explosion") || object.HasTag("penetrate") {
+					object.collision = collider.NewPenetrateCollision(0, 0, size.W, size.H)
+				} else if object.HasTag("obstacle") {
+					object.collision = collider.NewCollision(0, 0, size.W, size.H)
+				} else if !object.HasTag("obstacle") && object.HasTag("vulnerable") {
+					object.collision = collider.NewPenetrateCollision(0, 0, size.W, size.H)
+				} else {
+					logger.Printf("object %d %s has default fake collision\n", object.ID, payload)
+					object.collision = collider.NewFakeCollision(0, 0, size.W, size.H)
+				}
+				if object.HasTag("static") {
+					object.collision.SetStatic(true)
+				}
+			}
+		} else if collision == nil {
+			collector.Add(fmt.Errorf("size or collision must be set: %w", ParseError))
+		}
+
 		zIndex, err := jsonparser.GetInt(payload, "zIndex")
 		if err == nil {
 			object.zIndex = int(zIndex)
@@ -790,12 +815,16 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, payload []byte) inter
 			object.Tracker, err = NewTracker()
 			collector.Add(err)
 		}
+
+		if custom != nil {
+			object.Attributes.Custom = custom
+		}
 	}
 
 	return object
 }
 
-func CollisionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func CollisionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		collision *collider.ClBody
 	)
@@ -831,94 +860,104 @@ func CollisionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 	return collision
 }
 
-func SpriteLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func SpriterLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
-		sprite Spriteer
-		cfg    *GameConfig
-		err    error
+		sprite     Spriteer
+		spriteConf SpriteerConfig
+		ok         bool
 	)
 
-	loader := get("gameConfig")
-	if loader != nil {
-		proxy := loader(get, collector, payload)
-		if proxy != nil {
-			cfg = proxy.(*GameConfig)
-		}
+	if spriteConf, ok = preset.(SpriteerConfig); !ok {
+		spriteConf = SpriteerConfig{}
 	} else {
-		collector.Add(fmt.Errorf("gameConfig: %w", LoaderNotFoundError))
+		if _, dt, _, _ := jsonparser.Get(payload, "custom"); dt == jsonparser.Object {
+			spriteConf.Custom = make(map[string]int)
+		}
 	}
+	collector.Add(json.Unmarshal(payload, &spriteConf))
 
-	sType, _ := jsonparser.GetString(payload, "type")
-	switch sType {
+	switch spriteConf.Type {
 	case "animation":
-		fallthrough
+		if obj, err := lGetObject(spriteConf.Type, get, collector, AnimationConfig{
+			SpriteerConfig: spriteConf,
+		}, payload); !collector.Add(err) {
+			sprite = obj.(Spriteer)
+		}
 	case "composition":
-		loader := get(sType)
-		if loader != nil {
-			proxy := loader(get, collector, payload)
-			if proxy != nil {
-				sprite = proxy.(Spriteer)
-			}
-		} else {
-			collector.Add(fmt.Errorf("%s: %w", sType, LoaderNotFoundError))
+		if obj, err := lGetObject(spriteConf.Type, get, collector, CompositionConfig{
+			SpriteerConfig: spriteConf,
+		}, payload); !collector.Add(err) {
+			sprite = obj.(Spriteer)
 		}
 	default:
-		var isTransparent bool
-		sId, _ := jsonparser.GetString(payload, "name")
-		isTransparent, err = jsonparser.GetBoolean(payload, "transparent")
-		if err != nil {
-			isTransparent = false
-		}
-		if sId != "" {
-			var spriteInst *Sprite
-			spriteInst, err = GetSprite(sId, true, isTransparent)
-			if !collector.Add(err) {
-				spriteInst.CalculateSize()
-				if !cfg.disableCustomization {
-					customBytes, dataType, _, _ := jsonparser.Get(payload, "custom")
-					switch dataType {
-					case jsonparser.Object:
-						custom := make(CustomizeMap)
-						if !collector.Add(json.Unmarshal(customBytes, &custom)) {
-							hash := hashCustomizeMap(custom)
-							customSprite, err := GetSprite(sId+"-"+hash, false, false)
-							if err == nil {
-								spriteInst = customSprite
-							} else {
-								spriteInst, err = CustomizeSprite(spriteInst, custom)
-								if !collector.Add(err) {
-									err = AddSprite(sId+"-"+hash, spriteInst)
-								}
-							}
-							collector.Add(err)
-						}
-					case jsonparser.Null:
-						fallthrough
-					case jsonparser.NotExist:
-						//none
-					default:
-						collector.Add(fmt.Errorf("custom: %w", ParseError))
-					}
-				}
-			}
-			sprite = spriteInst
-		} else {
-			collector.Add(fmt.Errorf("sprite must have a id: %w", ParseError))
+		if obj, err := lGetObject(spriteConf.Type, get, collector, SpriteConfig{
+			SpriteerConfig: spriteConf,
+		}, payload); !collector.Add(err) {
+			sprite = obj.(Spriteer)
 		}
 	}
 
 	if sprite == nil {
 		collector.Add(fmt.Errorf("sprite is nil, use default: %w", InstanceError))
 		sprite = ErrorSprite
-
 	}
 
 	return sprite
 }
 
-func CompositionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func SpriteLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+	var (
+		sprite     *Sprite
+		spriteConf SpriteConfig
+		ok         bool
+		cfg        *GameConfig
+		err        error
+	)
+
+	if obj, err := lGetObject("gameConfig", get, collector, preset, payload); !collector.Add(err) {
+		cfg = obj.(*GameConfig)
+	}
+
+	if spriteConf, ok = preset.(SpriteConfig); !ok {
+		spriteConf = SpriteConfig{}
+	}
+	collector.Add(json.Unmarshal(payload, &spriteConf))
+
+	if spriteConf.Name == "" {
+		collector.Add(fmt.Errorf("sprite must have a id: %w", ParseError))
+		return ErrorSprite
+	}
+
+	sprite, err = GetSprite(spriteConf.Name, true, spriteConf.IsTransparent)
+	if !collector.Add(err) {
+		sprite.CalculateSize()
+		if len(spriteConf.Custom) > 0 && !cfg.disableCustomization {
+			hash := hashCustomizeMap(spriteConf.Custom)
+			customSprite, err := GetSprite(spriteConf.Name+"-"+hash, false, false)
+			if err == nil {
+				sprite = customSprite
+			} else {
+				sprite, err = CustomizeSprite(sprite, spriteConf.Custom)
+				if !collector.Add(err) {
+					err = AddSprite(spriteConf.Name+"-"+hash, sprite)
+				}
+			}
+			collector.Add(err)
+		}
+	}
+
+	if sprite == nil {
+		collector.Add(fmt.Errorf("sprite is nil, use default: %w", InstanceError))
+		sprite = ErrorSprite
+	}
+
+	return sprite
+}
+
+func CompositionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		composition *Composition
+		layerConf   *CompositionLayerConfig
 	)
 	//skip error because of dataType validation
 	keyFrames, dataType, _, _ := jsonparser.Get(payload, "frames")
@@ -934,20 +973,20 @@ func CompositionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) 
 					composition.addFrame(frame, 0, 0, index)
 				}
 			case jsonparser.Object:
-				if loader := get("sprite"); loader == nil {
-					collector.Add(fmt.Errorf("%s: %w", "sprite", LoaderNotFoundError))
-				} else {
-					if frame := loader(get, collector, value); frame != nil {
-						layerConf := new(CompositionLayerConfig)
-						json.Unmarshal(value, layerConf)
-						if layerConf.ZIndex == 0 {
-							_, dataType, _, _ = jsonparser.Get(value, "zIndex")
-							if dataType == jsonparser.NotExist || dataType == jsonparser.Null {
-								layerConf.ZIndex = index
-							}
-						}
-						composition.addFrame(frame.(Spriteer), layerConf.OffsetX, layerConf.OffsetY, layerConf.ZIndex)
+				if frame, err := lGetObject("spriter", get, collector, preset, value); !collector.Add(err) {
+					if cfg, ok := preset.(*CompositionLayerConfig); ok { //todo separate defaults and params
+						layerConf = cfg
+					} else {
+						layerConf = new(CompositionLayerConfig)
 					}
+					json.Unmarshal(value, layerConf)
+					if layerConf.ZIndex == 0 {
+						_, dataType, _, _ = jsonparser.Get(value, "zIndex")
+						if dataType == jsonparser.NotExist || dataType == jsonparser.Null {
+							layerConf.ZIndex = index
+						}
+					}
+					composition.addFrame(frame.(Spriteer), layerConf.OffsetX, layerConf.OffsetY, layerConf.ZIndex)
 				}
 			default:
 				collector.Add(fmt.Errorf("keyFrames:  %w", ParseError))
@@ -962,26 +1001,24 @@ func CompositionLoader(get LoaderGetter, collector *LoadErrors, payload []byte) 
 	return composition
 }
 
-func AnimationLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func AnimationLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		animation *Animation
 		cfg       *GameConfig
+		config    AnimationConfig
+		ok        bool
 		err       error
 	)
 
-	loader := get("gameConfig")
-	if loader != nil {
-		proxy := loader(get, collector, payload)
-		if proxy != nil {
-			cfg = proxy.(*GameConfig)
-		}
-	} else {
-		collector.Add(fmt.Errorf("gameConfig: %w", LoaderNotFoundError))
+	if obj, err := lGetObject("gameConfig", get, collector, preset, payload); !collector.Add(err) {
+		cfg = obj.(*GameConfig)
 	}
 
-	config := new(AnimationConfig)
-	err = json.Unmarshal(payload, config)
+	if config, ok = preset.(AnimationConfig); !ok {
+		config = AnimationConfig{}
+	}
 
+	err = json.Unmarshal(payload, &config)
 	if err != nil {
 		collector.Add(fmt.Errorf("animation config deserialization error: %w", ParseError))
 		return ErrorAnimation
@@ -1024,18 +1061,14 @@ func AnimationLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 						animation.AddFrame(ErrorSprite)
 					}
 				case jsonparser.Object:
-					if loader := get("sprite"); loader == nil {
-						collector.Add(fmt.Errorf("%s: %w", "sprite", LoaderNotFoundError))
-					} else {
-						if frame := loader(get, collector, value); frame != nil {
-							err = animation.AddFrame(frame.(Spriteer))
-							if collector.Add(err) && errors.Is(err, FrameTypeCombinationError) {
-								return
-							}
-						} else {
-							collector.Add(fmt.Errorf("animation no frame: %s", InstanceError))
-							animation.AddFrame(ErrorSprite)
+					if obj, err := lGetObject("spriter", get, collector, preset, value); err == nil {
+						err = animation.AddFrame(obj.(Spriteer))
+						if collector.Add(err) && errors.Is(err, FrameTypeCombinationError) {
+							return
 						}
+					} else {
+						collector.Add(fmt.Errorf("animation no frame: %s", InstanceError))
+						animation.AddFrame(ErrorSprite)
 					}
 				default:
 					collector.Add(fmt.Errorf("keyFrames:  %w", ParseError))
@@ -1066,7 +1099,7 @@ func AnimationLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 
 	if animation != ErrorAnimation {
 		//todo there is a problem, config.name is kind a animation key but to simplify usage we allow to override animation base config
-		if config.Custom != nil && !cfg.disableCustomization {
+		if len(config.Custom) > 0 && !cfg.disableCustomization {
 			name := hashCustomizeMap(config.Custom)
 			if customized, err := GetAnimation2(config.Name + "-" + name); err != nil {
 				customized, err = CustomizeAnimation(animation, config.Name, config.Custom)
@@ -1101,41 +1134,44 @@ func AnimationLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 	return animation
 }
 
-func StateLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func StateLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 
 	var (
-		loader Loader
-		state  *State
-		err    error
+		state *State
 	)
 
-	if loader = get("stateItem"); loader == nil {
-		collector.Add(fmt.Errorf("stateItem: %w", LoaderNotFoundError))
-	} else {
-		if root := loader(get, collector, payload); root != nil {
-			state, _ = NewState(nil)
-			state.root = root.(*StateItem)
-			state.Current = root.(*StateItem)
-			state.defaultPath, err = jsonparser.GetString(payload, "default")
-			collector.Add(err)
-			if state.defaultPath == ToDefaultState {
-				collector.Add(fmt.Errorf("%s is predefined state value and it cant be a defaultPath", ToDefaultState))
-				state.defaultPath = "/"
-			}
-			state.MoveTo(state.defaultPath)
+	if root, err := lGetObject("stateItem", get, collector, preset, payload); !collector.Add(err) {
+		state, _ = NewState(nil)
+		state.root = root.(*StateItem)
+		state.Current = root.(*StateItem)
+		state.defaultPath, err = jsonparser.GetString(payload, "default")
+		collector.Add(err)
+		if state.defaultPath == ToDefaultState {
+			collector.Add(fmt.Errorf("%s is predefined state value and it cant be a defaultPath", ToDefaultState))
+			state.defaultPath = "/"
 		}
+		state.MoveTo(state.defaultPath)
 	}
 
 	return state
 }
 
-func StateItemLoader(get LoaderGetter, collector *LoadErrors, payload []byte) interface{} {
+func StateItemLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		sprite     Spriteer
 		collision  *collider.ClBody
 		x, y, w, h float64
 		err        error
 	)
+
+	if customBytes, dt, _, _ := jsonparser.Get(payload, "custom"); dt == jsonparser.Object {
+		if spriteConf, ok := preset.(SpriteerConfig); ok {
+			spriteConf.Custom = make(map[string]int)
+			if !collector.Add(json.Unmarshal(customBytes, &spriteConf)) {
+				preset = spriteConf
+			}
+		}
+	}
 
 	//compatibility
 	//skip error because of dataType validation
@@ -1159,19 +1195,14 @@ func StateItemLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 		}
 		collector.Add(err)
 	case jsonparser.Object:
-		var loader Loader
+		var blueprint string
 		if compability {
-			loader = get("animation")
+			blueprint = "animation"
 		} else {
-			loader = get("sprite")
+			blueprint = "spriter"
 		}
-		if loader != nil {
-			proxy := loader(get, collector, spriteCfg)
-			if proxy != nil {
-				sprite = proxy.(Spriteer)
-			}
-		} else {
-			collector.Add(fmt.Errorf("sprite: %w", LoaderNotFoundError))
+		if obj, err := lGetObject(blueprint, get, collector, preset, spriteCfg); !collector.Add(err) {
+			sprite = obj.(Spriteer)
 		}
 	default:
 		collector.Add(fmt.Errorf("animation: %w", ParseError))
@@ -1181,14 +1212,8 @@ func StateItemLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 	collisionCfg, dType, _, _ := jsonparser.Get(payload, "collision")
 	switch dType {
 	case jsonparser.Object:
-		loader := get("collision")
-		if loader != nil {
-			proxy := loader(get, collector, collisionCfg)
-			if proxy != nil {
-				collision = proxy.(*collider.ClBody)
-			}
-		} else {
-			collector.Add(fmt.Errorf("collision: %w", LoaderNotFoundError))
+		if obj, err := lGetObject("collision", get, collector, preset, collisionCfg); !collector.Add(err) {
+			collision = obj.(*collider.ClBody)
 		}
 	case jsonparser.Null:
 		//nope for now
@@ -1223,7 +1248,7 @@ func StateItemLoader(get LoaderGetter, collector *LoadErrors, payload []byte) in
 				collector.Add(fmt.Errorf("%s is predefined state value and it cant be a stateName", ToDefaultState))
 				//todo return ErrorStateItem
 			}
-			if state := StateItemLoader(get, collector, value); state != nil {
+			if state := StateItemLoader(get, collector, preset, value); state != nil {
 				state.(*StateItem).parent = parent
 				parent.items[string(key)] = state.(*StateItem)
 			}

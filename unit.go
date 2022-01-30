@@ -31,6 +31,7 @@ var (
 		EType:   UNIT_EVENT_OFFSIGTH,
 		Payload: nil,
 	}
+	InvalidDirectionError = errors.New("invalid direction")
 )
 
 type UnitStateInfo struct {
@@ -57,28 +58,8 @@ func (receiver *Unit) Execute(command controller.Command) error {
 	}
 
 	if command.CType == controller.CTYPE_DIRECTION || command.CType == controller.CTYPE_MOVE {
-		if command.Pos != controller.PosIrrelevant && command.Pos.X != command.Pos.Y {
-			receiver.Moving.Direction.X = command.Pos.X
-			receiver.Moving.Direction.Y = command.Pos.Y
-			receiver.Moving.Direction.X = math.Max(math.Min(receiver.Moving.Direction.X, 1), -1)
-			receiver.Moving.Direction.Y = math.Max(math.Min(receiver.Moving.Direction.Y, 1), -1)
-		} else {
-			//invalid direction
-		}
-	}
-
-	if receiver.State != nil {
-		if receiver.Moving.Direction.X > 0 {
-			receiver.Enter("right")
-		}
-		if receiver.Moving.Direction.X < 0 {
-			receiver.Enter("left")
-		}
-		if receiver.Moving.Direction.Y < 0 {
-			receiver.Enter("top")
-		}
-		if receiver.Moving.Direction.Y > 0 {
-			receiver.Enter("bottom")
+		if command.Pos != controller.PosIrrelevant {
+			receiver.AlignToDirection(Point(command.Pos))
 		}
 	}
 
@@ -201,6 +182,7 @@ func (receiver *Unit) Reset() error {
 	receiver.MotionObject.Reset()
 	if receiver.State != nil {
 		receiver.State.Reset()
+		receiver.AlignToDirection(receiver.Direction)
 	}
 	if receiver.Gun != nil {
 		receiver.Gun.Reset()
@@ -234,6 +216,34 @@ func (receiver *Unit) GetAppearDuration() time.Duration {
 func (receiver *Unit) ApplyState(current *StateItem) error {
 	SwitchSprite(current.StateInfo.(*UnitStateInfo).sprite, receiver.sprite)
 	receiver.sprite = current.StateInfo.(*UnitStateInfo).sprite
+	return nil
+}
+
+func (receiver *Unit) AlignToDirection(Pos Point) error {
+	/*	if Pos == receiver.Moving.Direction {
+		return nil
+	}*/
+	if Pos.X != Pos.Y {
+		receiver.Moving.Direction.X = math.Max(math.Min(Pos.X, 1), -1)
+		receiver.Moving.Direction.Y = math.Max(math.Min(Pos.Y, 1), -1)
+	} else {
+		return InvalidDirectionError
+	}
+	receiver.Moving.Direction = Pos
+	if receiver.State != nil {
+		if receiver.Moving.Direction.X > 0 {
+			receiver.Enter("right")
+		}
+		if receiver.Moving.Direction.X < 0 {
+			receiver.Enter("left")
+		}
+		if receiver.Moving.Direction.Y < 0 {
+			receiver.Enter("top")
+		}
+		if receiver.Moving.Direction.Y > 0 {
+			receiver.Enter("bottom")
+		}
+	}
 	return nil
 }
 

@@ -8,19 +8,13 @@
       "normal": {
         "sprite": {
           "type": "sprite",
-          "name": "wall",
-          "custom": {
-            "X": 1
-          }
+          "name": "wall"
         }
       },
       "damage": {
         "sprite": {
           "type": "sprite",
-          "name": "wall_damage",
-          "custom": {
-            "X": 1
-          }
+          "name": "wall_damage"
         }
       },
       "disappear": {
@@ -30,22 +24,19 @@
           "duration": 2000000000,
           "cycled": true,
           "blink": 200000000,
-          "length": 1,
-          "custom": {
-            "X": 1
-          }
+          "length": 1
         }
       }
     }
   },
-  "collision": {
-    "type": "static",
-    "x": 0,
-    "y": 0,
+  "size": {
     "w": 8,
     "h": 4
   },
   "hp": 50,
   "score": 50,
-  "tags": ["wall", "obstacle", "highlights-disappear", "scored", "vulnerable", "tracked"]
+  "tags": ["wall", "obstacle", "highlights-disappear", "scored", "vulnerable", "tracked", "static"],
+  "custom": {
+    "X": 1
+  }
 }

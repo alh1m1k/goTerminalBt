@@ -28,14 +28,11 @@
       ";": 7
     }
   },
-  "collision": {
-    "type": "penetrate",
-    "x": 0,
-    "y": 0,
+  "size": {
     "w": 9,
     "h": 5
   },
   "ttl":    500000000,
   "damage": 100,
-  "tags": ["explosion", "danger"]
+  "tags": ["explosion", "danger", "penetrate"]
 }

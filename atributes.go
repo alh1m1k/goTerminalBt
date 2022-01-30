@@ -20,4 +20,7 @@ type Attributes struct {
 	Renderable  bool
 	Tagable     bool
 	AI          bool
+	Spawned     bool
+	Destroyed   bool
+	Custom      CustomizeMap
 }

@@ -1,11 +1,9 @@
 {
   "type":   "projectile",
+  "require": ["projectile-sharp-apoc-start", "projectile-sharp-apoc-end", "tank-base-explosion"],
   "sprite": "projectile-fanout",
   "state":  "projectile-fanout",
-  "collision": {
-    "type": "penetrate",
-    "x": 0,
-    "y": 0,
+  "size": {
     "w": 1,
     "h": 1
   },

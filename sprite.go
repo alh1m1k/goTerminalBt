@@ -20,12 +20,14 @@ var tokenReSimpl = regexp.MustCompile(`(\\033\[3%dm")<val>(\\033\[0m)`)
 var tokenReZeros = regexp.MustCompile("0+")
 
 var (
-	SpriteExistError         = errors.New("new sprite Id exist")
-	InvalidSpriteParentError = errors.New("invalid sprite parent")
-	SpriteNotFoundError      = errors.New("sprite do not exist")
-	SpriteTransparentError   = errors.New("transparent must set at load")
-	specialSymbols           = []string{"0", "\\", "3", "[", "m"}
-	ErrorSprite              = NewContentSprite([]byte("!!!Error!!!"))
+	SpriteExistError              = errors.New("new sprite Id exist")
+	InvalidSpriteParentError      = errors.New("invalid sprite parent")
+	SpriteNotFoundError           = errors.New("sprite do not exist")
+	SpriteTransparentError        = errors.New("transparent must set at load")
+	SpriteEmptyCustomizationError = errors.New("empty sprite customization list")
+
+	specialSymbols = []string{"0", "\\", "3", "[", "m"}
+	ErrorSprite    = NewContentSprite([]byte("!!!Error!!!"))
 )
 
 type SpriteInfo struct {
@@ -158,6 +160,10 @@ func CustomizeSprite(sprite *Sprite, custom CustomizeMap) (*Sprite, error) {
 		if sprite, ok = sprite.Parent.(*Sprite); !ok {
 			return ErrorSprite, InvalidSpriteParentError
 		}
+	}
+
+	if len(custom) == 0 {
+		return ErrorSprite, SpriteEmptyCustomizationError
 	}
 
 	index := make([]string, 0)

@@ -104,6 +104,8 @@ func (receiver *Game) Run(scenario *Scenario) error {
 
 	receiver.playBackground("main")
 
+	//receiver.EffectManager.ApplyGlobalWeather("", 0.01, 0)
+
 	receiver.Trigger(Event{
 		EType:   GAME_START,
 		Object:  nil,
@@ -161,7 +163,7 @@ func (receiver *Game) doSpawn(scenario *Scenario, payload *SpawnRequest) error {
 	var err error
 	if payload.Location != ZoneAuto && payload.Position == PosAuto {
 		if receiver.Location != nil {
-			payload.Position, err = receiver.Location.CoordinateByIndex(payload.Location.X, payload.Location.Y)
+			payload.Position, err = receiver.Location.CoordinateByZone(payload.Location)
 			if err != nil {
 				return fmt.Errorf("unable to locate position: %w", err)
 			}
@@ -220,7 +222,7 @@ func (receiver *Game) onUnitDamage(object ObjectInterface, payload interface{}) 
 			logger.Printf("highlights-damage: toState is empty")
 		} else {
 			object.(Stater).Enter(toState)
-			delayedEnterState(object.(Stater), returnToState, time.Millisecond * 500)
+			delayedEnterState(object.(Stater), returnToState, time.Millisecond*500)
 		}
 	}
 	if object.HasTag("tank") {
@@ -252,7 +254,7 @@ func (receiver *Game) onUnitOnSight(object ObjectInterface, payload interface{})
 
 func (receiver *Game) onUnitOffSight(object ObjectInterface, payload interface{}) {
 	if pObject, ok := payload.(ObjectInterface); ok {
-		if !pObject.HasTag("stealth") {
+		if !pObject.HasTag("stealth") && !pObject.GetAttr().Destroyed {
 			receiver.SpawnExplosion(PosAuto, "effect-offsight", pObject)
 		}
 	}
@@ -274,9 +276,9 @@ func (receiver *Game) onObjectReset(object ObjectInterface, payload interface{})
 
 func (receiver *Game) onObjectSpawn(object ObjectInterface, payload interface{}) {
 	if object.HasTag("highlights-appear") {
-		toState, _ 			:= object.GetTagValue("highlights-appear", "moveToState", "appear")
-		returnToState, _ 	:= object.GetTagValue("highlights-appear", "returnToState", ToDefaultState)
-		durStr, _ 			:= object.GetTagValue("highlights-appear", "duration", "8000000000")
+		toState, _ := object.GetTagValue("highlights-appear", "moveToState", "appear")
+		returnToState, _ := object.GetTagValue("highlights-appear", "returnToState", ToDefaultState)
+		durStr, _ := object.GetTagValue("highlights-appear", "duration", "8000000000")
 		duration, err := strconv.Atoi(durStr)
 		if err != nil || toState == "" {
 			logger.Printf("highlights-appear: invalid duration value %s or toState value %s", durStr, toState)
@@ -341,8 +343,8 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 
 	if object.HasTag("highlights-disappear") {
 		despawnNow = false
-		toState, _ 	:= object.GetTagValue("highlights-disappear", "moveToState", "disappear")
-		durStr, _   := object.GetTagValue("highlights-disappear", "duration", "1000000000")
+		toState, _ := object.GetTagValue("highlights-disappear", "moveToState", "disappear")
+		durStr, _ := object.GetTagValue("highlights-disappear", "duration", "1000000000")
 		duration, err := strconv.Atoi(durStr)
 		if err != nil || toState == "" {
 			logger.Printf("highlights-appear: invalid duration value %s or toState value %s", durStr, toState)

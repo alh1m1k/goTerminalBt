@@ -1,0 +1,51 @@
+{
+  "type":   "explosion",
+  "sprite": {
+      "type": "animation",
+      "name": "napalm",
+      "cycled": false,
+      "length": 3,
+      "keyFrames": [
+          {
+            "type": "animation",
+            "name": "napalmGrow",
+            "path": "napalm/fade/smokeGrow",
+            "length": 6,
+            "duration": 500000000,
+            "transparent": true
+          },
+          {
+            "type": "animation",
+            "name": "napalmPersist",
+            "path": "napalm/persist/smokeGrow",
+            "length": 6,
+            "duration": 1000000000,
+            "repeatDuration": 8600000000,
+            "repeatDurationComment": "400000000ms skip due to render and eye characteristics",
+            "transparent": true,
+            "cycled": true
+          },
+          {
+            "type": "animation",
+            "name": "napalmFade",
+            "path": "napalm/fade/smokeGrow",
+            "length": 6,
+            "duration": 500000000,
+            "transparent": true,
+            "reversed": true
+          }
+      ]
+  },
+  "collision": {
+    "type": "penetrate",
+    "x": 0,
+    "y": 0,
+    "w": 8,
+    "h": 4
+  },
+  "ttl":    10000000000,
+  "damage": 0,
+  "dotDamage": 2,
+  "zIndex": -10,
+  "tags": ["explosion", "napalm", "danger"]
+}

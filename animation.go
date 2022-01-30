@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"strconv"
 	"time"
@@ -16,6 +17,7 @@ var MismatchFrameCountError = errors.New("frame count param mismatch actual fram
 var AnimationExistError = errors.New("animation exist in storage")
 var Animation404Error = errors.New("animation does not exist in storage")
 var AnimationCustomizationError = errors.New("animation customization error")
+var AnimationEmptyCustomizationError = errors.New("empty sprite customization list")
 
 var ErrorAnimation, _ = NewErrorAnimation()
 
@@ -299,13 +301,17 @@ func LoadAnimation2(path string, length int, processTransparent bool) (*Animatio
 
 func AddAnimation(id string, anim *Animation) error {
 	if _, ok := animations[id]; ok {
-		return AnimationExistError
+		return fmt.Errorf("%s, %w", id, AnimationExistError)
 	}
 	animations[id] = anim
 	return nil
 }
 
 func CustomizeAnimation(animation *Animation, name string, custom CustomizeMap) (*Animation, error) {
+	if len(custom) == 0 {
+		return ErrorAnimation, AnimationEmptyCustomizationError
+	}
+
 	newAnimation := animation.Copy() //?
 	newAnimation.keyFrames = animation.keyFrames[0:0]
 	newAnimation.Spriteer = nil
@@ -326,7 +332,8 @@ func CustomizeAnimation(animation *Animation, name string, custom CustomizeMap) 
 				newAnimation.AddFrame(frameCustom)
 			}
 		} else {
-			newAnimation.AddFrame(ErrorSprite)
+			newAnimation = ErrorAnimation
+			return newAnimation, fmt.Errorf("%s: %w %t", name, AnimationCustomizationError, custom)
 		}
 	}
 

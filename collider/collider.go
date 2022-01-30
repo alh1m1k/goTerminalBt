@@ -32,6 +32,9 @@ func (c *Collider) AddExtra(clBody *ClBody, object Collideable) error {
 	if clBody == nil {
 		return errors.New("clBody was nil")
 	}
+	if clBody.fake {
+		return nil
+	}
 	clBody = clBody.First
 	clBody.ver = c.ver
 	for clBody != nil {
@@ -70,6 +73,9 @@ func (c *Collider) Add(object Collideable) error {
 	if clBody.collisionInfo == nil {
 		clBody.collisionInfo = NewCollisionInfo(5)
 	}
+	if clBody.fake {
+		return nil
+	}
 	clBody.ver = c.ver
 	for clBody != nil {
 		if clBody.realBody == nil {
@@ -99,18 +105,25 @@ func (c *Collider) Add(object Collideable) error {
 }
 
 func (c *Collider) Remove(object Collideable) {
+	clBody := object.GetClBody()
+	if clBody.fake {
+		return
+	}
 	for indx, candidate := range c.bodyMap {
 		if object == candidate {
 			delete(c.bodyMap, indx)
 			indx.Remove() //todo reenther
-			object.GetClBody().realBody = nil
-			object.GetClBody().First.collisionInfo.Clear()
+			clBody.realBody = nil
+			clBody.First.collisionInfo.Clear()
 		}
 	}
 }
 
 //todo remove
 func (c *Collider) RemoveExtra(clBody *ClBody, object Collideable) {
+	if clBody.fake {
+		return
+	}
 	for indx, candidate := range c.bodyMap {
 		if object == candidate {
 			delete(c.bodyMap, indx)
