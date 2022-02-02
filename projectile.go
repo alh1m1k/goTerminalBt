@@ -55,7 +55,7 @@ func (receiver *Projectile) OnTickCollide(object collider.Collideable, collision
 			if object.HasTag("player") && DEBUG_IMMORTAL_PLAYER {
 				return
 			}
-			DotDamage.Tag = receiver.tag
+			DotDamage.Tags = receiver.Tags
 			DotDamage.Damage = receiver.DotDamage
 			DotDamage.From = receiver
 			object.(Vulnerable).ReciveDamage(&DotDamage)
@@ -64,6 +64,13 @@ func (receiver *Projectile) OnTickCollide(object collider.Collideable, collision
 }
 
 func (receiver *Projectile) OnStartCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
+	if receiver.HasTag("danger") && object.HasTag("vulnerable") && !object.HasTag("low") {
+		if DEBUG_IMMORTAL_PLAYER && (object.HasTag("player") || object.HasTag("base")) {
+
+		} else {
+			object.(Vulnerable).ReciveDamage(receiver)
+		}
+	}
 	if object.HasTag("obstacle") && !object.HasTag("low") {
 		if !object.HasTag(receiver.GetAttr().TeamTag) {
 			if !receiver.HasTag("projectile-penetrate") {

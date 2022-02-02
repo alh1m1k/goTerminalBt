@@ -37,21 +37,6 @@ type Scored interface {
 	GetScore() int
 }
 
-type Danger interface {
-	GetDamage(target Vulnerable) (value int, nemesis ObjectInterface)
-	HasTag(tag string) bool
-}
-
-type Vulnerable interface {
-	ReciveDamage(incoming Danger)
-	HasTag(tag string) bool
-}
-
-type Tagable interface {
-	HasTag(tag string) bool
-	GetTagValue(tag string, key string, defaultValue string) (string, error)
-}
-
 type Obstacle interface {
 }
 
@@ -62,6 +47,7 @@ type ObjectInterface interface {
 	Renderable
 	Tagable
 	Seen
+	Trackable
 	collider.Collideable
 	GetCenter() Center
 	GetTracker() *Tracker
@@ -81,12 +67,11 @@ type Object struct {
 	*collider.Interactions
 	sprite Spriteer
 	*Tracker
+	*Tags
 	Owner, Prototype   ObjectInterface
 	destroyed, spawned bool
 	blueprint          string
 	zIndex             int
-	tag                []string
-	tagValues          map[string]*TagValue
 	spawnCount         int64
 }
 
@@ -162,8 +147,8 @@ func (receiver *Object) GetAttr() *Attributes {
 	return receiver.Attributes
 }
 
-func (receiver *Object) GetBlueprint() string {
-	return receiver.blueprint
+func (receiver *Object) GetLayer() int {
+	return receiver.layer
 }
 
 func (receiver *Object) GetZIndex() int {
@@ -206,65 +191,6 @@ func (receiver *Object) GetOwner() ObjectInterface {
 	return receiver.Owner
 }
 
-func (receiver *Object) GetPrototype() ObjectInterface {
-	if receiver.Prototype == nil {
-		return receiver
-	}
-	return receiver.Prototype
-}
-
-func (receiver *Object) addTag(tags ...string) {
-	for _, tag := range tags {
-		receiver.tag = append(receiver.tag, tag)
-	}
-}
-
-func (receiver *Object) HasTag(tag string) bool {
-	for _, part := range receiver.tag {
-		if part == tag {
-			return true
-		}
-	}
-	return false
-}
-
-func (receiver *Object) clearTags() {
-	receiver.tag = receiver.tag[0:0]
-	for index, _ := range receiver.tagValues {
-		delete(receiver.tagValues, index)
-	}
-}
-
-func (receiver *Object) removeTag(tag string) {
-	for i, part := range receiver.tag {
-		if part == tag {
-			receiver.tag[i] = ""
-		}
-	}
-	delete(receiver.tagValues, tag)
-}
-
-func (receiver *Object) GetTag(tag string, makeIfNil bool) (*TagValue, error) {
-	if _, ok := receiver.tagValues[tag]; !ok {
-		if makeIfNil {
-			receiver.tagValues[tag], _ = NewTagValue()
-		} else {
-			return nil, Tag404Error
-		}
-	}
-	return receiver.tagValues[tag], nil
-}
-
-/**
-* get tag value without allocation
- */
-func (receiver *Object) GetTagValue(tag string, key string, defaultValue string) (string, error) {
-	if tag, ok := receiver.tagValues[tag]; ok {
-		return tag.Get(key, defaultValue), nil
-	}
-	return defaultValue, Tag404Error
-}
-
 func (receiver *Object) Reset() error {
 	receiver.destroyed = false
 	receiver.Attributes.Destroyed = false
@@ -286,21 +212,15 @@ func (receiver *Object) Copy() *Object {
 	if receiver.Tracker != nil {
 		instance.Tracker = receiver.Tracker.Copy()
 	}
-	if receiver.tag != nil {
-		instance.tag = make([]string, len(receiver.tag), cap(receiver.tag))
-		copy(instance.tag, receiver.tag)
-	}
-	if receiver.tagValues != nil {
-		instance.tagValues = make(map[string]*TagValue, len(receiver.tagValues))
-		for index, value := range receiver.tagValues {
-			instance.tagValues[index] = value
-		}
+	if receiver.Tags != nil {
+		instance.Tags = receiver.Tags.Copy()
 	}
 	return &instance
 }
 
 func NewObject(s Spriteer, c *collider.ClBody) (*Object, error) {
 	interactions, _ := collider.NewIteractions()
+	tags, _ := NewTags()
 	return &Object{
 		Attributes:   new(Attributes),
 		Interactions: interactions,
@@ -310,8 +230,7 @@ func NewObject(s Spriteer, c *collider.ClBody) (*Object, error) {
 		sprite:       s,
 		collision:    c,
 		zIndex:       0,
-		tag:          nil,
-		tagValues:    make(map[string]*TagValue),
+		Tags:         tags,
 		spawnCount:   0,
 		Owner:        nil,
 		Prototype:    nil,

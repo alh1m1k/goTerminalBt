@@ -14,6 +14,7 @@ type Tracker struct {
 	Manager                    *Location
 	IsNeedUpdateZone           bool
 	subscribers                []IndexTracker
+	layer                      int
 }
 
 func (receiver *Tracker) Update(pos Point, size Size) bool {
@@ -61,6 +62,11 @@ func (receiver *Tracker) GetXY() Point {
 //to implement Trackable interface due simplyfy use
 func (receiver *Tracker) GetWH() Size {
 	return Size{receiver.lastW, receiver.lastH}
+}
+
+//to implement Trackable interface due simplyfy use
+func (receiver *Tracker) GetLayer() int {
+	return receiver.layer
 }
 
 func (receiver *Tracker) MoveTo(x, y float64) error {

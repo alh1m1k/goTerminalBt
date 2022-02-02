@@ -20,6 +20,7 @@
   "tags": {
     "projectile": true,
     "apocalypse-start": true,
+    "ttl": true,
     "fanout": {
         "blueprint": "projectile-sharp-apoc-end"
     }

@@ -194,13 +194,6 @@ func (manager *SpawnManager) Spawn(coordinate Point, blueprint string, configura
 		object.Move(coordinate.X, coordinate.Y)
 	}
 
-	/*	if tracker := object.GetTracker(); tracker != nil {
-		tracker.Manager = manager.location
-		tracker.Update(object.GetXY(), object.GetWH())
-		xi, yi := tracker.GetIndexes()
-		logger.Printf("spawn object %d to location %d, %d", object.GetAttr().ID, xi, yi, object.GetXY())
-	}*/
-
 	manager.spawnMutex.Lock()
 	manager.pendingSpawn = append(manager.pendingSpawn, object)
 	manager.spawnMutex.Unlock()
@@ -296,6 +289,13 @@ func (manager *SpawnManager) AddBuilder(blueprint string, builder Builder) {
 		manager.builders[blueprint] = builder
 		manager.setupPool(blueprint, 100, manager.builders[blueprint])
 	}
+}
+
+func (manager *SpawnManager) HasBuilder(blueprint string) bool {
+	if _, ok := manager.builders[blueprint]; !ok {
+		return false
+	}
+	return true
 }
 
 func (manager *SpawnManager) setupPool(blueprint string, size int, builder Builder) {

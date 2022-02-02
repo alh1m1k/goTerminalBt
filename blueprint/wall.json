@@ -35,7 +35,7 @@
   },
   "hp": 50,
   "score": 50,
-  "tags": ["wall", "obstacle", "highlights-disappear", "scored", "vulnerable", "tracked", "static"],
+  "tags": ["wall", "obstacle", "highlights-disappear", "scored", "vulnerable", "tracked"],
   "custom": {
     "X": 1
   }

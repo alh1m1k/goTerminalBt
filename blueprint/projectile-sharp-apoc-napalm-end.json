@@ -17,7 +17,7 @@
   "accelTime": 1000000000,
   "accelTimeFunc": "random",
   "damage": 10,
-  "tags": ["projectile", "danger",  {
+  "tags": ["projectile", "danger", "ttl", {
     "name": "explosive",
     "values": {
       "blueprint": "tank-special-napalm"

@@ -1,0 +1,9 @@
+{
+  "type":   "spawnPoint",
+  "sprite": "none",
+  "size": {
+    "w": 8,
+    "h": 4
+  },
+  "tags": ["penetrate"]
+}

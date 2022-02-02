@@ -32,7 +32,7 @@
   },
   "ttl": 10000000000,
   "zIndex": -1,
-  "tags": ["collectable", "opel", "penetrate", {
+  "tags": ["collectable", "opel", "penetrate", "ttl", {
     "name": "highlights-appear",
     "values": {
       "duration": "3000000000"

@@ -103,5 +103,5 @@
   "zIndex": 1000,
   "name": "Flak",
   "description": "Shutgun like weapon, short range hi area damage",
-  "tags": ["projectile", "danger", "projectile-penetrate"]
+  "tags": ["projectile", "danger", "projectile-penetrate", "ttl"]
 }

@@ -1,5 +1,6 @@
 {
   "type":   "unit",
+  "require": ["tank-base-explosion", "tank-base-projectile"],
   "sprite": "none",
   "state":  "player/tank",
   "size": {

@@ -44,20 +44,7 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 	}
 
 	scenario.DeclareBlueprint(func(blueprint string) {
-		builder, _ := receiver.BlueprintManager.CreateBuilder(blueprint)
-		if builder == nil { //may cause error on success
-			panic("builder " + blueprint + " not found")
-		} else {
-			receiver.SpawnManager.AddBuilder(blueprint, builder)
-		}
-		if receiver.BehaviorControlBuilder != nil {
-			object, _ := receiver.BlueprintManager.Get(blueprint)
-			if projectile, ok := object.(*Projectile); ok {
-				if err := receiver.BehaviorControlBuilder.RegisterProjectile(projectile); err != nil {
-					logger.Println(err)
-				}
-			}
-		}
+		recursiveRequire(blueprint, receiver.BlueprintManager, receiver.SpawnManager, receiver.BehaviorControlBuilder)
 	})
 
 	//temporal
@@ -216,4 +203,35 @@ func (receiver *GameRunner) lookupScreen(name string) (*Screen, error) {
 
 func NewGameRunner() (*GameRunner, error) {
 	return &GameRunner{}, nil
+}
+
+func recursiveRequire(blueprint string, blManager *BlueprintManager, spawnManager *SpawnManager, behavior *BehaviorControlBuilder) {
+	//todo make tree
+	if spawnManager.HasBuilder(blueprint) {
+		//we probably already import blueprint and all it dep
+		return
+	}
+
+	builder, err := blManager.CreateBuilder(blueprint)
+	if builder == nil { //may cause error on success
+		logger.Println(err)
+		panic("builder " + blueprint + " not found err:" + err.Error())
+	} else {
+		spawnManager.AddBuilder(blueprint, builder)
+		if info, err := Info(blueprint); err == nil {
+			for _, req := range info.Require {
+				recursiveRequire(req, blManager, spawnManager, behavior)
+			}
+		} else {
+			logger.Println(err)
+		}
+	}
+	if behavior != nil {
+		object, _ := blManager.Get(blueprint)
+		if projectile, ok := object.(*Projectile); ok {
+			if err := behavior.RegisterProjectile(projectile); err != nil {
+				logger.Println(err)
+			}
+		}
+	}
 }

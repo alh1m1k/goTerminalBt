@@ -1,5 +1,6 @@
 {
   "type":   "explosion",
+
   "sprite": {
       "type": "animation",
       "name": "napalm",
@@ -47,5 +48,5 @@
   "damage": 0,
   "dotDamage": 2,
   "zIndex": -10,
-  "tags": ["explosion", "napalm", "danger"]
+  "tags": ["explosion", "napalm", "danger", "ttl"]
 }

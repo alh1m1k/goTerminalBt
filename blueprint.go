@@ -12,6 +12,7 @@ var LoaderNotFoundError = errors.New("loader not found")
 var ParseError = errors.New("invalid json value")
 var PrototypeError = errors.New("unable to copy from prototype")
 var InstanceError = errors.New("unable to instance object")
+var NoInfo = BlueprintInfo{}
 
 type loadError struct {
 	path string
@@ -83,15 +84,20 @@ func newLoadErrors() (*LoadErrors, error) {
 	return instance, nil
 }
 
-type ObjectGetter func(blueprint string) interface{} //todo simplify loader by this getter ie encapsulate loader acquire and it's call
 type LoaderGetter func(blueprint string) Loader
 type Loader func(get LoaderGetter, eCollector *LoadErrors, preset interface{}, payload []byte) interface{}
 type Builder func() interface{}
 type RequireFunc func(blueprint string) error
+type InfoFunc func(blueprint string) (BlueprintInfo, error)
 
 type FileBuf struct {
 	buf []byte
 	err error
+}
+
+type BlueprintInfo struct {
+	Attributes
+	*Tags
 }
 
 type BlueprintManager struct {
@@ -112,49 +118,22 @@ func (receiver *BlueprintManager) Get(blueprint string) (ObjectInterface, error)
 	}
 	receiver.m.Lock()
 	defer receiver.m.Unlock() //concurent sprite and collector problem
+	return receiver.get(blueprint)
+}
+
+func (receiver *BlueprintManager) Info(blueprint string) (BlueprintInfo, error) {
 	if object, ok := receiver.proto[blueprint]; ok {
-		return receiver.copy(object) //try again
-	}
-	payload, _ := receiver.load(blueprint)
-	if root, ok := receiver.loaders["/"]; ok {
-		collector, _ := newLoadErrors()
-		if stuff := root(receiver.getLoader, collector, nil, payload); stuff == nil {
-			collector.Add(errors.New("object wont created"))
-			return nil, collector
+		tags, err := GetTags(object)
+		if err != nil {
+			return NoInfo, err
 		} else {
-			if object, ok := stuff.(ObjectInterface); ok {
-				object.GetAttr().Blueprint = blueprint
-				object = receiver.postProcess(object, collector)
-
-				//add object to map without lock
-				/*				receiver.protoShadow[blueprint] = object
-								pShadow := unsafe.Pointer(&receiver.protoShadow)
-								pProto 	:= unsafe.Pointer(&receiver.proto)
-								pShadow  = atomic.SwapPointer(&pProto, pShadow)
-								receiver.proto = *(*map[string] ObjectInterface)(pProto)
-								receiver.protoShadow = *(*map[string] ObjectInterface)(pShadow)*/
-
-				receiver.protoShadow[blueprint] = object
-				receiver.proto, receiver.protoShadow = receiver.protoShadow, receiver.proto
-				if _, ok := receiver.protoShadow[blueprint]; ok {
-					panic("shadow copy violation")
-				} else {
-					receiver.protoShadow[blueprint] = object
-				}
-
-				object, err := receiver.copy(object)
-				collector.Add(err)
-				if !collector.HasError() {
-					return object, nil
-				} else {
-					return object, collector
-				}
-			} else {
-				return nil, collector
-			}
+			return BlueprintInfo{
+				Attributes: *object.GetAttr(),
+				Tags:       tags.Copy(),
+			}, nil
 		}
 	}
-	return nil, LoaderNotFoundError
+	return NoInfo, PrototypeError
 }
 
 func (receiver *BlueprintManager) CreateBuilder(blueprint string) (Builder, error) {
@@ -185,6 +164,44 @@ func (receiver *BlueprintManager) AddLoaderPackage(p *Package) {
 	}
 	receiver.FilePath = p.FilePath
 	receiver.FileExtension = p.FileExtension
+}
+
+func (receiver *BlueprintManager) get(blueprint string) (ObjectInterface, error) {
+	if object, ok := receiver.proto[blueprint]; ok {
+		return receiver.copy(object) //try again
+	}
+	payload, _ := receiver.load(blueprint)
+	if root, ok := receiver.loaders["/"]; ok {
+		collector, _ := newLoadErrors()
+		if stuff := root(receiver.getLoader, collector, nil, payload); stuff == nil {
+			collector.Add(errors.New("object wont created"))
+			return nil, collector
+		} else {
+			if object, ok := stuff.(ObjectInterface); ok {
+				object.GetAttr().Blueprint = blueprint
+				object = receiver.postProcess(object, collector)
+
+				receiver.protoShadow[blueprint] = object
+				receiver.proto, receiver.protoShadow = receiver.protoShadow, receiver.proto
+				if _, ok := receiver.protoShadow[blueprint]; ok {
+					panic("shadow copy violation")
+				} else {
+					receiver.protoShadow[blueprint] = object
+				}
+
+				object, err := receiver.copy(object)
+				collector.Add(err)
+				if !collector.HasError() {
+					return object, nil
+				} else {
+					return object, collector
+				}
+			} else {
+				return nil, collector
+			}
+		}
+	}
+	return nil, LoaderNotFoundError
 }
 
 func (receiver *BlueprintManager) wrapLoader(loader Loader, blueprint string) Loader {
@@ -265,6 +282,13 @@ func (receiver *BlueprintManager) copy(object ObjectInterface) (ObjectInterface,
 		mo.Prototype = object
 		mo.GetAttr().ID = genId()
 		return mo, nil
+	case *SpawnPoint:
+		sp := object.(*SpawnPoint).Copy()
+		sp.Prototype = object
+		sp.GetAttr().ID = genId()
+		return sp, nil
+	default:
+		logger.Printf("blueprint copy, unknown object type %t", object)
 	}
 	return nil, PrototypeError
 }
@@ -285,7 +309,11 @@ func NewBlueprintManager() (*BlueprintManager, error) {
 	})
 	instance.AddLoader("require", func(get LoaderGetter, eCollector *LoadErrors, preset interface{}, payload []byte) interface{} {
 		return RequireFunc(func(blueprint string) error {
-			_, err := instance.Get(blueprint)
+			obj, err := instance.get(blueprint)
+			if obj != nil {
+				//todo fix this
+				return nil
+			}
 			return err
 		})
 	})

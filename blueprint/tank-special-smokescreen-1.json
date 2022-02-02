@@ -45,5 +45,5 @@
   "ttl":    10000000000,
   "damage": 0,
   "zIndex": 10000,
-  "tags": ["explosion", "smokescreen"]
+  "tags": ["explosion", "smokescreen", "ttl"]
 }

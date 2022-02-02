@@ -47,6 +47,13 @@ func (receiver Point) Minus(to Point) Point {
 	}
 }
 
+func (receiver Point) Divide(to Point) Point {
+	return Point{
+		X: receiver.X / to.X,
+		Y: receiver.Y / to.Y,
+	}
+}
+
 func (receiver Point) Abs() Point {
 	return Point{
 		X: math.Abs(receiver.X),
@@ -69,6 +76,27 @@ func (receiver Size) Plus(to Size) Size {
 	return Size{
 		W: receiver.W + to.W,
 		H: receiver.H + to.H,
+	}
+}
+
+func (receiver Size) Minus(to Size) Size {
+	return Size{
+		W: receiver.W - to.W,
+		H: receiver.H - to.H,
+	}
+}
+
+func (receiver Size) Divide(to Size) Size {
+	return Size{
+		W: receiver.W / to.W,
+		H: receiver.H / to.H,
+	}
+}
+
+func (receiver Size) Abs() Size {
+	return Size{
+		W: math.Abs(receiver.W),
+		H: math.Abs(receiver.H),
 	}
 }
 
@@ -95,6 +123,13 @@ func (receiver Center) Minus(to Center) Center {
 	return Center{
 		X: receiver.X - to.X,
 		Y: receiver.Y - to.Y,
+	}
+}
+
+func (receiver Center) Divide(to Center) Center {
+	return Center{
+		X: receiver.X / to.X,
+		Y: receiver.Y / to.Y,
 	}
 }
 

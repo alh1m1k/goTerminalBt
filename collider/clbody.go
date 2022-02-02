@@ -149,6 +149,18 @@ func NewCollision(x, y, w, h float64) *ClBody {
 	return body
 }
 
+func NewPerimeterCollision(x, y, w, h float64) *ClBody {
+	body := &ClBody{
+		x: x, y: y, w: w, h: h,
+	}
+	body.First = body
+	body.static = false
+	body.penetrate = false
+	body.filter = "perimeter"
+	body.collisionInfo = NewCollisionInfo(5)
+	return body
+}
+
 /*
 func NewVisionCollision(x, y, w, h float64) *ClBody {
 	body := &ClBody{

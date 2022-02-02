@@ -16,5 +16,5 @@
   "damage": 40,
   "name": "Base",
   "description": "sad but true",
-  "tags": ["projectile", "danger"]
+  "tags": ["projectile", "danger", "ttl"]
 }

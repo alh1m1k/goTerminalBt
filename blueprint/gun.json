@@ -1,5 +1,15 @@
 {
   "type":   "collectable",
+  "require": [
+    "tank-base-projectile",
+    "tank-base-projectile-apocalypse",
+    "tank-base-projectile-apocalypse-napalm",
+    "tank-base-projectile-fanout",
+    "tank-base-projectile-flak",
+    "tank-base-projectile-he",
+    "tank-base-projectile-rail",
+    "tank-special-projectile-napalm"
+  ],
   "sprite": "gun/gun_0",
   "state":  {
     "default": "normal",
@@ -32,7 +42,7 @@
   },
   "ttl": 10000000000,
   "zIndex": -1,
-  "tags": ["collectable", "gun", "penetrate", {
+  "tags": ["collectable", "gun", "penetrate", "ttl", {
     "name": "highlights-appear",
     "values": {
       "duration": "3000000000"

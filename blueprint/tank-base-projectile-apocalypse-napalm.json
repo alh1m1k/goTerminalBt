@@ -21,6 +21,7 @@
   "tags": {
       "projectile": true,
       "apocalypse": true,
+      "ttl": true,
       "fanout": {
           "blueprint": "projectile-sharp-apoc-napalm-start"
       }

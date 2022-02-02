@@ -12,7 +12,12 @@ import (
 	"time"
 )
 
-const BORDER_SIZE = 10
+const (
+	BORDER_SIZE            = 10
+	LOCATION_LAYER_UNIT    = 0
+	LOCATION_LAYER_TERRAIN = 1
+	LOCATION_LAYER_AIR     = 2
+)
 
 var (
 	ZoneSetupError     = errors.New("zone must be setup before use")
@@ -32,15 +37,16 @@ type Trackable interface {
 	GetXY() Point
 	GetWH() Size
 	GetTracker() *Tracker
+	GetLayer() int
 }
 
 type Location struct {
 	left, right, top, bottom *collider.ClBody
 	box                      Box
 	setupUnitSize            Point
-	zones                    [][]Trackable
+	zones                    [3][][]Trackable
+	zonesLeft                [3]int
 	sizeZone                 Zone
-	zonesLeft                int
 	zoneLock                 sync.Mutex
 }
 
@@ -50,15 +56,16 @@ func (receiver *Location) Add(object Trackable) {
 		tracker.Manager = receiver
 		tracker.Update(object.GetXY(), object.GetWH())
 		xi, yi := tracker.GetIndexes()
-		if receiver.zones[yi][xi] == ZoneSpawnPlaceholder {
-			receiver.zones[yi][xi] = nil
-			receiver.zonesLeft++
+		layeri := tracker.GetLayer()
+		if receiver.zones[layeri][yi][xi] == ZoneSpawnPlaceholder {
+			receiver.zones[layeri][yi][xi] = nil
+			receiver.zonesLeft[layeri]++
 		}
 		err := receiver.putInZone(object)
 		if err != nil {
-			logger.Printf("error on add object %d %t to location %d, %d, %s \n", object.(ObjectInterface).GetAttr().ID, receiver.zones[yi][xi], xi, yi, err)
+			logger.Printf("error on add object %d %t to location %d, %d, %s \n", object.(ObjectInterface).GetAttr().ID, receiver.zones[layeri][yi][xi], xi, yi, err)
 		} else {
-			receiver.zonesLeft--
+			receiver.zonesLeft[layeri]--
 		}
 		receiver.zoneLock.Unlock()
 	}
@@ -73,21 +80,24 @@ func (receiver *Location) Remove(object Trackable) {
 	defer receiver.zoneLock.Unlock()
 	if !tracker.IsNeedUpdateZone {
 		zxi, zyi := tracker.GetIndexes()
-		if receiver.zones[zyi][zxi] == object {
-			receiver.zones[zyi][zxi] = nil
+		layeri := tracker.GetLayer()
+		if receiver.zones[layeri][zyi][zxi] == object {
+			receiver.zones[layeri][zyi][zxi] = nil
 			tracker.Manager = nil
-			receiver.zonesLeft++
+			receiver.zonesLeft[layeri]++
 			return
 		} else {
 			logger.Println("Position::Remove wrong index")
 		}
 	}
-	for yi, row := range receiver.zones {
-		for xi, candidate := range row {
-			if object == candidate {
-				receiver.zones[yi][xi] = nil
-				tracker.Manager = nil
-				receiver.zonesLeft++
+	for layeri, layer := range receiver.zones {
+		for yi, row := range layer {
+			for xi, candidate := range row {
+				if object == candidate {
+					receiver.zones[layeri][yi][xi] = nil
+					tracker.Manager = nil
+					receiver.zonesLeft[layeri]++
+				}
 			}
 		}
 	}
@@ -104,20 +114,22 @@ func (receiver *Location) NeedCompact() bool {
 func (receiver *Location) Execute(timeLeft time.Duration) {
 	receiver.zoneLock.Lock()
 	defer receiver.zoneLock.Unlock()
-	for yi, row := range receiver.zones {
-		for xi, object := range row {
-			if object == nil {
-				continue
-			}
-			if object == ZoneSpawnPlaceholder {
-				receiver.zones[yi][xi] = nil
-				receiver.zonesLeft++
-				continue
-			}
-			if object.GetTracker().IsNeedUpdateZone {
-				err := receiver.putInZone(object)
-				if err == nil {
-					receiver.zones[yi][xi] = nil
+	for layeri, layer := range receiver.zones {
+		for yi, row := range layer {
+			for xi, object := range row {
+				if object == nil {
+					continue
+				}
+				if object == ZoneSpawnPlaceholder {
+					receiver.zones[layeri][yi][xi] = nil
+					receiver.zonesLeft[layeri]++
+					continue
+				}
+				if object.GetTracker().IsNeedUpdateZone {
+					err := receiver.putInZone(object)
+					if err == nil {
+						receiver.zones[layeri][yi][xi] = nil
+					}
 				}
 			}
 		}
@@ -142,7 +154,7 @@ func (receiver *Location) Minimap(withSpawnPoint bool, applyRoutes [][]Zone) ([]
 		}
 	}
 
-	for _, row := range receiver.zones {
+	for _, row := range receiver.zones[LOCATION_LAYER_UNIT] {
 		for _, object := range row {
 
 			if object == nil || object.GetTracker() == nil {
@@ -177,23 +189,24 @@ func (receiver *Location) Minimap(withSpawnPoint bool, applyRoutes [][]Zone) ([]
 func (receiver *Location) Mapdata() ([]*Tracker, error) {
 	receiver.zoneLock.Lock()
 	defer receiver.zoneLock.Unlock()
-	mapdata := make([]*Tracker, 0, receiver.sizeZone.X*receiver.sizeZone.Y-receiver.zonesLeft)
 
-	for _, row := range receiver.zones {
-		for _, object := range row {
-			if object == nil || object.GetTracker() == nil {
-				continue
+	mapdata := make([]*Tracker, 0, receiver.sizeZone.X*receiver.sizeZone.Y)
+	for _, layer := range receiver.zones {
+		for _, row := range layer {
+			for _, object := range row {
+				if object == nil || object.GetTracker() == nil {
+					continue
+				}
+				mapdata = append(mapdata, object.GetTracker())
 			}
-
-			mapdata = append(mapdata, object.GetTracker())
 		}
 	}
 
 	return mapdata, nil
 }
 
-func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
-	if receiver.zones == nil {
+func (receiver *Location) Coordinate2Spawn(empty bool, layeri int) (Point, error) {
+	if receiver.zones[layeri] == nil {
 		return NoPos, ZoneSetupError
 	}
 
@@ -209,7 +222,7 @@ func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
 			Zone{xi, yi},
 		), nil
 	}
-	if receiver.zonesLeft < 1 {
+	if receiver.zonesLeft[layeri] < 1 {
 		return NoPos, ZoneEmptyError
 	}
 
@@ -219,7 +232,7 @@ func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
 	for ; yi < receiver.sizeZone.Y; yi++ {
 		for ; xi < receiver.sizeZone.X; xi++ {
 			zone := Zone{xi, yi}
-			if receiver.captureZone(zone) {
+			if receiver.captureZone(zone, layeri) {
 				return newPointFromZone(
 					receiver.box.Point,
 					receiver.setupUnitSize,
@@ -232,7 +245,7 @@ func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
 	for ; byi >= 0; byi-- {
 		for ; bxi >= 0; bxi-- {
 			zone := Zone{bxi, byi}
-			if receiver.captureZone(zone) {
+			if receiver.captureZone(zone, layeri) {
 				return newPointFromZone(
 					receiver.box.Point,
 					receiver.setupUnitSize,
@@ -246,38 +259,35 @@ func (receiver *Location) Coordinate2Spawn(empty bool) (Point, error) {
 	return NoPos, ZoneEmptyError
 }
 
-func (receiver *Location) CaptureZone(zone Zone) error {
-	if receiver.zones == nil {
+func (receiver *Location) CaptureZone(zone Zone, layeri int) error {
+	if receiver.zones[layeri] == nil {
 		return ZoneSetupError
 	}
 
 	receiver.zoneLock.Lock()
 	defer receiver.zoneLock.Unlock()
 
-	if receiver.zonesLeft < 1 {
+	if receiver.zonesLeft[layeri] < 1 {
 		return ZoneEmptyError
 	}
 
-	if receiver.zones[zone.Y][zone.X] == nil {
-		receiver.zones[zone.Y][zone.X] = ZoneSpawnPlaceholder
-		receiver.zonesLeft--
-	}
+	receiver.captureZone(zone, layeri)
 
 	return ZoneEmptyError
 }
 
-func (receiver *Location) captureZone(zone Zone) bool {
-	if receiver.zones[zone.Y][zone.X] == nil {
-		receiver.zones[zone.Y][zone.X] = ZoneSpawnPlaceholder
-		receiver.zonesLeft--
+func (receiver *Location) captureZone(zone Zone, layeri int) bool {
+	if receiver.zones[layeri][zone.Y][zone.X] == nil {
+		receiver.zones[layeri][zone.Y][zone.X] = ZoneSpawnPlaceholder
+		receiver.zonesLeft[layeri]--
 		return true
 	}
 	return false
 }
 
-func (receiver *Location) CapturePoint(point Point) error {
+func (receiver *Location) CapturePoint(point Point, layeri int) error {
 	zone := receiver.ZoneByCoordinate(point)
-	return receiver.CaptureZone(zone)
+	return receiver.CaptureZone(zone, layeri)
 }
 
 func (receiver *Location) CoordinateByZone(zone Zone) (Point, error) {
@@ -368,11 +378,21 @@ func (receiver *Location) Setup(pos Point, size Size) error {
 func (receiver *Location) SetupZones(size Point) error {
 	receiver.setupUnitSize = size
 	receiver.sizeZone = Zone{int(receiver.box.W / size.X), int(receiver.box.H / size.Y)}
-	receiver.zones = make([][]Trackable, receiver.sizeZone.Y)
-	for ri, _ := range receiver.zones {
-		receiver.zones[ri] = make([]Trackable, receiver.sizeZone.X)
+	receiver.zones = [3][][]Trackable{
+		make([][]Trackable, receiver.sizeZone.Y),
+		make([][]Trackable, receiver.sizeZone.Y),
+		make([][]Trackable, receiver.sizeZone.Y),
 	}
-	receiver.zonesLeft = receiver.sizeZone.X * receiver.sizeZone.Y
+
+	for _, layer := range receiver.zones {
+		for ri, _ := range layer {
+			layer[ri] = make([]Trackable, receiver.sizeZone.X)
+		}
+	}
+
+	receiver.zonesLeft[0] = receiver.sizeZone.X * receiver.sizeZone.Y
+	receiver.zonesLeft[1] = receiver.sizeZone.X * receiver.sizeZone.Y
+	receiver.zonesLeft[2] = receiver.sizeZone.X * receiver.sizeZone.Y
 	return nil
 }
 
@@ -453,28 +473,29 @@ func (receiver *Location) putInZone(object Trackable) error {
 	tracker := object.GetTracker()
 	zxi, zyi := tracker.GetIndexes()
 	tracker.IsNeedUpdateZone = false
+	layeri := tracker.GetLayer()
 	if zxi >= receiver.sizeZone.X || zyi >= receiver.sizeZone.Y || zxi < 0 || zyi < 0 {
 		return ZoneRangeError
 	}
-	if receiver.zones[zyi][zxi] != nil {
-		if receiver.zones[zyi][zxi] == object {
+	if receiver.zones[layeri][zyi][zxi] != nil {
+		if receiver.zones[layeri][zyi][zxi] == object {
 			return ZoneCollisionError
-		} else if receiver.zones[zyi][zxi] == ZoneSpawnPlaceholder {
+		} else if receiver.zones[layeri][zyi][zxi] == ZoneSpawnPlaceholder {
 			return ZoneCollisionError
-		} else if receiver.zones[zyi][zxi].GetTracker().IsNeedUpdateZone {
-			err := receiver.putInZone(receiver.zones[zyi][zxi])
+		} else if receiver.zones[layeri][zyi][zxi].GetTracker().IsNeedUpdateZone {
+			err := receiver.putInZone(receiver.zones[layeri][zyi][zxi])
 			if err != nil {
 				return err
 			}
 		}
-		if receiver.zones[zyi][zxi] != nil {
+		if receiver.zones[layeri][zyi][zxi] != nil {
 			return ZoneCollisionError
 		}
 	}
 	if DEBUG {
 		logger.Printf("put in zone %d %d", zxi, zyi)
 	}
-	receiver.zones[zyi][zxi] = object
+	receiver.zones[layeri][zyi][zxi] = object
 	return nil
 }
 

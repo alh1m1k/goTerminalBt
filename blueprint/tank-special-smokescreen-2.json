@@ -46,5 +46,5 @@
   "damage": 0,
   "dotDamage": 2,
   "zIndex": 10000,
-  "tags": ["explosion", "smokescreen", "danger"]
+  "tags": ["explosion", "smokescreen", "danger", "ttl"]
 }

@@ -6,12 +6,12 @@
     "transparent": true
   },
   "size": {
-    "w": 0,
-    "h": 0
+    "w": 7,
+    "h": 10
   },
   "ttl":    1000000000,
   "damage": 0,
-  "tags": ["effect", "nocolision"],
+  "tags": ["effect", "nocolision", "ttl"],
   "custom": {
     "O": 3,
     "0": 3,

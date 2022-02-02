@@ -27,6 +27,8 @@ type SpawnRequest struct {
 	Location  Zone  //maybe auto
 	Team      int8
 	Blueprint string
+	Tags                    //tags overriding
+	Info      BlueprintInfo //prefetched value from Blueprint
 	Count     int
 }
 
@@ -101,7 +103,7 @@ func NewScenario() (*Scenario, error) {
 	return instance, nil
 }
 
-func NewRandomScenario(tankCnt int, wallCnt int) (scenario *Scenario, err error) {
+func NewRandomScenario(tankCnt int, wallCnt int, limitAi int) (scenario *Scenario, err error) {
 	scenario, err = NewScenario()
 	if err != nil {
 		return nil, err
@@ -122,7 +124,7 @@ func NewRandomScenario(tankCnt int, wallCnt int) (scenario *Scenario, err error)
 			Position:  PosAuto,
 			Location:  ZoneAuto,
 			Blueprint: blList[rand.Intn(len(blList))],
-			Team:      1,
+			Team:      2,
 		})
 	}
 	start, _ := NewStateItem(scenario.State.root, &ScenarioStateInfo{
@@ -134,16 +136,6 @@ func NewRandomScenario(tankCnt int, wallCnt int) (scenario *Scenario, err error)
 			"tank-fast",
 			"tank-heavy",
 			"tank-sneaky",
-			"tank-base-explosion",
-			"tank-base-projectile",
-			"tank-base-projectile-he",
-			"tank-base-projectile-rail",
-			"tank-base-projectile-flak",
-			"tank-special-projectile-smoke",
-			"tank-base-projectile-fanout",
-			"tank-base-projectile-apocalypse",
-			"tank-special-projectile-napalm",
-			"tank-base-projectile-apocalypse-napalm",
 			"effect-onsight",
 			"effect-offsight",
 			"opel",
@@ -153,6 +145,7 @@ func NewRandomScenario(tankCnt int, wallCnt int) (scenario *Scenario, err error)
 			"forest",
 			"player-base",
 		},
+		limits: ScenarioLimits{AiUnits: int64(limitMaxAi)},
 		Spawn:  spawn,
 		Screen: nil,
 	})

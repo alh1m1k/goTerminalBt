@@ -37,5 +37,5 @@
   "damage": 40,
   "name": "Rail",
   "description": "high speed, all penetrate projectile",
-  "tags": ["projectile", "danger", "projectile-penetrate"]
+  "tags": ["projectile", "danger", "projectile-penetrate", "ttl"]
 }

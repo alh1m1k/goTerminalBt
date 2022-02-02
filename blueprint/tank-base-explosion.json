@@ -34,5 +34,5 @@
   },
   "ttl":    500000000,
   "damage": 100,
-  "tags": ["explosion", "danger", "penetrate"]
+  "tags": ["explosion", "danger", "penetrate", "ttl"]
 }

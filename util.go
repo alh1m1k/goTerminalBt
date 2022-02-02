@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	direct "github.com/buger/goterm"
 	"math"
 	"math/rand"
@@ -16,6 +18,11 @@ var (
 		Description string
 	}{Name: "N/A", Description: "N/A"}
 )
+
+type MinMaxCurr struct {
+	MinMax
+	Current float64
+}
 
 func newThrottle(every time.Duration, done bool) *throttle {
 	var left time.Duration = 0
@@ -205,26 +212,42 @@ func everyFunc(duration time.Duration, callback func(), ctx context.Context) {
 	}(output, ctx)
 }
 
-//temporal
-//todo remove
+func GetTags(object ObjectInterface) (*Tags, error) {
+	switch object.(type) {
+	case *Unit:
+		return object.(*Unit).Tags, nil
+	case *Wall:
+		return object.(*Wall).Tags, nil
+	case *Projectile:
+		return object.(*Projectile).Tags, nil
+	case *Explosion:
+		return object.(*Explosion).Tags, nil
+	case *Collectable:
+		return object.(*Collectable).Tags, nil
+	case *Object:
+		return object.(*Object).Tags, nil
+	case *MotionObject:
+		return object.(*MotionObject).Tags, nil
+	case *SpawnPoint:
+		return object.(*SpawnPoint).Tags, nil
+	default:
+		return nil, errors.New(fmt.Sprintf("GetTags unknown object type %t", object))
+	}
+}
+
 func getProjectilePlDescription(blueprint string) struct {
 	Name        string
 	Description string
 } {
-	if buildManager == nil {
-		return noDescription
-	}
-	obj, err := buildManager.Get(blueprint)
+	info, err := Info(blueprint)
 	if err != nil {
 		return noDescription
 	}
-	var projectile *Projectile
-	var ok bool
-	if projectile, ok = obj.(*Projectile); !ok {
+	if info.Type != "projectile" {
 		return noDescription
 	}
 	return struct {
 		Name,
 		Description string
-	}{Name: projectile.GetAttr().Name, Description: projectile.GetAttr().Description}
+	}{Name: info.Name, Description: info.Description}
 }

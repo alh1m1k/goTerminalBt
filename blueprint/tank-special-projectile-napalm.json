@@ -20,7 +20,7 @@
   "damage": 0,
   "name": "napalm",
   "description": "burn the bitches",
-  "tags": ["projectile",
+  "tags": ["projectile", "ttl",
     {
       "name": "explosive",
       "values": {

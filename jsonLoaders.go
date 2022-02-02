@@ -30,10 +30,12 @@ func NewJsonPackage() *Package {
 	instance.M["explosion"] = ExplosionLoader
 	instance.M["projectile"] = ProjectileLoader
 	instance.M["collectable"] = CollectableLoader
+	instance.M["spawnPoint"] = SpawnPointLoader
 	instance.M["gun"] = GunLoader
 	instance.M["motionObject"] = MotionObjectLoader
 	instance.M["controlledObject"] = ControlledObjectLoader
 	instance.M["object"] = ObjectLoader
+	instance.M["tags"] = TagsLoader
 	instance.M["state"] = StateLoader
 	instance.M["stateItem"] = StateItemLoader
 	instance.M["collision"] = CollisionLoader
@@ -59,6 +61,7 @@ func lGetObject(blueprint string, get LoaderGetter, collector *LoadErrors, prese
 
 func RootLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	requireBytes, dType, _, _ := jsonparser.Get(payload, "require")
+	requireList := make([]string, 0)
 	if dType == jsonparser.String || dType == jsonparser.Array {
 		var requireFunc RequireFunc
 		if obj, err := lGetObject("require", get, collector, preset, payload); !collector.Add(err) {
@@ -67,18 +70,30 @@ func RootLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 				err := requireFunc(string(requireBytes))
 				if err != nil {
 					collector.Add(fmt.Errorf("unable to require %s: %w", requireBytes, err))
+					return nil
 				} else {
-					jsonparser.ArrayEach(requireBytes, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-						if dataType != jsonparser.String {
-							collector.Add(fmt.Errorf("require skip value, it has ubnormal format %w", ParseError))
-							return
-						}
-						err = requireFunc(string(value))
-						if err != nil {
-							collector.Add(fmt.Errorf("unable to require %s: %w", requireBytes, err))
-						}
+					requireList = append(requireList, string(requireBytes))
+				}
+			} else {
+				var requireError error
+				jsonparser.ArrayEach(requireBytes, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+					if requireError != nil {
 						return
-					})
+					}
+					if dataType != jsonparser.String {
+						collector.Add(fmt.Errorf("require skip value, it has ubnormal format %w", ParseError))
+						return
+					}
+					requireError = requireFunc(string(value))
+					if requireError != nil {
+						collector.Add(fmt.Errorf("unable to require %s: %w", string(value), requireError))
+						return
+					} else {
+						requireList = append(requireList, string(value))
+					}
+				})
+				if requireError != nil {
+					return nil
 				}
 			}
 		}
@@ -96,7 +111,10 @@ func RootLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 	if collector.Add(err) {
 		return nil
 	}
-	object.(ObjectInterface).GetAttr().Type = uType
+	if oi, ok := object.(ObjectInterface); ok {
+		oi.GetAttr().Type = uType
+		oi.GetAttr().Require = requireList
+	}
 
 	return object
 }
@@ -216,7 +234,6 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 	if unit != nil {
 
 		unit.Gun = gun
-
 		unit.Attributes.Obstacle = true
 		unit.Attributes.Vulnerable = true
 		unit.Attributes.Motioner = true
@@ -230,15 +247,23 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 			unit.Attributes.Visioned = true
 		}
 
-		hp, err := jsonparser.GetInt(payload, "hp")
-		if !collector.Add(err) {
-			unit.FullHP = int(hp)
-			unit.HP = int(hp)
+		if object.HasTag("vulnerable") {
+			hp, err := jsonparser.GetInt(payload, "hp")
+			if err == nil {
+				unit.FullHP = int(hp)
+				unit.HP = int(hp)
+			} else {
+				collector.Add(fmt.Errorf("no hp value set %w", err))
+			}
 		}
 
-		score, err := jsonparser.GetInt(payload, "score")
-		if err == nil {
-			unit.Score = int(score)
+		if unit.HasTag("scored") {
+			score, err := jsonparser.GetInt(payload, "score")
+			if err == nil {
+				unit.Score = int(score)
+			} else {
+				collector.Add(fmt.Errorf("no score value set %w", err))
+			}
 		}
 	}
 
@@ -306,15 +331,23 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 		wall.Attributes.Vulnerable = true
 		wall.Attributes.Evented = true
 
-		hp, err := jsonparser.GetInt(payload, "hp")
-		if collector.Add(err) {
-			wall.FullHP = int(hp)
-			wall.HP = int(hp)
+		if wall.HasTag("vulnerable") {
+			hp, err := jsonparser.GetInt(payload, "hp")
+			if err == nil {
+				wall.FullHP = int(hp)
+				wall.HP = int(hp)
+			} else {
+				collector.Add(fmt.Errorf("no hp value set %w", err))
+			}
 		}
 
-		score, err := jsonparser.GetInt(payload, "score")
-		if err == nil {
-			wall.Score = int(score)
+		if wall.HasTag("scored") {
+			score, err := jsonparser.GetInt(payload, "score")
+			if err == nil {
+				wall.Score = int(score)
+			} else {
+				collector.Add(fmt.Errorf("no score value set %w", err))
+			}
 		}
 	}
 
@@ -381,9 +414,13 @@ func CollectableLoader(get LoaderGetter, collector *LoadErrors, preset interface
 		collect.Attributes.Obstacle = true
 		collect.Attributes.Evented = true
 
-		ttl, err := jsonparser.GetInt(payload, "ttl")
-		if !collector.Add(err) {
-			collect.Ttl = time.Duration(ttl)
+		if collect.HasTag("ttl") {
+			ttl, err := jsonparser.GetInt(payload, "ttl")
+			if err == nil {
+				collect.Ttl = time.Duration(ttl)
+			} else {
+				collector.Add(fmt.Errorf("no ttl %w", err))
+			}
 		}
 	}
 
@@ -422,9 +459,13 @@ func ExplosionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}
 		explosion.Attributes.Evented = true
 		explosion.Attributes.Danger = true
 
-		ttl, err := jsonparser.GetInt(payload, "ttl")
-		if !collector.Add(err) {
-			explosion.Ttl = time.Duration(ttl)
+		if explosion.HasTag("ttl") {
+			ttl, err := jsonparser.GetInt(payload, "ttl")
+			if err == nil {
+				explosion.Ttl = time.Duration(ttl)
+			} else {
+				collector.Add(fmt.Errorf("no ttl %w", err))
+			}
 		}
 
 		damage, err := jsonparser.GetInt(payload, "damage")
@@ -504,9 +545,13 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, preset interface{
 		projectile.Attributes.Evented = true
 		projectile.Attributes.Controled = true
 
-		ttl, err := jsonparser.GetInt(payload, "ttl")
-		if !collector.Add(err) {
-			projectile.Ttl = time.Duration(ttl)
+		if projectile.HasTag("ttl") {
+			ttl, err := jsonparser.GetInt(payload, "ttl")
+			if err == nil {
+				projectile.Ttl = time.Duration(ttl)
+			} else {
+				collector.Add(fmt.Errorf("no ttl %w", err))
+			}
 		}
 
 		damage, err := jsonparser.GetInt(payload, "damage")
@@ -521,6 +566,58 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, preset interface{
 	}
 
 	return projectile
+}
+
+func SpawnPointLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+	var (
+		object *Object
+		output EventChanel
+	)
+
+	if obj, err := lGetObject("object", get, collector, preset, payload); !collector.Add(err) {
+		object = obj.(*Object)
+	} else {
+		return nil
+	}
+
+	//todo remove
+	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+		output = obj.(EventChanel)
+	}
+
+	oo, _ := NewObservableObject(output, nil)
+	sp, _ := NewSpawnPoint(object, oo)
+
+	if allowListBytes, dType, _, _ := jsonparser.Get(payload, "allow"); dType == jsonparser.Array {
+		index := 0
+		jsonparser.ArrayEach(allowListBytes, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+			if dataType == jsonparser.String {
+				sp.AddAllowing(string(value))
+			} else if dataType == jsonparser.Array {
+				index2 := 0
+				allowing := make([]string, 0, 0)
+				jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+					if dataType != jsonparser.String {
+						collector.Add(fmt.Errorf("allow value %d:%d unknown format: %w", index, index2, ParseError))
+						return
+					}
+					allowing = append(allowing, string(value))
+				})
+				sp.AddAllowing(allowing...)
+			} else {
+				collector.Add(fmt.Errorf("allow value %d unknown format: %w", index, ParseError))
+			}
+			index++
+		})
+	} else if dType != jsonparser.Null || dType != jsonparser.NotExist {
+		collector.Add(fmt.Errorf("allow list unknown format: %w", ParseError))
+	}
+
+	if sp != nil {
+		sp.Attributes.Evented = true
+	}
+
+	return sp
 }
 
 func GunLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
@@ -622,6 +719,7 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, p
 		collision *collider.ClBody
 		cfg       *GameConfig
 		custom    CustomizeMap
+		tags      *Tags
 		err       error
 	)
 
@@ -632,6 +730,13 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, p
 
 	if obj, err := lGetObject("gameConfig", get, collector, preset, payload); !collector.Add(err) {
 		cfg = obj.(*GameConfig)
+	}
+
+	tagsBytes, dType, _, _ := jsonparser.Get(payload, "tags")
+	if dType != jsonparser.Null || dType != jsonparser.NotExist {
+		if obj, err := lGetObject("tags", get, collector, preset, tagsBytes); !collector.Add(err) {
+			tags = obj.(*Tags)
+		}
 	}
 
 	if !cfg.disableCustomization {
@@ -696,78 +801,7 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, p
 			object.Attributes.Renderable = true
 		}
 
-		//skip error because of dataType validation
-		tagsCfg, dType, _, _ := jsonparser.Get(payload, "tags")
-		switch dType {
-		case jsonparser.Array:
-			jsonparser.ArrayEach(tagsCfg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-				switch dataType {
-				case jsonparser.String:
-					object.addTag(string(value))
-				case jsonparser.Object:
-					strVal, err := jsonparser.GetString(value, "name")
-					if err != nil || strVal == "" {
-						collector.Add(fmt.Errorf("tags Object missing name: %w", ParseError))
-						return
-					}
-					object.addTag(strVal)
-					tagValue, _ := object.GetTag(strVal, true)
-					objStr, dType, _, err := jsonparser.Get(value, "values")
-					if dType != jsonparser.Object || err != nil {
-						collector.Add(fmt.Errorf("tags Object missing value object: %w", ParseError))
-						return
-					}
-					jsonparser.ObjectEach(objStr, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-						if dataType != jsonparser.String && dataType != jsonparser.Number {
-							collector.Add(fmt.Errorf("tags Object key '%s' has invalid type '%s': %w", key, dataType, ParseError))
-							return nil
-						}
-
-						//warning: this code expect that value is string representation of number
-						//if dataType is jsonparser.Number
-						tagValue.Put(string(key), string(value))
-
-						return nil
-					})
-					//tagValue.freeze() make it after spawn
-				default:
-					return
-				}
-			})
-		case jsonparser.Object:
-			jsonparser.ObjectEach(tagsCfg, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-				switch dataType {
-				case jsonparser.Boolean:
-					bVal, err := jsonparser.GetBoolean(value)
-					if !collector.Add(err) && bVal {
-						object.addTag(string(key))
-					}
-				case jsonparser.Object:
-					tagValue, _ := object.GetTag(string(key), true)
-					object.addTag(string(key))
-					jsonparser.ObjectEach(value, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-						if dataType != jsonparser.String && dataType != jsonparser.Number {
-							collector.Add(fmt.Errorf("tags Object key '%s' has invalid type '%s': %w", key, dataType, ParseError))
-							return nil
-						}
-						//warning: this code expect that value is string representation of number
-						//if dataType is jsonparser.Number
-						tagValue.Put(string(key), string(value))
-						return nil
-					})
-					//tagValue.freeze() make it after spawn
-				default:
-					collector.Add(fmt.Errorf("tags Object key '%s' has invalid type '%s': %w", key, dataType, ParseError))
-				}
-				return nil
-			})
-		case jsonparser.Null:
-			fallthrough
-		case jsonparser.NotExist:
-			//nope
-		default:
-			collector.Add(fmt.Errorf("tags: %w", ParseError))
-		}
+		object.Tags = tags
 
 		//size
 		if sizePl, dt, _, _ := jsonparser.Get(payload, "size"); dt == jsonparser.Object {
@@ -816,12 +850,96 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, p
 			collector.Add(err)
 		}
 
+		if object.HasTag("terrain") {
+			object.Attributes.Layer = LOCATION_LAYER_TERRAIN
+		} else if object.HasTag("air") {
+			object.Attributes.Layer = LOCATION_LAYER_AIR
+		}
+
 		if custom != nil {
 			object.Attributes.Custom = custom
 		}
 	}
 
 	return object
+}
+
+func TagsLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+	tags, _ := NewTags()
+	//skip error because of dataType validation
+	tagsCfg, dType, _, _ := jsonparser.Get(payload)
+	switch dType {
+	case jsonparser.Array:
+		jsonparser.ArrayEach(tagsCfg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+			switch dataType {
+			case jsonparser.String:
+				tags.addTag(string(value))
+			case jsonparser.Object:
+				strVal, err := jsonparser.GetString(value, "name")
+				if err != nil || strVal == "" {
+					collector.Add(fmt.Errorf("tags Object missing name: %w", ParseError))
+					return
+				}
+				tags.addTag(strVal)
+				tagValue, _ := tags.GetTag(strVal)
+				objStr, dType, _, err := jsonparser.Get(value, "values")
+				if dType != jsonparser.Object || err != nil {
+					collector.Add(fmt.Errorf("tags Object missing value object: %w", ParseError))
+					return
+				}
+				jsonparser.ObjectEach(objStr, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+					if dataType != jsonparser.String && dataType != jsonparser.Number {
+						collector.Add(fmt.Errorf("tags Object key '%s' has invalid type '%s': %w", key, dataType, ParseError))
+						return nil
+					}
+
+					//warning: this code expect that value is string representation of number
+					//if dataType is jsonparser.Number
+					tagValue.Put(string(key), string(value))
+
+					return nil
+				})
+				//tagValue.freeze() make it after spawn
+			default:
+				return
+			}
+		})
+	case jsonparser.Object:
+		jsonparser.ObjectEach(tagsCfg, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+			switch dataType {
+			case jsonparser.Boolean:
+				bVal, err := jsonparser.GetBoolean(value)
+				if !collector.Add(err) && bVal {
+					tags.addTag(string(key))
+				}
+			case jsonparser.Object:
+				tags.addTag(string(key))
+				tagValue, _ := tags.GetTag(string(key))
+				jsonparser.ObjectEach(value, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+					if dataType != jsonparser.String && dataType != jsonparser.Number {
+						collector.Add(fmt.Errorf("tags Object key '%s' has invalid type '%s': %w", key, dataType, ParseError))
+						return nil
+					}
+					//warning: this code expect that value is string representation of number
+					//if dataType is jsonparser.Number
+					tagValue.Put(string(key), string(value))
+					return nil
+				})
+				//tagValue.freeze() make it after spawn
+			default:
+				collector.Add(fmt.Errorf("tags Object key '%s' has invalid type '%s': %w", key, dataType, ParseError))
+			}
+			return nil
+		})
+	case jsonparser.Null:
+		fallthrough
+	case jsonparser.NotExist:
+		//nope
+	default:
+		collector.Add(fmt.Errorf("tags: %w", ParseError))
+	}
+
+	return tags
 }
 
 func CollisionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
@@ -853,6 +971,8 @@ func CollisionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}
 		collision = collider.NewFakeCollision(x, y, w, h)
 	case "vision":
 		collision = collider.NewPenetrateCollision(x, y, w, h)
+	case "perimeter":
+		collision = collider.NewPerimeterCollision(x, y, w, h)
 	default:
 		collision = collider.NewCollision(x, y, w, h)
 	}

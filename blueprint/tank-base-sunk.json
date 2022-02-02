@@ -1,0 +1,24 @@
+{
+  "type":   "explosion",
+  "sprite": {
+    "type": "animation",
+    "name": "water/sunk/sunk",
+    "length": 5,
+    "duration": 500000000
+  },
+  "size": {
+    "w": 13,
+    "h": 4
+  },
+  "ttl":    500000000,
+  "tags": ["explosion", "ttl", "nocollision"],
+  "custom": {
+    "~": 4,
+    "o": 7,
+    "'": 7,
+    ".": 7,
+    "`": 7,
+    "-": 7,
+    "_": 7
+  }
+}

@@ -46,6 +46,7 @@ const DEBUG_DISARM_AI = false
 const DEBUG_SHOW_ID = false
 const DEBUG_SHOW_AI_BEHAVIOR = false
 const DEBUG_FREE_SPACES = false
+const DEBUG_SPAWN_POINT_STATUS = false
 
 var (
 	buf, bufErr     = os.OpenFile("./log.txt", os.O_CREATE|os.O_TRUNC, 644)
@@ -65,17 +66,18 @@ var (
 	buildManager *BlueprintManager
 	ui           *UI
 	Require      RequireFunc
+	Info         InfoFunc
 
 	//flags
-	seed                 int64
-	wallCnt, tankCnt     int
-	calibrate            bool
-	profileMod           string
-	scenarioName         string
-	profileDelay         time.Duration
-	withColor, withSound bool
-	simplifyAi           bool
-	osSignal             chan os.Signal
+	seed                         int64
+	wallCnt, tankCnt, limitMaxAi int
+	calibrate                    bool
+	profileMod                   string
+	scenarioName                 string
+	profileDelay                 time.Duration
+	withColor, withSound         bool
+	simplifyAi                   bool
+	osSignal                     chan os.Signal
 )
 
 func init() {
@@ -90,7 +92,8 @@ func init() {
 	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "random generator seed")
 	flag.StringVar(&scenarioName, "scenario", "random", "run scenario")
 	flag.IntVar(&tankCnt, "tankCnt", 25, "for random scenario")
-	flag.IntVar(&wallCnt, "wallCnt", 25, "for random scenario")
+	flag.IntVar(&wallCnt, "wallCnt", 80, "for random scenario")
+	flag.IntVar(&limitMaxAi, "limit.maxAiUnit", 10, "for random scenario, 0 means no limit")
 	flag.BoolVar(&calibrate, "calibrate", false, "terminal calibration mode")
 	flag.StringVar(&profileMod, "profile.mode", "", "enable profiling mode, one of [cpu, mem, mutex, block, all]")
 	flag.DurationVar(&profileDelay, "profile.delay", -1, "delay of starting profile, after game start. -1 means no delay")
@@ -109,6 +112,7 @@ func init() {
 
 func main() {
 	var err error
+
 	//EffectAnimDisappear("stealth/tank/left/tank", 16, 42)
 	//EffectAnimInterference("napalm/persist/smokeGrow", 6, 0.3)
 
@@ -187,7 +191,7 @@ func main() {
 
 	//scenario
 	if scenarioName == "random" {
-		scenario, _ = NewRandomScenario(tankCnt, wallCnt)
+		scenario, _ = NewRandomScenario(tankCnt, wallCnt, limitMaxAi)
 	} else {
 		scenario, err = GetScenario(scenarioName)
 		if err != nil {
@@ -223,6 +227,9 @@ func main() {
 	Require = func(blueprint string) error {
 		_, err := buildManager.Get(blueprint)
 		return err
+	}
+	Info = func(blueprint string) (BlueprintInfo, error) {
+		return buildManager.Info(blueprint)
 	}
 
 	//ai

@@ -17,7 +17,10 @@ const GAME_END_WIN = 201
 const GAME_END_LOSE = 202
 
 var (
-	GameInProgressError = errors.New("game in progress")
+	GameInProgressError         = errors.New("game in progress")
+	NoSpawnPointError           = errors.New("no spawn point")
+	NotAvailableSpawnPointError = errors.New("not available spawn point")
+	NoAvailableLocationManager  = errors.New("location spawn required but no location manager")
 )
 
 type Game struct {
@@ -27,6 +30,7 @@ type Game struct {
 	*Location
 	*EffectManager
 	*SoundManager
+	spawnPoints                []*SpawnPoint
 	scenario                   *Scenario
 	spawnedPlayer, spawnedAi   int64
 	inProgress                 bool
@@ -81,7 +85,7 @@ func (receiver *Game) Run(scenario *Scenario) error {
 	}
 
 	for pIndex, player := range receiver.players {
-		location, _ := receiver.location.Coordinate2Spawn(true)
+
 		if (pIndex+1)%2 == 0 && scenario.player2Blueprint != "" {
 			player.Blueprint = scenario.player2Blueprint
 		} else if scenario.player1Blueprint != "" {
@@ -89,7 +93,14 @@ func (receiver *Game) Run(scenario *Scenario) error {
 		} else {
 			player.Blueprint = "player-tank"
 		}
-		object, err := receiver.SpawnManager.SpawnPlayerTank(location, player.Blueprint, player)
+
+		//todo move to custom configurator to remove get info call
+		spawnPosition, err := receiver.NewSpawnPosition(player.Blueprint)
+		if err != nil {
+			logger.Println(fmt.Errorf("unable alloc new position for player %d: %w", pIndex+1, err))
+			spawnPosition = PosAuto
+		}
+		object, err := receiver.SpawnManager.SpawnPlayerTank(spawnPosition, player.Blueprint, player)
 		if err != nil {
 			logger.Println("at spawning player error: ", err)
 		}
@@ -119,8 +130,18 @@ func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) 
 	if payload.Count <= 0 {
 		payload.Count = 1
 	}
+	info, err := Info(payload.Blueprint)
+	if err != nil {
+		logger.Printf("unable to retrieve info about %s \n", payload.Blueprint)
+	}
+	payload.Info = info
 	for i := 0; i < payload.Count; i++ {
-		if scenario.limits.AiUnits == 0 || scenario.limits.AiUnits > receiver.spawnedAi {
+		if info.Attributes.Type != "unit" {
+			err := receiver.doSpawn(scenario, payload)
+			if err != nil {
+				logger.Println(err)
+			}
+		} else if scenario.limits.AiUnits == 0 || scenario.limits.AiUnits > receiver.spawnedAi {
 			err := receiver.doSpawn(scenario, payload)
 			if err != nil {
 				logger.Println(err)
@@ -128,9 +149,10 @@ func (receiver *Game) onSpawnRequest(scenario *Scenario, payload *SpawnRequest) 
 			if err == nil || scenario.limits.AiUnits == 0 {
 				continue
 			}
+		} else {
+			receiver.delayedSpawnRequest = append(receiver.delayedSpawnRequest, payload)
+			atomic.AddInt64(&receiver.delayedSpawnRequestCnt, 1)
 		}
-		receiver.delayedSpawnRequest = append(receiver.delayedSpawnRequest, payload)
-		atomic.AddInt64(&receiver.delayedSpawnRequestCnt, 1)
 	}
 }
 
@@ -159,34 +181,36 @@ func (receiver *Game) doDelayedSpawn() {
 }
 
 func (receiver *Game) doSpawn(scenario *Scenario, payload *SpawnRequest) error {
-	var location Point
+	//todo move to custom configurator to remove get info call
+	var spawnPosition Point = payload.Position
 	var err error
 	if payload.Location != ZoneAuto && payload.Position == PosAuto {
 		if receiver.Location != nil {
-			payload.Position, err = receiver.Location.CoordinateByZone(payload.Location)
+			spawnPosition, err = receiver.Location.CoordinateByZone(payload.Location)
 			if err != nil {
-				return fmt.Errorf("unable to locate position: %w", err)
+				return fmt.Errorf("unable to locate position by location: %w", err)
 			}
-		}
-	}
-	if payload.Position == PosAuto {
-		if receiver.Location != nil {
-			location, err = receiver.Location.Coordinate2Spawn(true)
-			if err != nil {
-				return fmt.Errorf("unable to spawn: %w", err)
-			}
+			receiver.Location.CapturePoint(spawnPosition, payload.Info.Layer)
 		} else {
-			location = Point{}
+			return NoAvailableLocationManager
 		}
-	} else {
-		location = payload.Position
 	}
-	receiver.location.CapturePoint(location)
-	object, err := receiver.SpawnManager.Spawn(location, payload.Blueprint, DefaultConfigurator, payload)
+	if spawnPosition == PosAuto {
+		spawnPosition, err = receiver.NewSpawnPosition(payload.Blueprint)
+		if err != nil {
+			logger.Println(fmt.Errorf("unable alloc new position %s: %w", payload.Blueprint, err))
+		}
+	}
+	object, err := receiver.SpawnManager.Spawn(spawnPosition, payload.Blueprint, DefaultConfigurator, payload)
 	if err != nil {
 		return err
-	} else if object.HasTag("ai") {
-		atomic.AddInt64(&receiver.spawnedAi, 1)
+	} else {
+		if object.HasTag("ai") {
+			atomic.AddInt64(&receiver.spawnedAi, 1)
+		}
+		if object.HasTag("spawnPoint") {
+			receiver.spawnPoints = append(receiver.spawnPoints, object.(*SpawnPoint))
+		}
 	}
 	return nil
 }
@@ -208,7 +232,7 @@ func (receiver *Game) onUnitFire(object *Unit, payload interface{}) {
 }
 
 func (receiver *Game) onUnitDamage(object ObjectInterface, payload interface{}) {
-	if object.HasTag("wall") {
+	if object.HasTag("wall") || object.HasTag("ice") {
 		wall := object.(*Wall)
 		wallHp := int(math.Max(float64(wall.HP), 1))
 		if wall.FullHP/wallHp >= 2 {
@@ -302,7 +326,16 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 		}
 	}
 
-	if object.HasTag("explosive") {
+	if payload != nil && payload.(ObjectInterface).HasTag("water") {
+		//EnvironmentDamage by water special case //todo make some better
+		_, err := receiver.SpawnManager.SpawnExplosion(PosAuto, "tank-base-sunk", object)
+		if err != nil {
+			logger.Printf("unable to spawn explosion[sunk]: %s \n", err)
+		}
+		if err := receiver.playSound("damage"); err != nil {
+			logger.Println(err)
+		}
+	} else if object.HasTag("explosive") {
 		bl, _ := object.GetTagValue("explosive", "blueprint", "tank-base-explosion")
 		_, err := receiver.SpawnManager.SpawnExplosion(PosAuto, bl, object)
 		if err != nil {
@@ -327,7 +360,7 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 	}
 
 	if object.HasTag("ice") {
-		bl, _ := object.GetTagValue("ice", "blueprint", "water")
+		bl, _ := object.GetTagValue("ice", "blueprint", "ice-water")
 		point := object.GetXY()
 		_, err := receiver.SpawnManager.Spawn(point, bl, DefaultConfigurator, &SpawnRequest{
 			Team: object.(ObjectInterface).GetAttr().Team,
@@ -338,7 +371,9 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 	}
 
 	if object.HasTag("fanout") {
-		doFanoutSpawn(receiver, object)
+		if err := doFanoutSpawn(receiver, object); err != nil {
+			logger.Println(err)
+		}
 	}
 
 	if object.HasTag("highlights-disappear") {
@@ -415,6 +450,10 @@ func (receiver *Game) onUnitCollect(object *Collectable, payload interface{}) {
 
 }
 
+func (receiver *Game) onSpawnPointStatus(object *SpawnPoint, payload interface{}) {
+	//nope for now
+}
+
 func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{}) {
 	if object.HasTag("base") {
 		receiver.End(GAME_END_LOSE)
@@ -431,14 +470,13 @@ func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{
 				} else {
 					if receiver.inProgress {
 						//todo theoretical may cause game freeze due send signal on closed dispatcher
-						location, err := receiver.location.Coordinate2Spawn(true)
+						spawnPosition, err := receiver.NewSpawnPosition(player.Blueprint)
 						if err != nil {
-							logger.Printf("zones left %d", receiver.Location.zonesLeft)
 							logger.Println(fmt.Errorf("player %d: %w", idx+1, err))
-							location = PosAuto
+							spawnPosition = PosAuto //no position?
 						}
-						if _, err = receiver.SpawnManager.SpawnPlayerTank(location, player.Blueprint, player); err != nil {
-							logger.Println("CRITICAL", err)
+						if _, err = receiver.SpawnManager.SpawnPlayerTank(spawnPosition, player.Blueprint, player); err != nil {
+							logger.Println("at respawning player error: ", err)
 						}
 					}
 				}
@@ -511,6 +549,67 @@ func (receiver *Game) End(code int) {
 			Payload: nil,
 		}, receiver, nil)
 	})
+}
+
+func (receiver *Game) NewSpawnPosition(blueprint string) (Point, error) {
+	info, err := Info(blueprint)
+	if err != nil {
+		return NoPos, err
+	}
+	if point, err := receiver.CaptureRandomSpawnPoint(blueprint); err == nil {
+		if receiver.location != nil {
+			receiver.Location.CapturePoint(point.GetXY(), info.Layer)
+		}
+		return point.GetXY(), nil
+	} else {
+		if !errors.Is(err, NoSpawnPointError) {
+			//return NoPos, err //todo check if allowed spawn point exist
+		}
+		if receiver.Location != nil {
+			return receiver.Location.Coordinate2Spawn(true, info.Layer)
+		} else {
+			//no need to capture this :(
+			return Point{}, nil
+		}
+	}
+}
+
+func (receiver *Game) CaptureRandomSpawnPoint(blueprint string) (*SpawnPoint, error) {
+	if len(receiver.spawnPoints) == 0 {
+		return nil, NoSpawnPointError
+	}
+	info, err := Info(blueprint)
+	if err != nil {
+		return nil, err
+	}
+	available := make([]*SpawnPoint, 0, len(receiver.spawnPoints))
+	for _, point := range receiver.spawnPoints {
+		if point.IsAvailable() && point.CanSpawn(info.Tags) {
+			available = append(available, point)
+		}
+	}
+	avlLen := len(available)
+	if avlLen == 0 {
+		return nil, NotAvailableSpawnPointError
+	}
+	start := rand.Intn(avlLen)
+	for i := start; i < avlLen; i++ {
+		if available[i].Capture() {
+			logger.Println("point captured", available[i].GetXY(), available[i].ID)
+			return available[i], nil
+		} else {
+			logger.Println("point already captured")
+		}
+	}
+	for i := start; i >= 0; i-- {
+		if available[i].Capture() {
+			logger.Println("point captured", available[i].GetXY(), available[i].ID)
+			return available[i], nil
+		} else {
+			logger.Println("point already captured")
+		}
+	}
+	return nil, NotAvailableSpawnPointError
 }
 
 func (receiver *Game) playSound(key string) error {
@@ -594,6 +693,8 @@ func gameCmdDispatcher(instance *Game, unitEvent EventChanel, ctx context.Contex
 				go instance.onObjectSpawn(event.Object.(ObjectInterface), event.Payload)
 			case COLLECT_EVENT_COLLECTED:
 				go instance.onUnitCollect(event.Object.(*Collectable), event.Payload)
+			case SPAWN_POINT_STATUS:
+				go instance.onSpawnPointStatus(event.Object.(*SpawnPoint), event.Payload)
 			}
 		}
 	}
@@ -637,7 +738,7 @@ type fanoutConfig struct {
 	SpeedScale float64
 }
 
-func doFanoutSpawn(instance *Game, object ObjectInterface) {
+func doFanoutSpawn(instance *Game, object ObjectInterface) error {
 	var bl string
 	pos := object.GetXY()
 	coords := []Point{Point{X: -1, Y: -1}, Point{X: 0, Y: -1}, Point{X: 1, Y: -1},
@@ -645,6 +746,7 @@ func doFanoutSpawn(instance *Game, object ObjectInterface) {
 		Point{X: -1, Y: 1}, Point{X: 0, Y: 1}, Point{X: 1, Y: 1},
 	}
 	var sscale float64 = 1
+	var err error
 	for _, coord := range coords {
 		if coord.X == 0 || coord.Y == 0 {
 			sscale = .5
@@ -652,10 +754,14 @@ func doFanoutSpawn(instance *Game, object ObjectInterface) {
 			sscale = 1.0
 		}
 		bl, _ = object.GetTagValue("fanout", "blueprint", "projectile-sharp")
-		instance.Spawn(pos, bl, FanoutProjectileConfigurator, &fanoutConfig{
+		if err != nil {
+			break
+		}
+		_, err = instance.Spawn(pos, bl, FanoutProjectileConfigurator, &fanoutConfig{
 			Owner:      object,
 			Direction:  coord,
 			SpeedScale: sscale,
 		})
 	}
+	return err
 }

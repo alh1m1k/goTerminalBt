@@ -19,19 +19,13 @@ type Accelerator interface {
 	GetMinSpeed() *Point
 }
 
-type MotionObjectInterface interface {
-	ObjectInterface
-	Motioner
-	Accelerator
-}
-
 type MotionObject struct {
 	*Object
 	Moving
-	speedAccelerator  Point //todo remove
 	moving            bool
 	AccelDuration     time.Duration
 	AccelTimeFunc     timeFunction
+	speedAccelerator  Point
 	MinSpeed          Point
 	MaxSpeed          Point
 	currAccelDuration time.Duration

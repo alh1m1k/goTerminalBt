@@ -197,5 +197,14 @@
     "scored": true,
     "vulnerable": true,
     "tracked": true
+  },
+  "custom": {
+    "0": 3,
+    "o": 3,
+    "x": 3,
+    "<": 3,
+    ">": 3,
+    "__": 3,
+    "|": 3
   }
 }

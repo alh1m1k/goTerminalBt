@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+const ENVIRONMENT_BASE_DAMAGE = 50
+
+var EnvironmentDamage = DamageProxy{}
+
 type Wall struct {
 	*Object
 	*ObservableObject
@@ -22,13 +26,35 @@ func (receiver *Wall) Update(timeLeft time.Duration) error {
 }
 
 func (receiver *Wall) OnTickCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
-
+	if clBody := receiver.GetClBody(); clBody != nil {
+		for opposite, _ := range clBody.CollisionInfo().I() {
+			if !receiver.HasTag("obstacle") {
+				continue
+			}
+			if !opposite.HasTag("obstacle") || !opposite.HasTag("vulnerable") {
+				continue
+			}
+			if oiOpposite, ok := opposite.(ObjectInterface); !ok {
+				continue
+			} else {
+				dist := receiver.GetCenter().Minus(oiOpposite.GetCenter()).Abs()
+				sumSize := receiver.GetWH().Plus(oiOpposite.GetWH()).Divide(Size{2, 2})
+				dist = dist.Minus(Center{sumSize.W, sumSize.H})
+				if dist.X < -collider.GRID_COORD_TOLERANCE && dist.Y < -collider.GRID_COORD_TOLERANCE {
+					mult := (dist.X * dist.Y) / (sumSize.W * sumSize.H)
+					EnvironmentDamage.Tags = receiver.Tags
+					EnvironmentDamage.Damage = int(ENVIRONMENT_BASE_DAMAGE * mult * (float64(CYCLE) / float64(time.Second)))
+					EnvironmentDamage.From = receiver
+					opposite.(Vulnerable).ReciveDamage(&EnvironmentDamage)
+					break
+				}
+			}
+		}
+	}
 }
 
 func (receiver *Wall) OnStartCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
-	if object.HasTag("danger") && receiver.HasTag("vulnerable") {
-		receiver.ReciveDamage(object.(Danger))
-	}
+
 }
 
 func (receiver *Wall) OnStopCollide(object collider.Collideable, duration time.Duration, owner *collider.Interactions) {

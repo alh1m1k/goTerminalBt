@@ -110,12 +110,7 @@ func (receiver *Unit) OnStartCollide(object collider.Collideable, collision *ump
 			receiver.Trigger(OnSightEvent, receiver, object)
 		}
 	} else {
-		if object.HasTag("danger") && receiver.HasTag("vulnerable") {
-			if DEBUG_IMMORTAL_PLAYER && (receiver.HasTag("player") || receiver.HasTag("base")) {
-				return
-			}
-			receiver.ReciveDamage(object.(Danger))
-		}
+
 	}
 }
 

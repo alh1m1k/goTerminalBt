@@ -3,12 +3,62 @@
   "items": {
     "start": {
       "declare": [
+        "spawn-point-player",
         "player-tank",
         "water",
         "wall",
         "forest"
       ],
       "spawn": [
+        {
+          "location": {
+            "X": 11,
+            "Y": 10
+          },
+          "blueprint":  "spawn-point-player",
+          "team":       -1
+        },
+        {
+          "location": {
+            "X": 0,
+            "Y": 0
+          },
+          "blueprint":  "water",
+          "team":       -1
+        },
+        {
+          "location": {
+            "X": 3,
+            "Y": 3
+          },
+          "blueprint":  "water",
+          "team":       -1
+        },
+        {
+          "location": {
+            "X": 4,
+            "Y": 3
+          },
+          "blueprint":  "water",
+          "team":       -1
+        },
+        {
+          "location": {
+            "X": 3,
+            "Y": 4
+          },
+          "blueprint":  "water",
+          "team":       -1
+        },
+        {
+          "location": {
+            "X": 4,
+            "Y": 4
+          },
+          "blueprint":  "water",
+          "team":       -1
+        },
+
         {
           "location": {
             "X": 13,

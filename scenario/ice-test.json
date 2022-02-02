@@ -7,55 +7,63 @@
       "location": {
         "x": 0,
         "y": 0,
-        "w": 104,
+        "w": 267,
         "h": 60
       },
       "limits": {
         "aiUnit": 10
       },
       "declare": [
+        "spawn-point-player",
+        "spawn-point-ai",
         "player-tank-he",
         "player-tank-apok",
         "tank",
         "tank-fast",
         "tank-heavy",
         "tank-sneaky",
-        "tank-base-explosion",
-        "tank-base-projectile",
-        "tank-base-projectile-he",
-        "tank-base-projectile-rail",
-        "tank-base-projectile-flak",
-        "tank-special-projectile-smoke",
-        "tank-special-smokescreen-1",
-        "tank-special-smokescreen-2",
-        "tank-base-projectile-fanout",
-        "projectile-sharp",
-        "tank-base-projectile-apocalypse",
-        "projectile-sharp-apoc-start",
-        "projectile-sharp-apoc-end",
         "effect-onsight",
         "effect-offsight",
         "opel",
         "gun",
         "water",
-        "wall",
         "ice",
-        "forest",
-        "player-base"
+        "wall"
       ],
       "spawn": [
         {
-          "blueprint":  "ice",
-          "team":       100,
-          "count":      196
+          "location": {
+            "X": 0,
+            "Y": 0
+          },
+          "blueprint":  "spawn-point-player"
         },
         {
           "location": {
-            "X": 5,
-            "Y": 13
+            "X": 3,
+            "Y": 0
           },
+          "blueprint":  "spawn-point-player"
+        },
+        {
+          "blueprint":  "ice",
+          "team":       100,
+          "count":      495
+        },
+        {
+          "blueprint":  "wall",
+          "team":       77,
+          "count":      100
+        },
+        {
           "blueprint":  "tank",
-          "team":       50
+          "team":       50,
+          "count": 9
+        },
+        {
+          "blueprint":  "tank-sneaky",
+          "team":       50,
+          "count": 1
         }
       ]
     },

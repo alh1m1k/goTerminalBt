@@ -14,24 +14,13 @@
         "aiUnit": 10
       },
       "declare": [
+        "spawn-point-ai",
+        "spawn-point-player",
         "player-tank",
         "tank",
         "tank-fast",
         "tank-heavy",
         "tank-sneaky",
-        "tank-base-explosion",
-        "tank-base-projectile",
-        "tank-base-projectile-he",
-        "tank-base-projectile-rail",
-        "tank-base-projectile-flak",
-        "tank-special-projectile-smoke",
-        "tank-special-smokescreen-1",
-        "tank-special-smokescreen-2",
-        "tank-base-projectile-fanout",
-        "projectile-sharp",
-        "tank-base-projectile-apocalypse",
-        "projectile-sharp-apoc-start",
-        "projectile-sharp-apoc-end",
         "effect-onsight",
         "effect-offsight",
         "opel",
@@ -42,6 +31,99 @@
         "player-base"
       ],
       "spawn": [
+        {
+          "location": {
+            "X": 6,
+            "Y": 12
+          },
+          "blueprint":  "spawn-point-player"
+        },
+        {
+          "location": {
+            "X": 4,
+            "Y": 14
+          },
+          "blueprint":  "spawn-point-player"
+        },
+        {
+          "location": {
+            "X": 8,
+            "Y": 14
+          },
+          "blueprint":  "spawn-point-player"
+        },
+        {
+          "location": {
+            "X": 6,
+            "Y": 7
+          },
+          "blueprint":  "spawn-point-ai"
+        },
+        {
+          "location": {
+            "X": 0,
+            "Y": 0
+          },
+          "blueprint":  "spawn-point-ai"
+        },
+        {
+          "location": {
+            "X": 12,
+            "Y": 0
+          },
+          "blueprint":  "spawn-point-ai"
+        },
+        {
+          "location": {
+            "X": 2,
+            "Y": 0
+          },
+          "blueprint":  "spawn-point-ai"
+        },
+        {
+          "location": {
+            "X": 4,
+            "Y": 0
+          },
+          "blueprint":  "spawn-point-ai"
+        },
+        {
+          "location": {
+            "X": 6,
+            "Y": 0
+          },
+          "blueprint":  "spawn-point-ai"
+        },
+        {
+          "location": {
+            "X": 8,
+            "Y": 0
+          },
+          "blueprint":  "spawn-point-ai"
+        },
+        {
+          "location": {
+            "X": 10,
+            "Y": 0
+          },
+          "blueprint":  "spawn-point-ai"
+        },
+        {
+          "location": {
+            "X": 0,
+            "Y": 6
+          },
+          "blueprint":  "spawn-point-ai"
+        },
+        {
+          "location": {
+            "X": 12,
+            "Y": 6
+          },
+          "blueprint":  "spawn-point-ai"
+        },
+
+
         {
           "location": {
             "X": 6,

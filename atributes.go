@@ -8,6 +8,8 @@ type Attributes struct {
 	Blueprint   string
 	Name        string
 	Description string
+	Layer       int
+	Require     []string
 	Player      bool
 	Obstacle    bool
 	Danger      bool

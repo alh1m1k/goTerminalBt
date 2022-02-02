@@ -48,10 +48,12 @@ func (c *Collider) AddExtra(clBody *ClBody, object Collideable) error {
 				body.SetResponse("penetrate", "cross")
 				body.SetResponse("static", "cross")
 				body.SetResponse("base", "cross")
+				body.SetResponse("perimeter", "cross")
 			} else {
 				body.SetResponse("penetrate", "cross")
 				body.SetResponse("static", "grid")
 				body.SetResponse("base", "grid")
+				body.SetResponse("perimeter", "perimeter")
 			}
 
 			clBody.realBody = body
@@ -88,10 +90,12 @@ func (c *Collider) Add(object Collideable) error {
 				body.SetResponse("penetrate", "cross")
 				body.SetResponse("static", "cross")
 				body.SetResponse("base", "cross")
+				body.SetResponse("perimeter", "cross")
 			} else {
 				body.SetResponse("penetrate", "cross")
 				body.SetResponse("static", "grid")
 				body.SetResponse("base", "grid")
+				body.SetResponse("perimeter", "perimeter")
 			}
 
 			clBody.realBody = body
@@ -232,6 +236,7 @@ func NewCollider(queueSize int) (*Collider, error) {
 	}
 
 	cl.world.AddResponse("grid", gridFilter)
+	cl.world.AddResponse("perimeter", perimeterFilter)
 	cl.world.AddResponse("none", noneFilter)
 
 	return cl, nil
@@ -261,6 +266,57 @@ func gridFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goa
 		distance := math.Abs(offset) - float64(w/2+ow/2)
 		if distance > -GRID_COORD_TOLERANCE {
 			goalX = goalX + float32(math.Copysign(distance, offset))
+			body.Update(col.Touch.X, col.Touch.Y)
+			return goalX, goalY, world.Project(body, goalX, goalY)
+		}
+	}
+
+	sx, sy := col.Touch.X, col.Touch.Y
+	if col.Move.X != 0 || col.Move.Y != 0 {
+		if col.Normal.X == col.Normal.Y && col.Normal.X == 0 {
+			logger.Printf("no normal")
+		}
+		if col.Normal.X == 0 {
+			sx = goalX
+		}
+		if col.Normal.Y == 0 {
+			sy = goalY
+		}
+	}
+	col.Data = ump.Point{X: sx, Y: sy}
+	body.Update(col.Touch.X, col.Touch.Y) //cause problem, prob wrong unable to use body.x, body.y = col.Touch.X, col.Touch.Y
+	return sx, sy, world.Project(body, sx, sy)
+}
+
+func perimeterFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goalY float32) (float32, float32, []*ump.Collision) {
+	_, _, w, h, _, _ := body.Extents()
+	ox1, oy1, ow, oh, _, _ := col.Body.Extents()
+
+	centerX := goalX + w/2
+	centerY := goalY + h/2
+	ocenterX := ox1 + ow/2
+	ocenterY := oy1 + oh/2
+
+	offsetX := float64(centerX) - float64(ocenterX)
+	distanceX := math.Abs(offsetX) - float64(w/2+ow/2)
+	offsetY := float64(centerY) - float64(ocenterY)
+	distanceY := math.Abs(offsetY) - float64(h/2+oh/2)
+
+	if distanceX < -GRID_COORD_TOLERANCE*2 && distanceY < -GRID_COORD_TOLERANCE*2 {
+		body.Update(col.Touch.X, col.Touch.Y)
+		return goalX, goalY, world.Project(body, goalX, goalY)
+	}
+
+	if col.Move.X != 0 {
+		if distanceY > -GRID_COORD_TOLERANCE {
+			goalY = goalY + float32(math.Copysign(distanceY, offsetY))
+			body.Update(col.Touch.X, col.Touch.Y)
+			return goalX, goalY, world.Project(body, goalX, goalY)
+		}
+	}
+	if col.Move.Y != 0 {
+		if distanceX > -GRID_COORD_TOLERANCE {
+			goalX = goalX + float32(math.Copysign(distanceX, offsetX))
 			body.Update(col.Touch.X, col.Touch.Y)
 			return goalX, goalY, world.Project(body, goalX, goalY)
 		}

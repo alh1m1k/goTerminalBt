@@ -1,5 +1,6 @@
 {
   "type":   "unit",
+  "require": ["tank-base-explosion", "tank-base-projectile-fanout"],
   "sprite": "none",
   "state":  "unit/tank-heavy",
   "size": {

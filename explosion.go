@@ -6,38 +6,33 @@ import (
 	"time"
 )
 
-type DotDamageProxy struct {
-	Tag    []string
+type DamageProxy struct {
+	*Tags
 	From   ObjectInterface
 	Damage int
 }
 
-func (receiver *DotDamageProxy) GetDamage(target Vulnerable) (value int, nemesis ObjectInterface) {
+func (receiver *DamageProxy) GetDamage(target Vulnerable) (value int, nemesis ObjectInterface) {
 	return receiver.Damage, receiver.From
 }
 
-func (receiver *DotDamageProxy) HasTag(tag string) bool {
-	for _, part := range receiver.Tag {
-		if part == tag {
-			return true
-		}
+var (
+	DotDamage = DamageProxy{
+		Tags:   nil,
+		From:   nil,
+		Damage: 0,
 	}
-	return false
-}
-
-var DotDamage = DotDamageProxy{
-	Tag:    nil,
-	From:   nil,
-	Damage: 0,
-}
+	NoDamage = MinMax{0, 0}
+)
 
 type Explosion struct {
 	*Object
 	*ObservableObject
 	*throttle
-	Owner             ObjectInterface
-	Damage, DotDamage int
-	Ttl               time.Duration
+	RangeDamageReductionFunction, RangeDotDamageReductionFunction timeFunction
+	Owner                                                         ObjectInterface
+	Damage, DotDamage                                             int
+	Ttl                                                           time.Duration
 }
 
 func (receiver *Explosion) ApplyState(current *StateItem) error {
@@ -65,7 +60,7 @@ func (receiver *Explosion) OnTickCollide(object collider.Collideable, collision 
 			if object.HasTag("player") && DEBUG_IMMORTAL_PLAYER {
 				return
 			}
-			DotDamage.Tag = receiver.tag
+			DotDamage.Tags = receiver.Tags
 			DotDamage.Damage = receiver.DotDamage
 			DotDamage.From = receiver
 			object.(Vulnerable).ReciveDamage(&DotDamage)
@@ -74,7 +69,13 @@ func (receiver *Explosion) OnTickCollide(object collider.Collideable, collision 
 }
 
 func (receiver *Explosion) OnStartCollide(object collider.Collideable, collision *ump.Collision, owner *collider.Interactions) {
+	if receiver.HasTag("danger") && object.HasTag("vulnerable") {
+		if DEBUG_IMMORTAL_PLAYER && (object.HasTag("player") || object.HasTag("base")) {
 
+		} else {
+			object.(Vulnerable).ReciveDamage(receiver)
+		}
+	}
 }
 
 func (receiver *Explosion) OnStopCollide(object collider.Collideable, duration time.Duration, owner *collider.Interactions) {

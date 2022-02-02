@@ -20,7 +20,7 @@
   "damage": 0,
   "name": "Smoke-2",
   "description": "who know's what hidding there",
-  "tags": ["projectile",
+  "tags": ["projectile", "ttl",
     {
       "name": "explosive",
       "values": {
