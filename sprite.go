@@ -85,7 +85,7 @@ func NewContentSprite(buffer []byte) *Sprite {
 	return box
 }
 
-//todo remove it
+// todo remove it
 func GetSprite(id string, load bool, processTransparent bool) (*Sprite, error) {
 	if sprite, ok := sprites[id]; ok {
 		return sprite, nil
@@ -94,7 +94,7 @@ func GetSprite(id string, load bool, processTransparent bool) (*Sprite, error) {
 	}
 	buffer, err := loadSprite(id)
 	if err != nil {
-		return nil, err
+		return ErrorSprite, err
 	}
 	sprite := NewSprite()
 

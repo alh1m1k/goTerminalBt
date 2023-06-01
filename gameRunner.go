@@ -90,7 +90,10 @@ func (receiver *GameRunner) setupSize() {
 	var configurationChanel EventChanel = make(EventChanel) //todo remove
 
 	keyboard := receiver.KeyboardRepeater.Subscribe()
-	screen, _ := NewSetupSizeDialog(receiver.GameConfig.Box, keyboard, configurationChanel)
+	screen, err := NewSetupSizeDialog(receiver.GameConfig.Box, keyboard, configurationChanel)
+	if err != nil {
+		panic(err)
+	}
 	receiver.Renderer.Add(screen)
 	screen.Activate()
 
