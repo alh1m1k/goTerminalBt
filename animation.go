@@ -228,7 +228,7 @@ func NewErrorAnimation() (*Animation, error) {
 	return &anim, err
 }
 
-//return new animation every call
+// return new animation every call
 func GetAnimation(id string, length int, load bool, processTransparent bool) (*Animation, error) {
 	if anim, ok := animations[id]; ok {
 		if len(anim.keyFrames) != length {
@@ -312,8 +312,8 @@ func CustomizeAnimation(animation *Animation, name string, custom CustomizeMap) 
 		return ErrorAnimation, AnimationEmptyCustomizationError
 	}
 
-	newAnimation := animation.Copy() //?
-	newAnimation.keyFrames = animation.keyFrames[0:0]
+	newAnimation := animation.Copy()                     //?
+	newAnimation.keyFrames = newAnimation.keyFrames[0:0] //fixed ref leak to animation //newAnimation.keyFrames = animation.keyFrames[0:0]
 	newAnimation.Spriteer = nil
 	for i, frame := range animation.keyFrames {
 		if s, ok := frame.(*Sprite); ok {
