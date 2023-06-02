@@ -23,11 +23,11 @@ First of all, build game for platform you want. On fastest way is:
 in container shell
 ```sh
  apt update && apt install libasound2-dev
-'''
+```
 then 
 ```sh
  go build .
-'''
+```
 then run terminal to start game, use --help to see all available opt.
 + --scenario run custom scenario (for now only one game scenario available: stage-1 `app --scenario stage-1` )  
 or use:  
