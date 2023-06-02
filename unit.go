@@ -275,6 +275,7 @@ func (receiver *Unit) Copy() *Unit {
 	}
 	if receiver.VisionInteractions != nil {
 		instance.VisionInteractions = receiver.VisionInteractions.Copy()
+		receiver.VisionInteractions.UnsubscribeAll()
 		instance.VisionInteractions.Subscribe(&instance)
 	}
 

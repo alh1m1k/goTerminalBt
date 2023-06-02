@@ -35,11 +35,6 @@ type Explosion struct {
 	Ttl                                                           time.Duration
 }
 
-func (receiver *Explosion) ApplyState(current *StateItem) error {
-	receiver.sprite = current.StateInfo.(*UnitStateInfo).sprite
-	return nil
-}
-
 func (receiver *Explosion) Update(timeLeft time.Duration) error {
 	if receiver.destroyed {
 		return nil

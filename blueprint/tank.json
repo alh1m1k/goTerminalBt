@@ -29,5 +29,10 @@
     ">": 6,
     "__": 6,
     "|": 6
+  },
+  "defaults": {
+    "sprite": {
+      "transparent": true
+    }
   }
 }

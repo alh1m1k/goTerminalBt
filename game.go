@@ -55,7 +55,7 @@ func (receiver *Game) GetPlayers() []*Player {
 	return receiver.players
 }
 
-//MUST RUN async
+// MUST RUN async
 func (receiver *Game) Run(scenario *Scenario) error {
 
 	receiver.mutex.Lock()
@@ -465,7 +465,9 @@ func (receiver *Game) onObjectDeSpawn(object ObjectInterface, payload interface{
 				logger.Printf("cycleId: %d, player %d have %d retry\n", CycleID, idx+1, left)
 				if left <= 0 {
 					if atomic.AddInt64(&receiver.spawnedPlayer, -1) == 0 {
-						receiver.End(GAME_END_LOSE)
+						time.AfterFunc(time.Second, func() { //small delay to improve experience
+							receiver.End(GAME_END_LOSE)
+						})
 					}
 				} else {
 					if receiver.inProgress {
@@ -506,7 +508,7 @@ func (receiver *Game) DecrSpawnedAi() int64 {
 	return atomic.AddInt64(&receiver.spawnedAi, -1)
 }
 
-//async
+// async
 func (receiver *Game) End(code int) {
 	if !receiver.inProgress {
 		return

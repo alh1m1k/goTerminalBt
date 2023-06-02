@@ -2,6 +2,7 @@ package main
 
 import (
 	"GoConsoleBT/controller"
+	"context"
 	direct "github.com/buger/goterm"
 	"github.com/eiannone/keyboard"
 	"strconv"
@@ -37,7 +38,7 @@ func (receiver *GameRunner) Run(game *Game, scenario *Scenario, done EventChanel
 	receiver.BlueprintManager.GameConfig = receiver.GameConfig
 	receiver.BlueprintManager.EventChanel = receiver.SpawnManager.UnitEventChanel //remove from builder
 	if receiver.BehaviorControlBuilder != nil {
-		receiver.BlueprintManager.AddLoader("ai", func(get LoaderGetter, eCollector *LoadErrors, preset interface{}, payload []byte) interface{} {
+		receiver.BlueprintManager.AddLoader("ai", func(ctx context.Context, get LoaderGetter, eCollector *LoadErrors, preset interface{}, payload []byte) interface{} {
 			ai, _ := receiver.BehaviorControlBuilder.Build()
 			return ai
 		})

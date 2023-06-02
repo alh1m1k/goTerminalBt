@@ -5,6 +5,9 @@
       "name": "smokeCompose-2",
       "cycled": false,
       "length": 3,
+      "defaults": {
+        "sprite": {"transparent": true}
+      },
       "keyFrames": [
           {
             "type": "animation",

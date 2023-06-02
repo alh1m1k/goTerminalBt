@@ -21,5 +21,10 @@
   },
   "hp":     50,
   "score": 150,
-  "tags": ["tank", "obstacle", "explosive", "highlights-damage", "ai", "scored", "stealth", "vulnerable", "tracked"]
+  "tags": ["tank", "obstacle", "explosive", "highlights-damage", "ai", "scored", "stealth", "vulnerable", "tracked"],
+  "defaults": {
+    "sprite": {
+      "transparent": true
+    }
+  }
 }

@@ -13,6 +13,7 @@
             "cycled": true,
             "blink": 200000000,
             "length": 2,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -32,6 +33,7 @@
             "cycled": true,
             "blink": 200000000,
             "length": 2,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -51,6 +53,7 @@
             "cycled": true,
             "blink": 200000000,
             "length": 2,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -70,6 +73,7 @@
             "cycled": true,
             "blink": 200000000,
             "length": 2,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -92,6 +96,7 @@
             "name": "stealthTopBlink",
             "length": 2,
             "blink": 100000000,
+            "transparent": true,
             "keyFrames": [
               {
                 "type": "animation",
@@ -100,6 +105,7 @@
                 "duration": 500000000,
                 "length": 17,
                 "reversed": true,
+                "transparent": true,
                 "custom": {
                   "0": 6,
                   "o": 6,
@@ -117,6 +123,7 @@
                 "duration": 500000000,
                 "length": 17,
                 "reversed": false,
+                "transparent": true,
                 "custom": {
                   "0": 6,
                   "o": 6,
@@ -136,6 +143,7 @@
             "name": "stealthBottomBlink",
             "blink": 100000000,
             "length": 2,
+            "transparent": true,
             "keyFrames": [
                 {
                   "type": "animation",
@@ -180,6 +188,7 @@
             "name": "stealthLeftBlink",
             "blink": 100000000,
             "length": 2,
+            "transparent": true,
             "keyFrames": [
               {
                 "type": "animation",
@@ -205,6 +214,7 @@
                 "duration": 500000000,
                 "length": 17,
                 "reversed": false,
+                "transparent": true,
                 "custom": {
                   "0": 6,
                   "o": 6,
@@ -224,6 +234,7 @@
             "name": "stealthRightBlink",
             "blink": 100000000,
             "length": 2,
+            "transparent": true,
             "keyFrames": [
               {
                 "type": "animation",
@@ -249,6 +260,7 @@
                 "duration": 500000000,
                 "length": 17,
                 "reversed": false,
+                "transparent": true,
                 "custom": {
                   "0": 6,
                   "o": 6,
@@ -272,6 +284,7 @@
             "type": "animation",
             "name": "stealthTopBlink",
             "length": 2,
+            "transparent": true,
             "keyFrames": [
               {
                 "type": "animation",
@@ -297,6 +310,7 @@
                 "duration": 500000000,
                 "length": 17,
                 "reversed": false,
+                "transparent": true,
                 "custom": {
                   "0": 6,
                   "o": 6,
@@ -315,6 +329,7 @@
             "type": "animation",
             "name": "stealthBottomBlink",
             "length": 2,
+            "transparent": true,
             "keyFrames": [
               {
                 "type": "animation",
@@ -340,6 +355,7 @@
                 "duration": 500000000,
                 "length": 17,
                 "reversed": false,
+                "transparent": true,
                 "custom": {
                   "0": 6,
                   "o": 6,
@@ -358,6 +374,7 @@
             "type": "animation",
             "name": "stealthLeftBlink",
             "length": 2,
+            "transparent": true,
             "keyFrames": [
               {
                 "type": "animation",
@@ -366,6 +383,7 @@
                 "duration": 500000000,
                 "length": 17,
                 "reversed": true,
+                "transparent": true,
                 "custom": {
                   "0": 6,
                   "o": 6,
@@ -383,6 +401,7 @@
                 "duration": 500000000,
                 "length": 17,
                 "reversed": false,
+                "transparent": true,
                 "custom": {
                   "0": 6,
                   "o": 6,
@@ -401,6 +420,7 @@
             "type": "animation",
             "name": "stealthRightBlink",
             "length": 2,
+            "transparent": true,
             "keyFrames": [
               {
                 "type": "animation",
@@ -409,6 +429,7 @@
                 "duration": 500000000,
                 "length": 17,
                 "reversed": true,
+                "transparent": true,
                 "custom": {
                   "0": 6,
                   "o": 6,
@@ -426,6 +447,7 @@
                 "duration": 500000000,
                 "length": 17,
                 "reversed": false,
+                "transparent": true,
                 "custom": {
                   "0": 6,
                   "o": 6,
@@ -451,6 +473,7 @@
             "duration": 1000000000,
             "cycled": true,
             "length": 17,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -469,6 +492,7 @@
             "duration": 1000000000,
             "cycled": true,
             "length": 17,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -487,6 +511,7 @@
             "duration": 1000000000,
             "cycled": true,
             "length": 17,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -505,6 +530,7 @@
             "duration": 1000000000,
             "cycled": true,
             "length": 17,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -528,6 +554,7 @@
             "duration": 1000000000,
             "cycled": true,
             "length": 17,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -546,6 +573,7 @@
             "duration": 1000000000,
             "cycled": true,
             "length": 17,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -564,6 +592,7 @@
             "duration": 1000000000,
             "cycled": true,
             "length": 17,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -582,6 +611,7 @@
             "duration": 1000000000,
             "cycled": true,
             "length": 17,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -605,6 +635,7 @@
             "duration": 300000000,
             "cycled": true,
             "length": 2,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -623,6 +654,7 @@
             "duration": 300000000,
             "cycled": true,
             "length": 2,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -641,6 +673,7 @@
             "duration": 300000000,
             "cycled": true,
             "length": 2,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,
@@ -659,6 +692,7 @@
             "duration": 300000000,
             "cycled": true,
             "length": 2,
+            "transparent": true,
             "custom": {
               "0": 6,
               "o": 6,

@@ -16,7 +16,7 @@ type Interactions struct {
 	subscribers []CollisionReceiver
 }
 
-//WARNING: WATCH for composition inderect call, no check for that
+// WARNING: WATCH for composition inderect call, no check for that
 func (receiver *Interactions) Subscribe(collideable CollisionReceiver) {
 	receiver.subscribers = append(receiver.subscribers, collideable)
 }
@@ -65,6 +65,10 @@ func (receiver *Interactions) Clear() {
 		i++
 	}
 	receiver.subscribers = receiver.subscribers[0:j]
+}
+
+func (receiver *Interactions) UnsubscribeAll() {
+	receiver.subscribers = receiver.subscribers[0:0]
 }
 
 func (receiver *Interactions) OnTickCollide(object Collideable, collision *ump.Collision, owner *Interactions) {

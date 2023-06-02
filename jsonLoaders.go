@@ -3,6 +3,7 @@ package main
 import (
 	"GoConsoleBT/collider"
 	"GoConsoleBT/controller"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,24 +48,24 @@ func NewJsonPackage() *Package {
 	return instance
 }
 
-func lGetObject(blueprint string, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) (interface{}, error) {
+func lGetObject(ctx context.Context, blueprint string, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) (interface{}, error) {
 	loader := get(blueprint)
 	if loader == nil {
 		return nil, fmt.Errorf("%s: %w", blueprint, LoaderNotFoundError)
 	}
-	object := loader(get, collector, preset, payload)
+	object := loader(ctx, get, collector, preset, payload)
 	if object == nil {
 		return nil, fmt.Errorf("%s: %w", blueprint, InstanceError)
 	}
 	return object, nil
 }
 
-func RootLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func RootLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	requireBytes, dType, _, _ := jsonparser.Get(payload, "require")
 	requireList := make([]string, 0)
 	if dType == jsonparser.String || dType == jsonparser.Array {
 		var requireFunc RequireFunc
-		if obj, err := lGetObject("require", get, collector, preset, payload); !collector.Add(err) {
+		if obj, err := lGetObject(ctx, "require", get, collector, preset, payload); !collector.Add(err) {
 			requireFunc = obj.(RequireFunc)
 			if dType == jsonparser.String {
 				err := requireFunc(string(requireBytes))
@@ -107,7 +108,7 @@ func RootLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 	if collector.Add(err) {
 		return nil
 	}
-	object, err := lGetObject(uType, get, collector, preset, payload)
+	object, err := lGetObject(ctx, uType, get, collector, preset, payload)
 	if collector.Add(err) {
 		return nil
 	}
@@ -119,7 +120,7 @@ func RootLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 	return object
 }
 
-func UnitLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func UnitLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		output     EventChanel
 		object     *MotionObject
@@ -133,7 +134,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 		err        error
 	)
 
-	if obj, err := lGetObject("motionObject", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "motionObject", get, collector, preset, payload); !collector.Add(err) {
 		object = obj.(*MotionObject)
 	} else {
 		return nil
@@ -145,14 +146,14 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 	case jsonparser.String:
 		stateBytes, err := loadState(string(stateCfg))
 		if !collector.Add(err) {
-			if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+			if obj, err := lGetObject(ctx, "state", get, collector, SpriteerConfig{
 				Custom: object.Attributes.Custom,
 			}, stateBytes); !collector.Add(err) {
 				stateObj = obj.(*State)
 			}
 		}
 	case jsonparser.Object:
-		if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+		if obj, err := lGetObject(ctx, "state", get, collector, SpriteerConfig{
 			Custom: object.Attributes.Custom,
 		}, stateCfg); !collector.Add(err) {
 			stateObj = obj.(*State)
@@ -169,7 +170,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 	gunBytes, dType, _, _ := jsonparser.Get(payload, "gun")
 	switch dType {
 	case jsonparser.Object:
-		if object, err := lGetObject("gun", get, collector, preset, gunBytes); !collector.Add(err) {
+		if object, err := lGetObject(ctx, "gun", get, collector, preset, gunBytes); !collector.Add(err) {
 			gun = object.(*Gun)
 		}
 	case jsonparser.Null:
@@ -195,7 +196,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 	}
 
 	//todo remove
-	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "eventChanel", get, collector, preset, payload); !collector.Add(err) {
 		output = obj.(EventChanel)
 	}
 
@@ -211,7 +212,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 				obj, _ := controller.NewAIControl()
 				co, err = NewControlledObject(obj, nil)
 			default:
-				if obj, err := lGetObject("controlledObject", get, collector, preset, payload); !collector.Add(err) {
+				if obj, err := lGetObject(ctx, "controlledObject", get, collector, preset, payload); !collector.Add(err) {
 					co = obj.(*ControlledObject)
 					if _, ok := co.Control.(*BehaviorControl); ok {
 						behaviorAi = true
@@ -270,7 +271,7 @@ func UnitLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 	return unit
 }
 
-func WallLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func WallLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object   *Object
 		stateObj *State
@@ -280,7 +281,7 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 		err      error
 	)
 
-	if obj, err := lGetObject("object", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "object", get, collector, preset, payload); !collector.Add(err) {
 		object = obj.(*Object)
 	} else {
 		return nil
@@ -293,14 +294,14 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 		//todo rename
 		stateBytes, err := loadState(string(stateCfg))
 		if !collector.Add(err) {
-			if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+			if obj, err := lGetObject(ctx, "state", get, collector, SpriteerConfig{
 				Custom: object.Attributes.Custom,
 			}, stateBytes); !collector.Add(err) {
 				stateObj = obj.(*State)
 			}
 		}
 	case jsonparser.Object:
-		if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+		if obj, err := lGetObject(ctx, "state", get, collector, SpriteerConfig{
 			Custom: object.Attributes.Custom,
 		}, stateCfg); !collector.Add(err) {
 			stateObj = obj.(*State)
@@ -314,7 +315,7 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 	}
 
 	//todo remove
-	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "eventChanel", get, collector, preset, payload); !collector.Add(err) {
 		output = obj.(EventChanel)
 	}
 
@@ -354,7 +355,7 @@ func WallLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 	return wall
 }
 
-func CollectableLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func CollectableLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object   *Object
 		stateObj *State
@@ -364,7 +365,7 @@ func CollectableLoader(get LoaderGetter, collector *LoadErrors, preset interface
 		err      error
 	)
 
-	if obj, err := lGetObject("object", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "object", get, collector, preset, payload); !collector.Add(err) {
 		object = obj.(*Object)
 	} else {
 		return nil
@@ -377,14 +378,14 @@ func CollectableLoader(get LoaderGetter, collector *LoadErrors, preset interface
 		//todo rename
 		stateBytes, err := loadState(string(stateCfg))
 		if !collector.Add(err) {
-			if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+			if obj, err := lGetObject(ctx, "state", get, collector, SpriteerConfig{
 				Custom: object.Attributes.Custom,
 			}, stateBytes); !collector.Add(err) {
 				stateObj = obj.(*State)
 			}
 		}
 	case jsonparser.Object:
-		if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+		if obj, err := lGetObject(ctx, "state", get, collector, SpriteerConfig{
 			Custom: object.Attributes.Custom,
 		}, stateCfg); !collector.Add(err) {
 			stateObj = obj.(*State)
@@ -398,7 +399,7 @@ func CollectableLoader(get LoaderGetter, collector *LoadErrors, preset interface
 	}
 
 	//todo remove
-	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "eventChanel", get, collector, preset, payload); !collector.Add(err) {
 		output = obj.(EventChanel)
 	}
 
@@ -427,7 +428,7 @@ func CollectableLoader(get LoaderGetter, collector *LoadErrors, preset interface
 	return collect
 }
 
-func ExplosionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func ExplosionLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object    *Object
 		oo        *ObservableObject
@@ -436,14 +437,14 @@ func ExplosionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}
 		err       error
 	)
 
-	if obj, err := lGetObject("object", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "object", get, collector, preset, payload); !collector.Add(err) {
 		object = obj.(*Object)
 	} else {
 		return nil
 	}
 
 	//todo remove
-	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "eventChanel", get, collector, preset, payload); !collector.Add(err) {
 		output = obj.(EventChanel)
 	}
 
@@ -481,7 +482,7 @@ func ExplosionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}
 	return explosion
 }
 
-func ProjectileLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func ProjectileLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object     *MotionObject
 		stateObj   *State
@@ -491,7 +492,7 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, preset interface{
 		err        error
 	)
 
-	if obj, err := lGetObject("motionObject", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "motionObject", get, collector, preset, payload); !collector.Add(err) {
 		object = obj.(*MotionObject)
 	} else {
 		return nil
@@ -503,14 +504,14 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, preset interface{
 	case jsonparser.String:
 		stateBytes, err := loadState(string(stateCfg))
 		if !collector.Add(err) {
-			if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+			if obj, err := lGetObject(ctx, "state", get, collector, SpriteerConfig{
 				Custom: object.Attributes.Custom,
 			}, stateBytes); !collector.Add(err) {
 				stateObj = obj.(*State)
 			}
 		}
 	case jsonparser.Object:
-		if obj, err := lGetObject("state", get, collector, SpriteerConfig{
+		if obj, err := lGetObject(ctx, "state", get, collector, SpriteerConfig{
 			Custom: object.Attributes.Custom,
 		}, stateCfg); !collector.Add(err) {
 			stateObj = obj.(*State)
@@ -524,7 +525,7 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, preset interface{
 	}
 
 	//todo remove
-	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "eventChanel", get, collector, preset, payload); !collector.Add(err) {
 		output = obj.(EventChanel)
 	}
 
@@ -568,20 +569,20 @@ func ProjectileLoader(get LoaderGetter, collector *LoadErrors, preset interface{
 	return projectile
 }
 
-func SpawnPointLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func SpawnPointLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object *Object
 		output EventChanel
 	)
 
-	if obj, err := lGetObject("object", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "object", get, collector, preset, payload); !collector.Add(err) {
 		object = obj.(*Object)
 	} else {
 		return nil
 	}
 
 	//todo remove
-	if obj, err := lGetObject("eventChanel", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "eventChanel", get, collector, preset, payload); !collector.Add(err) {
 		output = obj.(EventChanel)
 	}
 
@@ -620,7 +621,7 @@ func SpawnPointLoader(get LoaderGetter, collector *LoadErrors, preset interface{
 	return sp
 }
 
-func GunLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func GunLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object *Gun
 		err    error
@@ -642,13 +643,13 @@ func GunLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payl
 	return object
 }
 
-func MotionObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func MotionObjectLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object *MotionObject
 		config *MotionObjectConfig
 	)
 
-	if obj, err := lGetObject("object", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "object", get, collector, preset, payload); !collector.Add(err) {
 		if cfg, ok := preset.(*MotionObjectConfig); ok { //todo separate defaults and params
 			config = cfg
 		} else {
@@ -692,12 +693,12 @@ func MotionObjectLoader(get LoaderGetter, collector *LoadErrors, preset interfac
 	return object
 }
 
-func ControlledObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func ControlledObjectLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		object *ControlledObject
 	)
 
-	if obj, err := lGetObject("ai", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "ai", get, collector, preset, payload); !collector.Add(err) {
 		object, _ = NewControlledObject(obj.(controller.Controller), nil)
 	} else {
 		collector.Add(fmt.Errorf("%s: %w", "ai", LoaderNotFoundError))
@@ -713,7 +714,7 @@ func ControlledObjectLoader(get LoaderGetter, collector *LoadErrors, preset inte
 	return object
 }
 
-func ObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func ObjectLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		sprite    Spriteer
 		collision *collider.ClBody
@@ -728,13 +729,13 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, p
 		collector.Add(fmt.Errorf("animation key is depricated for jsonLoaders: %w", ParseError))
 	}
 
-	if obj, err := lGetObject("gameConfig", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "gameConfig", get, collector, preset, payload); !collector.Add(err) {
 		cfg = obj.(*GameConfig)
 	}
 
 	tagsBytes, dType, _, _ := jsonparser.Get(payload, "tags")
 	if dType != jsonparser.Null || dType != jsonparser.NotExist {
-		if obj, err := lGetObject("tags", get, collector, preset, tagsBytes); !collector.Add(err) {
+		if obj, err := lGetObject(ctx, "tags", get, collector, preset, tagsBytes); !collector.Add(err) {
 			tags = obj.(*Tags)
 		}
 	}
@@ -764,7 +765,7 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, p
 			}
 		}
 	case jsonparser.Object:
-		if obj, err := lGetObject("spriter", get, collector, SpriteerConfig{
+		if obj, err := lGetObject(ctx, "spriter", get, collector, SpriteerConfig{
 			Custom: custom,
 		}, spriteCfg); !collector.Add(err) {
 			sprite = obj.(Spriteer)
@@ -777,7 +778,7 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, p
 	collisionCfg, dType, _, _ := jsonparser.Get(payload, "collision")
 	switch dType {
 	case jsonparser.Object:
-		if obj, err := lGetObject("collision", get, collector, preset, collisionCfg); !collector.Add(err) {
+		if obj, err := lGetObject(ctx, "collision", get, collector, preset, collisionCfg); !collector.Add(err) {
 			collision = obj.(*collider.ClBody)
 		}
 	case jsonparser.Null:
@@ -864,7 +865,7 @@ func ObjectLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, p
 	return object
 }
 
-func TagsLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func TagsLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	tags, _ := NewTags()
 	//skip error because of dataType validation
 	tagsCfg, dType, _, _ := jsonparser.Get(payload)
@@ -942,7 +943,7 @@ func TagsLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pay
 	return tags
 }
 
-func CollisionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func CollisionLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		collision *collider.ClBody
 	)
@@ -980,7 +981,7 @@ func CollisionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}
 	return collision
 }
 
-func SpriterLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func SpriterLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		sprite     Spriteer
 		spriteConf SpriteerConfig
@@ -998,19 +999,19 @@ func SpriterLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, 
 
 	switch spriteConf.Type {
 	case "animation":
-		if obj, err := lGetObject(spriteConf.Type, get, collector, AnimationConfig{
+		if obj, err := lGetObject(ctx, spriteConf.Type, get, collector, AnimationConfig{
 			SpriteerConfig: spriteConf,
 		}, payload); !collector.Add(err) {
 			sprite = obj.(Spriteer)
 		}
 	case "composition":
-		if obj, err := lGetObject(spriteConf.Type, get, collector, CompositionConfig{
+		if obj, err := lGetObject(ctx, spriteConf.Type, get, collector, CompositionConfig{
 			SpriteerConfig: spriteConf,
 		}, payload); !collector.Add(err) {
 			sprite = obj.(Spriteer)
 		}
 	default:
-		if obj, err := lGetObject(spriteConf.Type, get, collector, SpriteConfig{
+		if obj, err := lGetObject(ctx, spriteConf.Type, get, collector, SpriteConfig{
 			SpriteerConfig: spriteConf,
 		}, payload); !collector.Add(err) {
 			sprite = obj.(Spriteer)
@@ -1025,7 +1026,7 @@ func SpriterLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, 
 	return sprite
 }
 
-func SpriteLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func SpriteLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		sprite     *Sprite
 		spriteConf SpriteConfig
@@ -1034,7 +1035,7 @@ func SpriteLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, p
 		err        error
 	)
 
-	if obj, err := lGetObject("gameConfig", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "gameConfig", get, collector, preset, payload); !collector.Add(err) {
 		cfg = obj.(*GameConfig)
 	}
 
@@ -1074,7 +1075,7 @@ func SpriteLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, p
 	return sprite
 }
 
-func CompositionLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func CompositionLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		composition *Composition
 		layerConf   *CompositionLayerConfig
@@ -1093,7 +1094,7 @@ func CompositionLoader(get LoaderGetter, collector *LoadErrors, preset interface
 					composition.addFrame(frame, 0, 0, index)
 				}
 			case jsonparser.Object:
-				if frame, err := lGetObject("spriter", get, collector, preset, value); !collector.Add(err) {
+				if frame, err := lGetObject(ctx, "spriter", get, collector, preset, value); !collector.Add(err) {
 					if cfg, ok := preset.(*CompositionLayerConfig); ok { //todo separate defaults and params
 						layerConf = cfg
 					} else {
@@ -1121,7 +1122,7 @@ func CompositionLoader(get LoaderGetter, collector *LoadErrors, preset interface
 	return composition
 }
 
-func AnimationLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func AnimationLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		animation *Animation
 		cfg       *GameConfig
@@ -1130,7 +1131,7 @@ func AnimationLoader(get LoaderGetter, collector *LoadErrors, preset interface{}
 		err       error
 	)
 
-	if obj, err := lGetObject("gameConfig", get, collector, preset, payload); !collector.Add(err) {
+	if obj, err := lGetObject(ctx, "gameConfig", get, collector, preset, payload); !collector.Add(err) {
 		cfg = obj.(*GameConfig)
 	}
 
@@ -1181,7 +1182,7 @@ func AnimationLoader(get LoaderGetter, collector *LoadErrors, preset interface{}
 						animation.AddFrame(ErrorSprite)
 					}
 				case jsonparser.Object:
-					if obj, err := lGetObject("spriter", get, collector, preset, value); err == nil {
+					if obj, err := lGetObject(ctx, "spriter", get, collector, preset, value); err == nil {
 						err = animation.AddFrame(obj.(Spriteer))
 						if collector.Add(err) && errors.Is(err, FrameTypeCombinationError) {
 							return
@@ -1254,13 +1255,13 @@ func AnimationLoader(get LoaderGetter, collector *LoadErrors, preset interface{}
 	return animation
 }
 
-func StateLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func StateLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 
 	var (
 		state *State
 	)
 
-	if root, err := lGetObject("stateItem", get, collector, preset, payload); !collector.Add(err) {
+	if root, err := lGetObject(ctx, "stateItem", get, collector, preset, payload); !collector.Add(err) {
 		state, _ = NewState(nil)
 		state.root = root.(*StateItem)
 		state.Current = root.(*StateItem)
@@ -1276,7 +1277,7 @@ func StateLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, pa
 	return state
 }
 
-func StateItemLoader(get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
+func StateItemLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, preset interface{}, payload []byte) interface{} {
 	var (
 		sprite     Spriteer
 		collision  *collider.ClBody
@@ -1321,7 +1322,7 @@ func StateItemLoader(get LoaderGetter, collector *LoadErrors, preset interface{}
 		} else {
 			blueprint = "spriter"
 		}
-		if obj, err := lGetObject(blueprint, get, collector, preset, spriteCfg); !collector.Add(err) {
+		if obj, err := lGetObject(ctx, blueprint, get, collector, preset, spriteCfg); !collector.Add(err) {
 			sprite = obj.(Spriteer)
 		}
 	default:
@@ -1332,7 +1333,7 @@ func StateItemLoader(get LoaderGetter, collector *LoadErrors, preset interface{}
 	collisionCfg, dType, _, _ := jsonparser.Get(payload, "collision")
 	switch dType {
 	case jsonparser.Object:
-		if obj, err := lGetObject("collision", get, collector, preset, collisionCfg); !collector.Add(err) {
+		if obj, err := lGetObject(ctx, "collision", get, collector, preset, collisionCfg); !collector.Add(err) {
 			collision = obj.(*collider.ClBody)
 		}
 	case jsonparser.Null:
@@ -1368,7 +1369,7 @@ func StateItemLoader(get LoaderGetter, collector *LoadErrors, preset interface{}
 				collector.Add(fmt.Errorf("%s is predefined state value and it cant be a stateName", ToDefaultState))
 				//todo return ErrorStateItem
 			}
-			if state := StateItemLoader(get, collector, preset, value); state != nil {
+			if state := StateItemLoader(ctx, get, collector, preset, value); state != nil {
 				state.(*StateItem).parent = parent
 				parent.items[string(key)] = state.(*StateItem)
 			}

@@ -216,6 +216,19 @@ func SwitchSprite(new, old Spriteer) {
 		}
 		return
 	}
+
+	if old != nil {
+		switch old.(type) {
+		case *Animation:
+			animation := old.(*Animation)
+			if animation.Manager != nil {
+				animation.Manager.Remove(animation)
+			}
+		default:
+
+		}
+	}
+
 	if new != nil {
 		switch new.(type) {
 		case *Animation:
@@ -223,17 +236,6 @@ func SwitchSprite(new, old Spriteer) {
 			animation.Reset()
 			if animation.Manager == nil {
 				manager.Add(animation)
-			}
-		default:
-
-		}
-	}
-	if old != nil {
-		switch old.(type) {
-		case *Animation:
-			animation := old.(*Animation)
-			if animation.Manager != nil {
-				animation.Manager.Remove(animation)
 			}
 		default:
 
@@ -261,7 +263,7 @@ func TruncateSpaces(reader io.Reader, writer io.Writer) {
 		if err == io.EOF {
 			break
 		}
-		if buf[0] == 32 {
+		if buf[0] == 32 || buf[0] == 32 {
 			spaceCounter++
 		} else if spaceCounter > 0 {
 			fmt.Fprintf(writer, "\033[%dC", spaceCounter)

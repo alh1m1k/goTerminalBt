@@ -42,12 +42,13 @@ func NewDefaultGameConfig() (*GameConfig, error) {
 
 type AnimationConfig struct {
 	SpriteerConfig
-	Duration       time.Duration `json:"duration"`
-	RepeatDuration time.Duration `json:"repeatDuration"`
-	Cycled         bool          `json:"cycled"`
-	Blink          time.Duration `json:"blink"`
-	Length         int           `json:"length"`
-	Reversed       bool          `json:"reversed"`
+	Duration       time.Duration          `json:"duration"`
+	RepeatDuration time.Duration          `json:"repeatDuration"`
+	Cycled         bool                   `json:"cycled"`
+	Blink          time.Duration          `json:"blink"`
+	Length         int                    `json:"length"`
+	Reversed       bool                   `json:"reversed"`
+	Defaults       map[string]interface{} `json:"defaults"`
 }
 
 type SpriteerConfig struct {
@@ -72,6 +73,7 @@ type CompositionLayerConfig struct {
 
 type CompositionConfig struct {
 	SpriteerConfig
+	Defaults map[string]interface{} `json:"defaults"`
 }
 
 type MotionObjectConfig struct {

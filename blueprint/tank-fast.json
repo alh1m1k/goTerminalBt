@@ -31,5 +31,10 @@
     "x<": 3,
     ">x": 3,
     "x>": 3
+  },
+  "defaults": {
+    "sprite": {
+      "transparent": true
+    }
   }
 }

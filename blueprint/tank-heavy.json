@@ -31,5 +31,10 @@
     "x": 6,
     ">": 6,
     "<": 6
+  },
+  "defaults": {
+    "sprite": {
+      "transparent": true
+    }
   }
 }

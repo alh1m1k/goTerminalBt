@@ -32,5 +32,10 @@
     "/": 3,
     "\\": 3,
     "'": 3
+  },
+  "defaults": {
+    "sprite": {
+      "transparent": true
+    }
   }
 }

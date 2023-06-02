@@ -5,7 +5,8 @@
     "name": "tank_top",
     "duration": 300000000,
     "cycled": true,
-    "length": 2
+    "transparent": true,
+    "length": 2,
   },
   "items": {
     "appear": {
@@ -15,6 +16,7 @@
         "duration": 300000000,
         "cycled": true,
         "blink": 200000000,
+        "transparent": true,
         "length": 2
       },
       "items": {
@@ -25,6 +27,7 @@
             "duration": 300000000,
             "cycled": true,
             "blink": 200000000,
+            "transparent": true,
             "length": 2
           }
         },
@@ -35,6 +38,7 @@
             "duration": 300000000,
             "cycled": true,
             "blink": 200000000,
+            "transparent": true,
             "length": 2
           }
         },
@@ -45,6 +49,7 @@
             "duration": 300000000,
             "cycled": true,
             "blink": 200000000,
+            "transparent": true,
             "length": 2
           }
         },
@@ -55,6 +60,7 @@
             "duration": 300000000,
             "cycled": true,
             "blink": 200000000,
+            "transparent": true,
             "length": 2
           }
         }
@@ -66,6 +72,7 @@
         "name": "tank_top",
         "duration": 300000000,
         "cycled": true,
+        "transparent": true,
         "length": 2
       },
       "items": {
@@ -75,6 +82,7 @@
             "name": "tank_top",
             "duration": 300000000,
             "cycled": true,
+            "transparent": true,
             "length": 2
           }
         },
@@ -84,6 +92,7 @@
             "name": "tank_bottom",
             "duration": 300000000,
             "cycled": true,
+            "transparent": true,
             "length": 2
           }
         },
@@ -93,6 +102,7 @@
             "name": "tank_left",
             "duration": 300000000,
             "cycled": true,
+            "transparent": true,
             "length": 2
           }
         },
@@ -102,6 +112,7 @@
             "name": "tank_right",
             "duration": 300000000,
             "cycled": true,
+            "transparent": true,
             "length": 2
           }
         }

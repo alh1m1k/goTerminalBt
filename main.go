@@ -49,7 +49,7 @@ const DEBUG_FREE_SPACES = false
 const DEBUG_SPAWN_POINT_STATUS = false
 
 var (
-	buf, bufErr     = os.OpenFile("./log.txt", os.O_CREATE|os.O_TRUNC, 644)
+	buf, bufErr     = os.OpenFile("log.txt", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 644)
 	logger          = log.New(buf, "logger: ", log.Lshortfile)
 	profilerHandler interface {
 		Stop()
@@ -85,8 +85,8 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if bufErr != nil {
-		log.Println(bufErr)
+	if bufErr != nil && DEBUG {
+		panic(bufErr)
 	}
 	profile.ProfilePath(dir)
 	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "random generator seed")
@@ -112,6 +112,8 @@ func init() {
 
 func main() {
 	var err error
+
+	defer buf.Close()
 
 	//EffectAnimDisappear("stealth/tank/left/tank", 16, 42)
 	//EffectAnimInterference("napalm/persist/smokeGrow", 6, 0.3)

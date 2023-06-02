@@ -1,6 +1,5 @@
 package main
 
-
 type Event struct {
 	EType   int
 	Object  interface{}
@@ -33,7 +32,6 @@ func (receiver *ObservableObject) GetEventChanel() EventChanel {
 }
 
 func (receiver *ObservableObject) Free() error {
-	//close(receiver.output)
 	return nil
 }
 
@@ -49,4 +47,3 @@ func NewObservableObject(output EventChanel, owner ObservableObjectInterface) (*
 
 	return instance, nil
 }
-

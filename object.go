@@ -209,6 +209,7 @@ func (receiver *Object) Copy() *Object {
 	instance.sprite = CopySprite(receiver.sprite)
 	instance.collision = receiver.collision.Copy()
 	instance.Interactions = receiver.Interactions.Copy()
+	instance.Interactions.UnsubscribeAll() //subscribe later
 	if receiver.Tracker != nil {
 		instance.Tracker = receiver.Tracker.Copy()
 	}

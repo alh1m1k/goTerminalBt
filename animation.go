@@ -174,8 +174,10 @@ func (receiver *Animation) Copy() *Animation {
 	instance.keyFrames = make([]Spriteer, len(instance.keyFrames), cap(instance.keyFrames))
 	for i := 0; i < len(receiver.keyFrames); i++ {
 		instance.keyFrames[i] = CopySprite(receiver.keyFrames[i])
+		if receiver.keyFrames[i] == receiver.Spriteer {
+			instance.Spriteer = instance.keyFrames[i]
+		}
 	}
-	instance.Spriteer = CopySprite(receiver.Spriteer)
 	return &instance
 }
 
@@ -228,35 +230,35 @@ func NewErrorAnimation() (*Animation, error) {
 	return &anim, err
 }
 
-// return new animation every call
+// return new animation every call, unless error
 func GetAnimation(id string, length int, load bool, processTransparent bool) (*Animation, error) {
 	if anim, ok := animations[id]; ok {
 		if len(anim.keyFrames) != length {
-			return nil, MismatchFrameCountError
+			return ErrorAnimation, MismatchFrameCountError
 		}
 		return anim.Copy(), nil
 	}
 
 	if !load {
-		return nil, Animation404Error
+		return ErrorAnimation, Animation404Error
 	}
 
 	if length <= 0 {
-		return nil, UndefinedFrameCountError
+		return ErrorAnimation, UndefinedFrameCountError
 	}
 
 	anim, err := NewAnimation(nil)
 	if err != nil {
-		return nil, err
+		return ErrorAnimation, err
 	}
 	for i := 0; i < length; i++ {
 		sprite, err := GetSprite(id+"_"+strconv.Itoa(i), true, processTransparent)
 		if err != nil {
-			return nil, err
+			return ErrorAnimation, err
 		}
 		err = anim.AddFrame(sprite)
 		if err != nil {
-			return nil, err
+			return ErrorAnimation, err
 		}
 	}
 	animations[id] = anim

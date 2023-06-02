@@ -12,6 +12,7 @@
                         "duration": 400000000,
                         "cycled": true,
                         "blink": 200000000,
+                        "transparent": true,
                         "length": 2
                     }
                 },
@@ -22,6 +23,7 @@
                         "duration": 400000000,
                         "cycled": true,
                         "blink": 200000000,
+                        "transparent": true,
                         "length": 2
                     }
                 },
@@ -32,6 +34,7 @@
                         "duration": 400000000,
                         "cycled": true,
                         "blink": 200000000,
+                        "transparent": true,
                         "length": 2
                     }
                 },
@@ -42,6 +45,7 @@
                         "duration": 400000000,
                         "cycled": true,
                         "blink": 200000000,
+                        "transparent": true,
                         "length": 2
                     }
                 }
@@ -57,6 +61,7 @@
                         "duration": 400000000,
                         "cycled": true,
                         "blink": 200000000,
+                        "transparent": true,
                         "length": 2
                     }
                 },
@@ -67,6 +72,7 @@
                         "duration": 400000000,
                         "cycled": true,
                         "blink": 200000000,
+                        "transparent": true,
                         "length": 2
                     }
                 },
@@ -77,6 +83,7 @@
                         "duration": 400000000,
                         "cycled": true,
                         "blink": 200000000,
+                        "transparent": true,
                         "length": 2
                     }
                 },
@@ -87,6 +94,7 @@
                         "duration": 400000000,
                         "cycled": true,
                         "blink": 200000000,
+                        "transparent": true,
                         "length": 2
                     }
                 }
@@ -101,6 +109,7 @@
                         "name": "tank_top",
                         "duration": 400000000,
                         "cycled": true,
+                        "transparent": true,
                         "length": 2
                     }
                 },
@@ -110,6 +119,7 @@
                         "name": "tank_bottom",
                         "duration": 400000000,
                         "cycled": true,
+                        "transparent": true,
                         "length": 2
                     }
                 },
@@ -119,6 +129,7 @@
                         "name": "tank_left",
                         "duration": 400000000,
                         "cycled": true,
+                        "transparent": true,
                         "length": 2
                     }
                 },
@@ -128,6 +139,7 @@
                         "name": "tank_right",
                         "duration": 400000000,
                         "cycled": true,
+                        "transparent": true,
                         "length": 2
                     }
                 }
