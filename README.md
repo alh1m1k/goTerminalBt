@@ -16,7 +16,18 @@ Run from app directory `go build . ` to build app, or `go run . ` to build and r
 ![Alt-текст](/stage1Normal.png "Stage-1")
 
 ### Usage
-First of all, build game for platform you want. 
+First of all, build game for platform you want. Fastest way is: 
+```sh
+ docker run --rm -it -v  <project-dir>:/usr/src/myapp -w /usr/src/myapp golang bash
+```
+in container shell
+```sh
+ apt update && apt install libasound2-dev
+```
+then 
+```sh
+ go build .
+```
 then run terminal to start game, use --help to see all available opt.
 + --scenario run custom scenario (for now only one game scenario available: stage-1 `app --scenario stage-1` )  
 or use:  
