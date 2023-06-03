@@ -352,6 +352,12 @@ func WallLoader(ctx context.Context, get LoaderGetter, collector *LoadErrors, pr
 		}
 	}
 
+	if regeneration, err := jsonparser.GetFloat(payload, "regeneration"); !collector.Add(err) {
+		if regeneration > 0.0 {
+			wall.Regenerator, _ = NewRegenerator(regeneration)
+		}
+	}
+
 	return wall
 }
 

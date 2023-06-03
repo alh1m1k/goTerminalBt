@@ -27,7 +27,7 @@ type Collider struct {
 	ver     bool //odd even
 }
 
-//todo remove
+// todo remove
 func (c *Collider) AddExtra(clBody *ClBody, object Collideable) error {
 	if clBody == nil {
 		return errors.New("clBody was nil")
@@ -123,7 +123,7 @@ func (c *Collider) Remove(object Collideable) {
 	}
 }
 
-//todo remove
+// todo remove
 func (c *Collider) RemoveExtra(clBody *ClBody, object Collideable) {
 	if clBody.fake {
 		return
@@ -204,7 +204,7 @@ func (c *Collider) QuerySegment(x1, y1, x2, y2 float64, tags ...string) []Collid
 	return c.bodyList2Collideable(bodyList)
 }
 
-//additional filtering due lib do not apply it to result :(
+// additional filtering due lib do not apply it to result :(
 func (c *Collider) filterBody(bodyList []*ump.Body, x, y, w, h float32) []Collideable {
 	result := make([]Collideable, 0, len(bodyList))
 	for _, body := range bodyList {
@@ -252,9 +252,10 @@ func gridFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goa
 	ocenterX := ox1 + ow/2
 	ocenterY := oy1 + oh/2
 
-	if col.Move.X != 0 {
+	if col.Move.X != 0 { //edge case stuck on corner move
 		offset := float64(centerY) - float64(ocenterY)
 		distance := math.Abs(offset) - float64(h/2+oh/2)
+		//if we move on x and Y in grid tolerance then ignore collide and reduce error to zero
 		if distance > -GRID_COORD_TOLERANCE {
 			goalY = goalY + float32(math.Copysign(distance, offset))
 			body.Update(col.Touch.X, col.Touch.Y)
@@ -271,6 +272,7 @@ func gridFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goa
 		}
 	}
 
+	//common case collision out of tolerance
 	sx, sy := col.Touch.X, col.Touch.Y
 	if col.Move.X != 0 || col.Move.Y != 0 {
 		if col.Normal.X == col.Normal.Y && col.Normal.X == 0 {
@@ -288,6 +290,7 @@ func gridFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goa
 	return sx, sy, world.Project(body, sx, sy)
 }
 
+// not work for now as no way to mark body that it already in to other ticks
 func perimeterFilter(world *ump.World, col *ump.Collision, body *ump.Body, goalX, goalY float32) (float32, float32, []*ump.Collision) {
 	_, _, w, h, _, _ := body.Extents()
 	ox1, oy1, ow, oh, _, _ := col.Body.Extents()

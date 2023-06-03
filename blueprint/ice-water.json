@@ -9,7 +9,7 @@
     "cycled": true
   },
   "collision": {
-    "type": "perimeter",
+    "type": "penetrate",
     "w": 8,
     "h": 4
   },

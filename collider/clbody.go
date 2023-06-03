@@ -14,7 +14,7 @@ type CollisionInfo struct {
 	Details *ump.Collision
 }
 
-//todo tags && hasTag
+// todo tags && hasTag
 type ClBody struct {
 	x, y, w, h              float64
 	static, penetrate, fake bool
@@ -43,7 +43,7 @@ func (receiver *ClBody) Move(x, y float64) {
 	receiver.y = y
 }
 
-//after collision correction
+// after collision correction
 func (receiver *ClBody) Correct(x, y float64) {
 	receiver.x = x
 	receiver.y = y
@@ -119,7 +119,7 @@ func (receiver *ClBody) HasTag(tag string) bool {
 	return false
 }
 
-//interface recursion
+// interface recursion
 func (receiver *ClBody) GetClBody() *ClBody {
 	return receiver
 }
@@ -198,7 +198,7 @@ func NewPenetrateCollision(x, y, w, h float64) *ClBody {
 	return body
 }
 
-//no cycle detection!
+// no cycle detection!
 func LinkClBody(first, second *ClBody) {
 	first.First = first
 	second.First = first

@@ -9,11 +9,13 @@ import (
 const ENVIRONMENT_BASE_DAMAGE = 50
 
 var EnvironmentDamage = DamageProxy{}
+var SelfRegeneration = DamageProxy{}
 
 type Wall struct {
 	*Object
 	*ObservableObject
 	*State
+	*Regenerator
 	HP, FullHP, Score int
 }
 
@@ -22,6 +24,17 @@ func (receiver *Wall) Update(timeLeft time.Duration) error {
 		return nil
 	}
 	receiver.Object.Update(timeLeft)
+	if receiver.Regeneration > 0 && receiver.HP < receiver.FullHP {
+		receiver.Regenerator.Update(timeLeft)
+		if heal := receiver.Regenerator.GetAccumulated(); heal >= 1 {
+			if heal = minInt(heal, receiver.FullHP-receiver.HP); heal > 0 {
+				SelfRegeneration.Tags = receiver.Tags
+				SelfRegeneration.From = receiver
+				SelfRegeneration.Damage = -heal
+				receiver.ReciveDamage(&SelfRegeneration)
+			}
+		}
+	}
 	return nil
 }
 
@@ -63,7 +76,7 @@ func (receiver *Wall) OnStopCollide(object collider.Collideable, duration time.D
 
 func (receiver *Wall) ReciveDamage(incoming Danger) {
 	damage, nemesis := incoming.GetDamage(receiver)
-	if damage <= 0 {
+	if damage == 0 {
 		return
 	}
 	receiver.HP -= damage
@@ -93,6 +106,7 @@ func (receiver *Wall) Reset() error {
 	if receiver.State != nil {
 		receiver.State.Reset()
 	}
+	receiver.Regenerator.Reset()
 	receiver.Trigger(ResetEvent, receiver, nil)
 	return nil
 }
@@ -137,6 +151,7 @@ func NewWall(obj *Object, state *State, obs *ObservableObject) (*Wall, error) {
 	instance.Object = obj
 	instance.ObservableObject = obs
 	instance.ObservableObject.Owner = instance
+	instance.Regenerator = NoRegeneration
 	if state != nil {
 		instance.State = state
 		instance.State.Owner = instance

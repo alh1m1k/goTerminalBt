@@ -33,6 +33,7 @@
   "hp": 180,
   "zIndex": -10,
   "score": 50,
+  "regeneration": 6.0,
   "tags": [{
     "name": "ice",
     "values": {

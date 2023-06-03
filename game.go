@@ -232,11 +232,15 @@ func (receiver *Game) onUnitFire(object *Unit, payload interface{}) {
 }
 
 func (receiver *Game) onUnitDamage(object ObjectInterface, payload interface{}) {
+	//todo add Damage to interface
+	//todo add isHeal flag
 	if object.HasTag("wall") || object.HasTag("ice") {
 		wall := object.(*Wall)
 		wallHp := int(math.Max(float64(wall.HP), 1))
 		if wall.FullHP/wallHp >= 2 {
 			wall.Enter("damage")
+		} else {
+			wall.Enter("normal")
 		}
 	}
 	if object.HasTag("highlights-damage") {
@@ -362,12 +366,31 @@ func (receiver *Game) onObjectDestroy(object ObjectInterface, payload interface{
 	if object.HasTag("ice") {
 		bl, _ := object.GetTagValue("ice", "blueprint", "ice-water")
 		point := object.GetXY()
-		_, err := receiver.SpawnManager.Spawn(point, bl, DefaultConfigurator, &SpawnRequest{
-			Team: object.(ObjectInterface).GetAttr().Team,
+		originalBl := object.GetAttr().Blueprint
+		originalTeam := object.(ObjectInterface).GetAttr().Team
+		newWaterObject, err := receiver.SpawnManager.Spawn(point, bl, DefaultConfigurator, &SpawnRequest{
+			Team: originalTeam,
 		})
 		if err != nil {
 			logger.Printf("unable to spawn water: %s \n", err)
 		}
+		time.AfterFunc(time.Second*time.Duration(30), func() { //time.AfterFunc(time.Second*time.Duration(rand.Intn(11)+25), func() {
+			if game.inProgress && !newWaterObject.GetAttr().Destroyed {
+				_, err := receiver.SpawnManager.Spawn(point, originalBl, func(object ObjectInterface, config interface{}) ObjectInterface {
+					DefaultConfigurator(object, config)
+					//probably not best way to do this, mb wait until spawned
+					object.(Vulnerable).ReciveDamage(&DamageProxy{Damage: object.(*Wall).FullHP - 1, Tags: &Tags{}, From: object})
+					return object
+				}, &SpawnRequest{
+					Team: originalTeam,
+				})
+				if err != nil {
+					logger.Printf("unable to respawn ice: %s \n", err)
+				} else {
+					receiver.SpawnManager.DeSpawn(newWaterObject)
+				}
+			}
+		})
 	}
 
 	if object.HasTag("fanout") {
