@@ -16,7 +16,7 @@ Run from app directory `go build . ` to build app, or `go run . ` to build and r
 ![Alt-текст](/stage1Normal.png "Stage-1")
 
 ### Usage
-First of all, build game for platform you want. Fastest way is: 
+First of all, build game for platform you want. Fastest way is (linux container build): 
 ```sh
  docker run --rm -it -v  <project-dir>:/usr/src/myapp -w /usr/src/myapp golang bash
 ```
@@ -28,6 +28,11 @@ then
 ```sh
  go build .
 ```
+or you can run game inside container
+```sh
+ go run .
+```
+
 then run terminal to start game, use --help to see all available opt.
 + --scenario run custom scenario (for now only one game scenario available: stage-1 `app --scenario stage-1` )  
 or use:  

@@ -8,13 +8,15 @@
       "normal": {
         "sprite": {
           "type": "sprite",
-          "name": "wall"
+          "name": "wall",
+          "transparent": true
         }
       },
       "damage": {
         "sprite": {
           "type": "sprite",
-          "name": "wall_damage"
+          "name": "wall_damage",
+          "transparent": true
         }
       },
       "disappear": {
@@ -24,6 +26,7 @@
           "duration": 2000000000,
           "cycled": true,
           "blink": 200000000,
+          "transparent": true,
           "length": 1
         }
       }

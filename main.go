@@ -19,7 +19,7 @@ import (
 )
 
 /**
-* Go BattleTanks v0.3
+* Go BattleTanks v0.7
 * @author Pyadukhov Roman
  */
 
@@ -112,8 +112,6 @@ func init() {
 
 func main() {
 	var err error
-
-	defer buf.Close()
 
 	//EffectAnimDisappear("stealth/tank/left/tank", 16, 42)
 	//EffectAnimInterference("napalm/persist/smokeGrow", 6, 0.3)
